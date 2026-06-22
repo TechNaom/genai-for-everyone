@@ -1,0 +1,137 @@
+name: CI Checks
+
+# Runs on every push and PR to main, plus manual trigger from the Actions tab.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ---------------------------------------------------------------
+  # 1. Validate that the curriculum folder structure stays consistent
+  #    as new weeks/sessions get added.
+  # ---------------------------------------------------------------
+  structure-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required top-level folders exist
+        run: |
+          for dir in docs weeks codebase assets/slides assessments; do
+            if [ ! -d "$dir" ]; then
+              echo "::error::Missing required folder: $dir"
+              exit 1
+            fi
+          done
+          echo "All required top-level folders present."
+
+      - name: Check for placeholder/leftover text
+        run: |
+          set -e
+          echo "Scanning markdown files for placeholder text..."
+          if grep -rniE "lorem ipsum|\[insert[^]]*\]|\bTODO\b|\bFIXME\b|xxx{2,}" \
+              --include="*.md" weeks/ docs/ assessments/ 2>/dev/null; then
+            echo "::error::Found placeholder/leftover text above. Fix before merging."
+            exit 1
+          fi
+          echo "No placeholder text found."
+
+      - name: Check session naming convention
+        run: |
+          echo "Checking weeks/ files follow session-X.Y-slug.md pattern..."
+          BAD=0
+          while IFS= read -r -d '' f; do
+            base=$(basename "$f")
+            if ! [[ "$base" =~ ^session-[0-9]+\.[0-9]+-[a-z0-9-]+\.md$ ]]; then
+              echo "::warning::File does not match naming convention: $f"
+              BAD=1
+            fi
+          done < <(find weeks -name "*.md" -print0 2>/dev/null)
+          exit 0
+
+  # ---------------------------------------------------------------
+  # 2. Lint and sanity-check Python exercises/solutions.
+  # ---------------------------------------------------------------
+  python-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lint tools
+        run: pip install ruff --quiet
+
+      - name: Check Python files compile (syntax check)
+        run: |
+          shopt -s globstar nullglob
+          FILES=(codebase/**/*.py)
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No Python files yet — skipping."
+            exit 0
+          fi
+          python -m py_compile "${FILES[@]}"
+          echo "All Python files compile cleanly."
+
+      - name: Lint with ruff (non-blocking warnings)
+        run: |
+          shopt -s globstar nullglob
+          FILES=(codebase/**/*.py)
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No Python files yet — skipping."
+            exit 0
+          fi
+          ruff check codebase/ --exit-zero
+
+  # ---------------------------------------------------------------
+  # 3. Guard against accidentally committed secrets/API keys.
+  # ---------------------------------------------------------------
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for likely API keys / secrets
+        run: |
+          set -e
+          PATTERN='sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|api[_-]?key\s*=\s*["\047][A-Za-z0-9]{16,}'
+          if grep -rniE "$PATTERN" \
+              --include="*.py" --include="*.md" --include="*.json" --include="*.yml" --include="*.yaml" \
+              --exclude-dir=".git" . 2>/dev/null; then
+            echo "::error::Possible secret/API key detected above. Remove it and use environment variables instead."
+            exit 1
+          fi
+          echo "No obvious secrets found."
+
+  # ---------------------------------------------------------------
+  # 4. Validate PPTX decks actually open (catches corrupted uploads).
+  # ---------------------------------------------------------------
+  pptx-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify all .pptx files are valid zip archives
+        run: |
+          shopt -s globstar nullglob
+          FILES=(assets/slides/**/*.pptx)
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No .pptx files yet — skipping."
+            exit 0
+          fi
+          FAIL=0
+          for f in "${FILES[@]}"; do
+            if ! unzip -tq "$f" > /dev/null 2>&1; then
+              echo "::error::Corrupted or invalid pptx: $f"
+              FAIL=1
+            fi
+          done
+          exit $FAIL

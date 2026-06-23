@@ -5,6 +5,16 @@
 set -e
 cd "$(dirname "$0")/.."
 
+# Detect which Python command is available (varies by system: python3 vs python)
+if command -v python3 &> /dev/null; then
+  PYTHON_CMD=python3
+elif command -v python &> /dev/null; then
+  PYTHON_CMD=python
+else
+  echo "No Python interpreter found (tried python3 and python). Install Python 3 to run this check."
+  exit 1
+fi
+
 echo "== 1. Checking required folders =="
 for dir in docs weeks codebase assets/slides assessments; do
   if [ ! -d "$dir" ]; then
@@ -30,7 +40,7 @@ FILES=(codebase/**/*.py)
 if [ ${#FILES[@]} -eq 0 ]; then
   echo "No Python files yet — skipping."
 else
-  python -m py_compile "${FILES[@]}"
+  $PYTHON_CMD -m py_compile "${FILES[@]}"
   echo "OK"
 fi
 

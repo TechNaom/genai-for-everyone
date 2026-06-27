@@ -74,3 +74,53 @@ Notice that step 6 is where this session connects directly back to where Week 3 
 When you build your local vector store over a real PDF today, pay close attention to one thing in particular: try a few different chunk sizes on the *same* document and the *same* test questions, and watch the retrieved results change. A chunk size that's too small will sometimes retrieve fragments that are technically on-topic but missing the context to actually answer the question. A chunk size that's too large will sometimes retrieve a chunk that contains the right answer buried inside three paragraphs of surrounding material that has nothing to do with the question. There is no single "correct" setting waiting to be discovered — there's a genuine engineering trade-off, and today is your first chance to feel it directly rather than just read about it.
 
 That hands-on feel for the trade-off is exactly what Session 3.5 will ask you to diagnose systematically once you've seen a working pipeline misbehave in Session 3.4. For now: build the engine, watch it retrieve real passages from a real document in response to real questions, and notice where it does well and where it struggles. You're not just learning a technique today — you're building the actual component that decides what an LLM gets to see before it answers, which is, in a real sense, the single most consequential design decision in any RAG system you'll ever build.
+
+---
+
+## Points to Remember
+
+- **Chunking is a genuine design decision, not a default setting.** Whole-document embeddings blur everything into one vague vector; single-sentence chunks can lose the surrounding context that gave them meaning. The practical answer sits in between, tuned to your documents.
+- **Chunk boundaries matter as much as chunk size.** Cutting mid-sentence or mid-list produces a chunk that's broken even before you consider its meaning — better chunkers respect natural structure like paragraphs and headers.
+- **A vector store exists to answer "what's nearby?" fast**, using Approximate Nearest Neighbor indexing to avoid comparing a query against every single vector in the database.
+- **Top-k retrieval is a trade-off, not a fixed constant.** Too low a k risks missing the answer; too high a k reintroduces noise and can measurably hurt answer quality by diluting the genuinely relevant passages.
+- **Semantically close is not the same as most useful for answering the question.** A chunk can be topically related without containing the specific fact being asked about — this is exactly what motivates re-ranking, covered in Session 3.5.
+- **Today's exercise stops deliberately after retrieval, before generation.** Chunking, embedding, storing, and retrieving form a complete sub-system on their own — Session 3.4 adds the final generation step on top.
+
+---
+
+## Quick Check: Fill in the Blanks
+
+1. Embedding an entire document as a single vector produces a __________ representation that blurs together everything from the summary to the appendix.
+2. Embedding individual sentences in isolation risks __________, where a sentence that was clear in context becomes nearly meaningless once sliced out on its own.
+3. A vector store uses __________ indexing to avoid comparing a query against every single stored vector.
+4. Setting top-k too __________ risks missing the answer if it's split across chunks; setting it too __________ reintroduces irrelevant noise.
+5. A chunk being semantically close to a query is not the same as the chunk being __________ for actually answering the question — a gap that motivates re-ranking in Session 3.5.
+
+**Answers:** 1. blurred / averaged — 2. context collapse — 3. Approximate Nearest Neighbor (ANN) — 4. low, high — 5. most useful
+
+---
+
+## Quiz and Interview Questions
+
+Full quiz: [`assessments/quizzes/week-03/session-3.3-quiz.md`](../../assessments/quizzes/week-03/session-3.3-quiz.md) · Answer key: [`assessments/answer-keys/week-03/session-3.3-quiz-answers.md`](../../assessments/answer-keys/week-03/session-3.3-quiz-answers.md)
+
+Interview-style questions for this topic:
+
+1. *"Why can't you just embed an entire document as a single vector for retrieval purposes?"*
+2. *"What's the difference between a vector store and a traditional relational database, conceptually?"*
+3. *"Walk me through the trade-off in choosing top-k for a retrieval system. What happens at the extremes?"*
+4. *"Give an example of a chunk that would be semantically close to a query but still not useful for answering it."*
+
+---
+
+## Core path — guided activity
+
+**Build a Local Vector Store Over a PDF.** You'll chunk a real sample company handbook, embed each chunk using the word-count approach from Session 3.2, store the vectors, and retrieve the top-k most relevant chunks for real test questions — the full pipeline minus the final generation step. Full instructions: [`codebase/exercises/week-03/session-3.3/`](../../codebase/exercises/week-03/session-3.3/).
+
+## Pro path — extended challenge
+
+Run the same sick-leave question ("How many sick days do employees get and do they roll over?") against the handbook at two different chunk sizes and compare the actual retrieved results — don't predict the outcome in advance, run it and look. At one setting you'll likely see retrieval miss the sick-leave chunk entirely in favor of an unrelated PTO chunk that shares surface words like "days" and "employees"; at a smaller chunk size, the genuinely correct chunk should appear, though not always cleanly in the top slot. This is the real, occasionally messy trade-off chunking forces on you — worth seeing with your own generated numbers rather than taking on faith.
+
+## What's next
+
+Session 3.4 — **Building a RAG Pipeline** — retrieval, augmentation, and generation, brought together end to end, with citation grounding so every answer can be traced back to the real passage it came from.

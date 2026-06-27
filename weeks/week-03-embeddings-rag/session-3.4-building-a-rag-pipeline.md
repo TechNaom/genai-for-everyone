@@ -95,3 +95,54 @@ If Session 2.4's lesson about defensive parsing and Session 2.6's lesson about d
 By the end of today, you'll have a single function that takes a raw user question, runs it through retrieval (reusing Session 3.3's vector store), augments a prompt with the retrieved chunks in proper numbered format, sends that prompt to an LLM, and returns a generated answer with citations attached — pointing back at the exact chunks that supported it. This is, for the first time in this course, a complete, working RAG application, end to end, over a real document.
 
 It will not be a perfect one. You already know from Session 3.3's honest results that retrieval itself sometimes returns near-misses rather than clean hits, and nothing about adding a generation step on top fixes that underlying problem — it can only generate an honest "I don't have enough information" response *if* you've built the defensive instructions to allow for that outcome, or it will generate a fluent answer from a flawed retrieval, which looks identical to a correct one from the outside. That gap — between a RAG system that runs without errors and a RAG system that's actually trustworthy — is exactly where Session 3.5 picks up. Today, you build the complete machine. Next session, you learn to find out where it's lying to you.
+
+---
+
+## Points to Remember
+
+- **"Augment" and "generate" are where Session 3.1's framework finally becomes concrete code** — retrieved chunks get inserted into a structured prompt, and the model is instructed to answer using only that context.
+- **"Use ONLY the provided context" is the single most load-bearing instruction in a RAG prompt.** Without it, the model is free to quietly fall back on its own memorized knowledge, which defeats the purpose of retrieval entirely.
+- **Numbered context chunks are what make citation possible at all.** You can't ask a model to cite "which part of the context" supported an answer if the context has no addressable internal structure.
+- **Citation grounding turns an invisible failure mode into a checkable one.** A faithfully-grounded answer and a quietly-hallucinated one look identical without it; citations give you something concrete to verify against the real retrieved text.
+- **Pipeline stages have different internal data shapes, and that's normal, not a flaw.** A chunk is a plain string during embedding, a (text, score) pair during retrieval, and a numbered labeled unit during generation — the translation between these shapes is ordinary "adapter" code, not an annoying afterthought.
+- **A citation can never be more precise than the chunk it points to.** Chunk size affects not just retrieval quality but how specific a citation can possibly be — the same trade-off from Session 3.3, reappearing in a new form.
+- **A trustworthy RAG system needs a defensive plan for "I don't know."** Weak retrieval, a missing citation, or a genuinely unanswerable question should all be able to produce an honest "not enough information" response instead of a forced, confident-sounding guess.
+
+---
+
+## Quick Check: Fill in the Blanks
+
+1. The instruction "use ONLY the information in the provided context" is what makes a system genuinely __________ rather than just retrieval-adjacent.
+2. __________ context chunks are what make citation possible, because they give the model addressable units to point back to.
+3. Citation grounding converts an __________ failure mode (a hallucinated answer looking identical to a grounded one) into a __________ one.
+4. The translation from a (chunk_text, similarity_score) tuple into clean, numbered context for the prompt is an example of an __________ step between pipeline stages.
+5. A citation can never be more __________ than the chunk it points to, which connects directly back to the chunk-size trade-off from Session 3.3.
+
+**Answers:** 1. retrieval-augmented — 2. Numbered — 3. invisible, checkable — 4. adapter — 5. precise / specific
+
+---
+
+## Quiz and Interview Questions
+
+Full quiz: [`assessments/quizzes/week-03/session-3.4-quiz.md`](../../assessments/quizzes/week-03/session-3.4-quiz.md) · Answer key: [`assessments/answer-keys/week-03/session-3.4-quiz-answers.md`](../../assessments/answer-keys/week-03/session-3.4-quiz-answers.md)
+
+Interview-style questions for this topic:
+
+1. *"Why is 'use only the provided context' arguably the single most important line in a RAG prompt?"*
+2. *"What does citation grounding actually protect against, and what does it not protect against?"*
+3. *"Describe an 'adapter' step you'd need to build between retrieval and generation in a RAG pipeline, and why it's necessary."*
+4. *"How should a well-designed RAG system behave when the retrieved context doesn't actually contain the answer?"*
+
+---
+
+## Core path — guided activity
+
+**End-to-End RAG App Over a Document Set.** You'll wire together `format_context()` (translating retrieval's (chunk, score) pairs into clean numbered context), `build_rag_prompt()` (the grounded prompt template), and `extract_citations()` (parsing which numbered chunks the model actually cited) into a single `answer_question()` function — reusing Session 3.3's vector store as the retrieval layer. Full instructions: [`codebase/exercises/week-03/session-3.4/`](../../codebase/exercises/week-03/session-3.4/).
+
+## Pro path — extended challenge
+
+Test your pipeline with a question you know is genuinely unanswerable from the document set (not just a weak retrieval match — a fact that simply isn't in the source document at all), and confirm your system produces an honest "not enough information" response rather than a fluent, ungrounded guess. Note explicitly which parts of your output you've verified by direct execution versus which parts you're trusting will behave as expected — the discipline of keeping those two categories separate is exactly what real production RAG debugging requires.
+
+## What's next
+
+Session 3.5 — **RAG Failure Modes & Fixes** — chunking errors, retrieval misses, context stuffing, and re-ranking: learning to find out exactly where the system you just built is lying to you.

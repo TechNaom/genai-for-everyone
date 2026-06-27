@@ -109,3 +109,54 @@ Watch for **clustering** in your plot: sentences about pets should visually grou
 You now understand the actual computational substance behind "find the relevant text," which is the load-bearing idea inside every RAG system you'll build from here on. But notice what today's exercise *doesn't* yet do: it doesn't organize a large real-world document collection, it doesn't handle the question of how to split long documents into the right-sized pieces before embedding them, and it doesn't yet retrieve anything in response to a live user question.
 
 Those are exactly the problems Session 3.3 takes on — chunking strategies for breaking documents into sensible pieces, vector databases for storing and searching embeddings efficiently at scale, and top-k retrieval for actually pulling back the most relevant matches to a query. You've built the conceptual engine today. Next session, you put it in a car.
+
+---
+
+## Points to Remember
+
+- **An embedding converts text into a vector — a list of numbers — that encodes meaning as geometry.** Texts with similar meaning produce nearby vectors; texts with different meaning produce vectors that are far apart.
+- **Embeddings compare meaning, not vocabulary.** Two sentences can share almost no literal words and still land close together if they're about the same underlying concept — this is the core advantage over keyword matching.
+- **Cosine similarity measures the angle between two vectors, ignoring their length.** A score near 1 means highly similar meaning; a score near 0 means essentially unrelated; the formula is the dot product divided by the product of the two vectors' magnitudes.
+- **A 2D embedding plot requires dimensionality reduction**, which inevitably distorts some relationships when flattening many dimensions down to two — similar to how a flat world map distorts the relative size of landmasses.
+- **Today's toy embedding used engineered concept-anchor scores, not a real trained model**, because 20 short sentences with deliberately diverse vocabulary aren't enough raw text for topic structure to emerge from word statistics alone.
+- **Real embedding models don't need engineered help.** Clustering by meaning emerges automatically from the sheer scale of training data, with no human ever hand-labeling which words belong to which topic.
+
+---
+
+## Quick Check: Fill in the Blanks
+
+1. An embedding converts a piece of text into a __________ — an ordered list of numbers that encodes meaning as a point in space.
+2. Two sentences with almost no shared vocabulary can still produce nearby embedding vectors because embeddings compare __________ rather than literal word overlap.
+3. Cosine similarity measures the __________ between two vectors, deliberately ignoring their __________.
+4. Flattening a high-dimensional embedding down to a 2D plot requires a __________ technique, which inevitably introduces some distortion.
+5. Today's toy embedding needed __________ concept-anchor scores because 20 short, deliberately varied sentences weren't enough raw text for topic clustering to emerge from word statistics alone.
+
+**Answers:** 1. vector — 2. meaning — 3. angle (direction), magnitude (length) — 4. dimensionality reduction — 5. engineered / hand-picked
+
+---
+
+## Quiz and Interview Questions
+
+Full quiz: [`assessments/quizzes/week-03/session-3.2-quiz.md`](../../assessments/quizzes/week-03/session-3.2-quiz.md) · Answer key: [`assessments/answer-keys/week-03/session-3.2-quiz-answers.md`](../../assessments/answer-keys/week-03/session-3.2-quiz-answers.md)
+
+Interview-style questions for this topic:
+
+1. *"Explain cosine similarity to someone with no math background, without using the word 'angle.'"*
+2. *"Why can two sentences with almost no shared vocabulary still produce a high embedding similarity score?"*
+3. *"What does a 2D visualization of embeddings actually distort, and why is that distortion unavoidable?"*
+4. *"Why doesn't a real production embedding model need hand-picked topic words the way today's toy exercise did?"*
+
+---
+
+## Core path — guided activity
+
+**Visualize Embeddings of 20 Sentences in 2D.** You'll build vectors for 20 sentences spanning several topics using a transparent concept-anchor-plus-word-count approach, reduce them to 2 dimensions, plot them, and check whether sentences from the same topic visually cluster together. Full instructions: [`codebase/exercises/week-03/session-3.2/`](../../codebase/exercises/week-03/session-3.2/).
+
+## Pro path — extended challenge
+
+Rebuild the same 20 sentences' vectors using *only* raw word counts, with no concept-anchor scores at all, and compare the resulting plot to the Core path version. You should see the clustering largely disappear — directly demonstrating, with your own generated output, why scale of training data (not different math) is what lets real embedding models cluster by meaning without anyone hand-seeding topic categories.
+
+## What's next
+
+Session 3.3 — **Vector Databases & Retrieval** — chunking strategies for breaking documents into sensible pieces, vector stores for organizing embeddings at scale, and top-k retrieval for pulling back the most relevant matches to a real query.
+

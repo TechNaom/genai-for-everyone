@@ -91,3 +91,54 @@ This is genuinely a judgment call, and it's one you'll have to make over and ove
 Today you've built the *why*. The rest of Week 3 builds the *how*, in careful order: Session 3.2 demystifies embeddings — the actual mathematical representation that makes "finding the relevant text" possible at all. Session 3.3 covers chunking and vector stores — how you organize a large document set so retrieval is fast and accurate. Session 3.4 puts all of it together into an end-to-end RAG pipeline with real citation grounding. Session 3.5 is where it gets honest: RAG systems fail in specific, predictable ways, and you'll learn to recognize and fix them. Session 3.6 closes the week the way 2.6 did — by building something real that needs everything you've learned, this time a company policy Q&A bot.
 
 But none of that engineering matters if you can't first answer the question this session was actually about: does this problem need external knowledge at all, and if so, why? Get that judgment right, and the rest of the week is technique. Get it wrong, and you'll either build elaborate retrieval infrastructure for a problem that never needed it, or you'll skip retrieval on a problem that desperately needed grounding — and ship something that hallucinates with total confidence, exactly like the consultant who never noticed they'd walked out of the room they were supposed to be reporting on.
+
+---
+
+## Points to Remember
+
+- **A model's confidence is not a measurement of its accuracy.** A hallucinated fact and a correct one are expressed in the same calm, fluent sentences — there's no built-in signal that distinguishes them from the outside.
+- **A knowledge cutoff matters for time-dependent facts, not timeless ones.** Stable historical or scientific facts are unaffected by the cutoff; anything that depends on "what's true right now" is structurally at risk.
+- **The deeper reason for RAG isn't the cutoff — it's that a general-purpose model's weights will never contain everything a specific application needs to know**, including private, internal, or freshly created information that was never going to be in any training set.
+- **RAG is a three-step move**: retrieve the relevant real text, augment the prompt with it, and generate an answer grounded in what was retrieved rather than what the model remembers.
+- **RAG is not free** — it adds retrieval infrastructure, latency, and engineering complexity, so the valuable skill is knowing when it's the right tool, not just knowing how to build it.
+- **Not every problem is a RAG problem.** Reasoning/writing/transformation tasks, timeless-knowledge questions, and under-specified prompts are three common cases where reaching for RAG fixes the wrong layer.
+
+---
+
+## Quick Check: Fill in the Blanks
+
+1. A model's __________ is not a measurement of its __________ — both can look identical from the outside, expressed in the same fluent sentences.
+2. A language model that doesn't "know" something often doesn't fail loudly — it fails __________, producing the most plausible-sounding continuation available even if it's fabricated.
+3. The deeper, more durable reason for needing retrieval is that a general-purpose model's __________ will never contain everything a specific application needs to know.
+4. The three steps of RAG, conceptually, are __________, __________, and __________.
+5. A task that's really about reasoning, writing, or transformation rather than factual recall is a sign that RAG is __________ the right tool for the job.
+
+**Answers:** 1. confidence, accuracy — 2. fluently — 3. weights — 4. retrieve, augment, generate — 5. not
+
+---
+
+## Quiz and Interview Questions
+
+Full quiz: [`assessments/quizzes/week-03/session-3.1-quiz.md`](../../assessments/quizzes/week-03/session-3.1-quiz.md) · Answer key: [`assessments/answer-keys/week-03/session-3.1-quiz-answers.md`](../../assessments/answer-keys/week-03/session-3.1-quiz-answers.md)
+
+Interview-style questions for this topic:
+
+1. *"Why can a language model state an outdated or incorrect fact with exactly the same confidence as a correct one?"*
+2. *"What's the actual difference between a knowledge-cutoff problem and the deeper reason most real applications need retrieval?"*
+3. *"Describe the three conceptual steps of RAG without using the words 'embedding' or 'vector store.'"*
+4. *"Give an example of a task where adding RAG would be the wrong fix, and explain what the real fix should be instead."*
+
+---
+
+## Core path — guided activity
+
+**The "RAG or Not?" Decision Worksheet.** You'll work through six realistic scenarios, deciding for each whether it genuinely needs RAG, needs something else entirely (better prompting, a tool call, a database lookup), or needs nothing beyond what the model already knows — and explaining your reasoning using the framework from this session. Full instructions: [`codebase/exercises/week-03/session-3.1/`](../../codebase/exercises/week-03/session-3.1/).
+
+## Pro path — extended challenge
+
+For each of the six scenarios, beyond just naming the right approach, sketch the *failure mode* of getting it wrong in the opposite direction — what would actually go wrong if a "Not RAG" scenario were given a full RAG pipeline anyway, or if a genuine RAG scenario were handled with prompting alone? Articulating the cost of the wrong call, not just the right call, is what turns this from a classification exercise into real engineering judgment.
+
+## What's next
+
+Session 3.2 — **Embeddings Demystified** — the actual mathematical representation that makes "finding the relevant text" possible at all: vector representations, semantic similarity, and cosine distance.
+

@@ -2,9 +2,13 @@
 
 ## Building the Customer-Support Reply Generator
 
+**Week:** 2 — Prompt Engineering & Application Design
+**Format:** Live session + self-paced exercise + quiz
+**Reading time:** ~25–30 minutes
+
 ---
 
-### Where you've been
+## Why this chapter exists
 
 Five sessions ago, you couldn't reliably get an LLM to do what you wanted. Now look at what's actually in your toolbox.
 
@@ -16,37 +20,35 @@ Today that ends. Today you build one real thing, and every single technique from
 
 ---
 
-### The problem: a support inbox that's drowning
+## Part 1: The Problem — A Support Inbox That's Drowning
 
-Picture a small software company. Twelve hundred support tickets a week, four support agents, and a backlog that never quite gets to zero. The tickets aren't exotic — "my export isn't working," "how do I change my billing plan," "this is the third time I've reported this bug and I'm furious" — but each reply has to be *written*, and writing takes time the team doesn't have.
+### The scenario
 
-The naive fix is "just have an LLM write the replies." And if you tried that with a single bare prompt — `"Reply to this support ticket: {ticket}"` — you'd get something that mostly works and occasionally embarrasses the company. A frustrated customer gets a chirpy reply that sounds like it didn't read the complaint. A billing question gets answered with made-up policy details. A bug report gets a reply that doesn't actually acknowledge what's broken. None of these are exotic LLM failures — they're exactly the failure modes you've spent five sessions learning to prevent.
+Picture a small software company. Twelve hundred support tickets a week, four support agents, and a backlog that never quite gets to zero. Most tickets are routine — a password reset, a billing question, a "how do I export my data" — but each one still needs a reply that's accurate, on-brand, and doesn't read like it was copy-pasted from a template that ignores what the customer actually asked.
 
-So the real spec for this build is more interesting than "write a reply." It's:
+The company doesn't want to fully automate support away. They want a tool that drafts a strong first-pass reply for every incoming ticket, in a tone that fits the situation, which a human agent can review, lightly edit, and send — instead of writing every reply from a blank page. That's the artifact you're building today: **a customer-support reply generator with tone control.**
 
-> Given a support ticket and a target tone, generate a reply that addresses the customer's actual issue, matches the requested tone *consistently*, and returns in a structured format the support team's ticketing software can actually consume — with no invented policy details.
+### Why this needs every technique from the week, not just one
 
-Read that spec again and notice how it maps onto the week:
+It would be easy to write a single, reasonably good prompt for this and call it done — and that's exactly the trap. A single ad-hoc prompt might handle one ticket well and quietly fail on the next one, with no way to tell which is which until a customer complains. Look at what the real requirements actually demand:
 
-- **"addresses the customer's actual issue"** → this needs context and constraints (2.1), and for anything beyond a one-line question, a bit of reasoning before writing (2.3).
-- **"matches the requested tone *consistently*"** → tone is exactly the kind of thing models drift on without anchoring — this is what few-shot examples and role prompting are for (2.2).
-- **"structured format the ticketing software can consume"** → this is session 2.4, full stop. JSON mode, a schema, defensive parsing.
-- **"no invented policy details"** → a constraint you enforce *in the prompt*, and a thing your eval/spot-checks need to watch for.
-- **"given a support ticket and a target tone"** → this is a template with variables, not a one-off prompt — which means it belongs in your prompt library, versioned, with documented inputs (2.5).
+- **The reply needs the right tone** — an angry billing dispute and a casual feature question shouldn't get the same voice. That's few-shot and role prompting (2.2).
+- **The model needs to reason about severity before it writes** — should this ticket be escalated to a human immediately, or is a standard reply fine? That's chain-of-thought (2.3).
+- **The output needs to be machine-checkable**, not just a paragraph of text, because a real support tool needs to log the tone used, flag escalations, and route tickets — that's structured output with a schema (2.4).
+- **The prompt itself needs to be a maintainable, documented template** — not a string improvised fresh for this exercise — because in six months someone will need to add a fourth tone option without reading through application code to find where the prompt lives. That's prompt systems (2.5).
+- **And the whole thing still needs to follow the four pillars** from session 2.1, because none of the above matters if the prompt itself is vague about what "good" looks like.
 
-You're not learning a sixth technique today. You're learning how the five you have compose into a system bigger than any one of them.
+This is the real lesson of a lab day: production prompting work is rarely "pick the one right technique." It's combining several techniques, each solving a different sub-problem, into one coherent system.
 
 ---
 
-### Step 1 — Design before you prompt
+## Part 2: Designing the Output Contract First
 
-The instinct when you're excited to build is to open the editor and start writing prompt strings immediately. Resist it for five minutes. Production prompt systems are designed the same way production code is: decide the interface first.
+### Why contract-first, not prompt-first
 
-What goes **in**? A ticket has a subject, a body, and (for this build) a customer-supplied tone preference — say, one of `"empathetic"`, `"professional"`, or `"concise"`. What comes **out**? Not free text — a JSON object the ticketing system can route, log, and display: a `reply_body`, the `tone_applied`, a `confidence` flag for whether the model thinks it actually has enough information to resolve the issue, and an `escalate` boolean for tickets that need a human.
+A natural instinct is to start by writing the prompt and see what comes back. For this build, it's better to start at the other end: **decide exactly what a finished reply needs to contain, as a schema, before writing a single word of the prompt.** This mirrors the discipline from Session 2.4 — the schema is the actual deliverable; the prompt is just the mechanism that produces it.
 
-Notice that last field. A genuinely well-designed support-reply system doesn't try to answer everything — it knows when *not* to answer. That's not a stretch goal bolted onto this exercise for the sake of difficulty. It's what separates a toy generator from one a real support team would actually trust enough to use. You'll see this exact theme again in Week 5 when we cover evaluation and guardrails: a system that knows its own limits is safer than one that always sounds confident.
-
-This is the schema you're designing toward:
+For this tool, every generated reply needs:
 
 ```json
 {
@@ -58,104 +60,111 @@ This is the schema you're designing toward:
 }
 ```
 
-Design the contract first. The prompt exists to satisfy the contract — not the other way around.
+Notice what this schema is doing beyond just holding the reply text. `confidence` lets a human reviewer triage their workload — a "low confidence" reply gets a closer read before sending. `escalate` and `escalation_reason` mean the model isn't just drafting replies blindly; it's making (and explaining) a judgment call about whether this ticket actually needs a human, which is a chain-of-thought decision baked directly into the contract.
+
+### The three tones, defined concretely
+
+"Tone control" is a vague phrase until you pin it down with **examples**, not adjectives. Telling a model "be empathetic" is far weaker than showing it one short example of what empathetic actually sounds like in this context — which is exactly the lesson from few-shot prompting in Session 2.2. For this build, three tones are defined:
+
+- **Empathetic** — for frustrated, upset, or anxious customers. Leads with acknowledgment before any explanation or solution.
+- **Professional** — the default for routine, neutral requests. Clear, polite, efficient, no unnecessary warmth or formality.
+- **Concise** — for customers who clearly want a fast, no-fluff answer (short tickets, direct questions). Shortest replies of the three, with no preamble.
 
 ---
 
-### Step 2 — Build the template, not the instance
+## Part 3: Building the Prompt as a Documented Template
 
-If you were solving one ticket, you'd write one prompt. You're solving a *category* of tickets, so you write a template — the session 2.5 move. Two variables drive everything: the ticket content and the tone setting. Everything else in the prompt is fixed scaffolding that should behave the same way every time it runs.
+### Following the 2.5 convention
 
-A first-draft template skeleton looks like this:
+Per Session 2.5's lesson, this prompt doesn't live as a one-off string improvised inline — it's built as a named, documented template with placeholders, stored separately from the calling code:
 
-```
-You are a customer support reply assistant for a software company.
+```python
+SUPPORT_REPLY_TEMPLATE = """You are a customer support assistant for a
+software company. Read the ticket below, decide on the right tone, reason
+through whether this needs human escalation, then draft a reply.
 
-A customer has submitted the following support ticket:
+Tone examples:
+{tone_examples}
 
-Subject: {ticket_subject}
-Body: {ticket_body}
+Before answering, think step by step about: (1) what the customer is
+actually asking, (2) how urgent or sensitive this is, (3) whether a
+standard reply is sufficient or this needs escalation. Do this reasoning
+internally — do not include it in your final output.
 
-Write a reply in a {tone} tone, where:
-- "empathetic" means lead with acknowledging the customer's frustration or situation before addressing the issue
-- "professional" means clear, courteous, and businesslike, with no casual language
-- "concise" means the shortest reply that fully resolves the issue, no pleasantries
-
-Rules:
-- Only state policy or product details you can see directly in the ticket. Never invent specific policies, refund amounts, or timelines.
-- If the ticket doesn't contain enough information to resolve the issue, do not guess — set escalate to true and explain why in escalation_reason.
-
-Return your answer as JSON matching exactly this schema:
+Respond with ONLY valid JSON matching this schema:
 {schema}
+
+Ticket:
+{ticket_text}
+"""
 ```
 
-Stop and notice what's already in there from earlier sessions even before you've run it once: explicit format specification and constraints (2.1), a hard rule against fabricating policy details — directly addressing the hallucination risk from Week 1 that this whole program keeps spiraling back to — and a JSON schema contract (2.4) with an explicit "don't guess, escalate instead" instruction.
+`{tone_examples}` carries the few-shot anchors (2.2). The "think step by step... do this internally" instruction is chain-of-thought (2.3), deliberately kept out of the visible output — the model still reasons, but the reply stays clean for the schema. `{schema}` is the structured-output contract from Part 2 (2.4). And the whole thing is a named, reusable `SUPPORT_REPLY_TEMPLATE`, not a string buried inside a function (2.5).
 
-What's *missing* is tone consistency. Notice the prompt currently just *describes* each tone in one clause and trusts the model to nail it. Try this in isolation and you'll likely get tone drift: "empathetic" tickets that are warm on easy issues and oddly flat on hard ones, or "concise" replies that creep back toward chatty once the issue gets complicated. Description alone under-constrains style — this is precisely the gap few-shot examples exist to close.
+### Why the reasoning has to stay invisible to the customer
+
+A subtlety worth naming explicitly: chain-of-thought reasoning is genuinely useful for getting a better-quality decision out of the model, but a customer should never see "Let me think about whether this needs escalation..." in their actual support reply. The instruction to reason "internally" and exclude it from the final output is what keeps the *benefit* of chain-of-thought (a more careful decision) without its *cost* (a confusing, unprofessional-looking reply). This is a detail easy to miss if you've only practiced chain-of-thought in isolation, where the visible reasoning was the point.
 
 ---
 
-### Step 3 — Pin down tone with few-shot examples
+## Part 4: Defensive Parsing, Again — Because It's Never One-and-Done
 
-Pick one short example reply for each tone — written once, by you, as the gold standard — and fold them into the template as few-shot demonstrations rather than just adjective descriptions:
+### The lesson that doesn't go away
 
-```
-Here is an example of the "empathetic" tone for a different ticket:
+Session 2.4 introduced defensive parsing: never trust that the model's JSON is well-formed, never trust that an enum field actually contains one of the allowed values, always validate before your application logic touches the data. It would be tempting to think of that as "the 2.4 lesson," already learned, checked off. It isn't. Every session from here forward that touches model output needs this same discipline, because the underlying risk — a model that's *usually* well-behaved but not *guaranteed* to be — never goes away.
 
-Ticket: "I've been charged twice this month and no one has responded to my last two emails."
-Reply: "I completely understand the frustration here — being charged twice and then not hearing back only makes it worse. I've looked into your account and I can see the duplicate charge. I'm flagging this for an immediate refund and will personally confirm once it's processed within 24 hours."
+For this build, `parse_reply()` needs to handle, at minimum: JSON that fails to parse at all (the model added a sentence of preamble before the `{`), a `tone_applied` value that isn't one of the three defined tones, and an `escalate: true` response with a missing or empty `escalation_reason` — which is a logically inconsistent output the schema doesn't prevent on its own, but your validation code should catch.
 
-[similarly for "professional" and "concise"]
-```
+### Why this matters more here, not less
 
-This is role prompting and few-shot prompting working together, not separately: the system message establishes *who* the model is being asked to be, and the worked examples establish *what that identity sounds like on the page*. One sets the frame; the other anchors the execution inside it. That pairing is worth remembering — in production prompt systems, role and few-shot are almost always used together rather than as alternatives.
+In earlier single-technique exercises, a malformed response was an inconvenience you'd notice immediately while testing. In a tool meant to run continuously over a live ticket queue, an unhandled malformed response is the difference between "the system flags one ticket for manual review" and "the system silently sends a customer a JSON parsing error instead of a reply." The stakes of defensive parsing scale with how close a tool is to something real — and this lab is deliberately the closest thing to "real" you've built so far.
 
 ---
 
-### Step 4 — Add reasoning for the cases that need it
+## Points to Remember
 
-For a simple ticket — "how do I export my data as CSV" — the model doesn't need to deliberate. It knows the answer or it doesn't. But for a ticket like "your app deleted three days of my work and I want to know why before I decide whether to cancel," jumping straight to a reply risks missing something: Is this actually a known bug? Does the situation genuinely warrant escalation? Is there a risk of promising something the company can't actually deliver?
-
-This is where session 2.3's chain-of-thought earns its place — but notice the discipline it requires. You don't want the model's reasoning showing up in the customer-facing reply. So you ask it to reason *internally*, as a step before producing the final structured answer, and your schema only surfaces the *output* of that reasoning — the `escalate` flag and `confidence` rating — not the reasoning text itself.
-
-```
-Before writing the reply, privately reason through:
-1. What specifically is the customer asking for or upset about?
-2. Do I have enough information in the ticket to resolve this, or am I missing something I'd have to guess?
-3. Does this involve money, data loss, or a repeated complaint? If so, lean toward escalation.
-
-Then write only the final JSON object — do not include your reasoning in the output.
-```
-
-This is a subtle but important pattern: chain-of-thought doesn't always mean "show your work to the user." Often it means "think carefully, then show the user only the conclusion." The reasoning step improves the *quality* of the escalate/confidence decision without leaking scratch-work into a customer's inbox.
+- **A lab/build day isn't about learning something new — it's about discovering that the week's separate techniques were never actually separate.** A real prompting problem usually needs several techniques combined, each solving a distinct sub-problem.
+- **Design the output contract (schema) before writing the prompt.** The schema is the actual deliverable; the prompt is the mechanism that produces it.
+- **Tone control is concrete only when backed by few-shot examples**, not adjectives alone — "be empathetic" is far weaker than showing what empathetic sounds like.
+- **Chain-of-thought reasoning should often stay invisible to the end user** — instruct the model to reason internally and exclude that reasoning from the final output, especially in customer-facing tools.
+- **Defensive parsing is not a one-time lesson from Session 2.4** — every exercise that touches model output needs it, and the stakes increase as a tool gets closer to running on real, continuous data.
+- **Prompts belong in named, documented templates**, not inline strings, from the very first version of a tool — not retrofitted later once it's "important enough."
 
 ---
 
-### Step 5 — Parse defensively, exactly like 2.4 taught you
+## Quick Check: Fill in the Blanks
 
-You already know not to trust that the model's output is clean JSON on the first try, every try. The same defensive parsing logic from the resume-parser exercise applies here without modification: strip wrapper text if the model adds any despite instructions, attempt to parse, validate the result against your schema (right field names, right types, `tone_applied` is actually one of your three allowed values, `confidence` is one of your three allowed values), and have a defined fallback — flagging the ticket for manual handling — rather than letting malformed output silently break the pipeline.
+1. Before writing the prompt for this build, you should first design the __________ — exactly what fields a finished reply needs to contain.
+2. Tone control becomes concrete when backed by __________ examples, rather than relying on adjectives alone.
+3. Chain-of-thought reasoning in a customer-facing tool should generally stay __________ to the end user, even though the model still benefits from doing it.
+4. An `escalate: true` response with a missing `escalation_reason` is an example of a __________ inconsistent output that schema validation alone won't catch.
+5. The stakes of defensive parsing __________ as a tool moves from a single test run to something running continuously over real data.
 
-This is the unglamorous 20% of the build that makes the other 80% trustworthy. A prompt that works on your ten test tickets but has no parsing safety net is a demo. The same prompt with validation and a fallback path is a system you could actually hand to a real support team.
-
----
-
-### Step 6 — This is a template library entry, not a one-off
-
-Once it works, don't leave it as a loose script. Following the convention from 2.5, this prompt belongs in your template library with:
-
-- a name (`support_reply_v1`)
-- documented input variables (`ticket_subject`, `ticket_body`, `tone`)
-- the schema it returns
-- a version number, so that when you improve the tone examples next month, you're not silently breaking whatever already depends on `v1`
-
-This is a small thing to do for one prompt and an essential thing to do for a team running dozens of them. You're previewing Week 6 here — when we get to prompt CI and versioning, this exact discipline is what a regression suite checks against.
+**Answers:** 1. output contract / schema — 2. few-shot — 3. invisible / hidden — 4. logically — 5. increase / scale up
 
 ---
 
-### What today actually proved
+## Quiz and Interview Questions
 
-Step back and look at what you just built: a single feature with one clear job, that nonetheless needed format specification, constraints, role framing, few-shot anchoring, conditional reasoning, structured output with a schema, defensive parsing, and a place in a versioned library to be considered done. Nobody handed you a single trick that did all of that. You combined five separate things you already knew, in service of one spec you wrote yourself.
+Full quiz: [`assessments/quizzes/week-02/session-2.6-quiz.md`](../../assessments/quizzes/week-02/session-2.6-quiz.md) · Answer key: [`assessments/answer-keys/week-02/session-2.6-quiz-answers.md`](../../assessments/answer-keys/week-02/session-2.6-quiz-answers.md)
 
-That's the actual skill this week was teaching, underneath the named techniques: not "how do I use chain-of-thought" but "given a real problem, which of my tools does it actually need, and in what order." Every production GenAI feature you'll ever build starts from that same question. The techniques are just the vocabulary — this is the grammar.
+Interview-style questions for this topic:
 
-Week 3 turns to a different kind of gap entirely: what happens when the model doesn't just need better instructions, but needs information it was never trained on in the first place. That's where retrieval comes in.
+1. *"You're asked to build a tool that drafts customer support replies. Walk me through how you'd combine prompting techniques to handle tone, reasoning, and reliable output all at once."*
+2. *"Why might you want a model to reason step-by-step internally but hide that reasoning from the final user-facing output?"*
+3. *"What's a logically inconsistent output that a JSON schema alone wouldn't catch, and how would you validate against it?"*
+4. *"How would you decide which support tickets a tool like this should auto-escalate to a human, versus reply to automatically?"*
+
+---
+
+## Core path — guided activity
+
+**Customer-Support Reply Generator with Tone Control.** You'll build `generate_reply()`, wiring together a documented prompt template (`build_prompt()`), the schema-validated call to the model, and defensive parsing (`parse_reply()`) that catches malformed JSON, invalid tone values, and the escalate/escalation_reason inconsistency. Full instructions: [`codebase/exercises/week-02/session-2.6/`](../../codebase/exercises/week-02/session-2.6/).
+
+## Pro path — extended challenge
+
+Extend the generator to log every generated reply (ticket, tone applied, confidence, escalation decision) to a simple structured log, then write a small script that reports the escalation rate and tone distribution across a batch of tickets — a first, lightweight taste of the monitoring and observability work formalized in Week 6.
+
+## What's next
+
+Week 2 is complete. Next: **Week 3 — Working with Data: Embeddings & RAG**, starting with Session 3.1, **Why LLMs Need External Knowledge** — knowledge cutoffs, hallucination on facts, and when retrieval-augmented generation is (and isn't) the right tool.

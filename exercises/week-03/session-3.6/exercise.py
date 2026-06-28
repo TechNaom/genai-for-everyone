@@ -1,28 +1,30 @@
 """
-Session 3.6 — Week 3 Lab: Company Policy Q&A Bot (YOUR TURN)
+Session 3.6 — Week 3 Lab: Campus Student Services Q&A Bot (YOUR TURN)
 
-You've now built every piece of a RAG system across this week:
+You've built every piece of a RAG system across this week:
   3.2 — turning text into vectors and comparing them
   3.3 — chunking a document and storing/searching chunks
   3.4 — grounding answers in retrieved context with citations
   3.5 — diagnosing and fixing retrieval failures
 
-This lab puts all of it together into one realistic system: a bot that
-answers employee questions by retrieving from FOUR separate company
-policy PDFs (remote work, expenses, leave, IT security) instead of one
-single handbook.
+This lab puts all of it together over FOUR separate campus documents
+instead of one handbook: a Registration Guide, a Financial Aid Handbook,
+an Academic Standing Policy, and a Housing Handbook. These documents
+genuinely cross-reference each other -- dropping below full-time status
+shows up in both the Registration Guide AND the Housing Handbook, for
+different reasons -- which is exactly the kind of overlap that trips up
+naive multi-document retrieval in the real world.
 
-Fill in every function marked TODO. Run offline_test() first --
-it needs no API key and will tell you immediately if your retrieval
-and prompt-building logic is correct. The chunking BUG you'll find in
-Part 4 is real and was found by actually running this code against
-the actual generated PDFs, not invented for the lesson.
+Fill in every function marked TODO. Run offline_test() first -- it
+needs no API key and will tell you immediately if your retrieval and
+prompt-building logic is correct. There's a real, genuinely-discovered
+chunking bug waiting for you in Part 4.
 
 Files you need (already provided, don't edit):
-  policy_docs/remote_work_policy.pdf
-  policy_docs/expense_policy.pdf
-  policy_docs/leave_policy.pdf
-  policy_docs/it_security_policy.pdf
+  campus_docs/registration_guide.pdf
+  campus_docs/financial_aid_handbook.pdf
+  campus_docs/academic_standing_policy.pdf
+  campus_docs/housing_handbook.pdf
 """
 
 import os
@@ -31,13 +33,13 @@ import math
 from collections import Counter
 from pypdf import PdfReader
 
-DOC_DIR = os.path.join(os.path.dirname(__file__), "policy_docs")
+DOC_DIR = os.path.join(os.path.dirname(__file__), "campus_docs")
 
 STOPWORDS = set("""
 a an the is are was were be been being of to in on for and or with as at by
 from this that these those it its if then than so such not no may might
-will would should could can does do did has have had your you employees
-employee company policy
+will would should could can does do did has have had your you students
+student university policy
 """.split())
 
 
@@ -48,8 +50,7 @@ employee company policy
 def load_documents(doc_dir: str = DOC_DIR) -> dict:
     """
     TODO: Load every .pdf file in doc_dir using PdfReader, extract its
-    text (joining all pages with "\n"), and return a dict mapping
-    {filename: full_text}.
+    text (joining all pages with "\n"), and return {filename: full_text}.
     """
     raise NotImplementedError("Fill in load_documents()")
 
@@ -61,17 +62,16 @@ def chunk_text(text: str, target_words: int = 80, overlap_words: int = 20) -> li
     Steps:
       1. Split text into paragraphs on blank lines: re.split(r"\\n\\s*\\n", text)
       2. Strip and drop any empty paragraphs.
-      3. Accumulate paragraphs into a buffer until the buffer reaches
-         target_words, then close that chunk.
+      3. Accumulate paragraphs into a buffer until target_words is reached,
+         then close that chunk.
       4. Carry the last overlap_words words of the closed chunk forward
-         into the next chunk's buffer, for context continuity.
-      5. Don't forget to flush whatever's left in the buffer at the end
-         (if it's more than a few words).
+         into the next chunk's buffer.
+      5. Flush whatever's left in the buffer at the end (if non-trivial).
 
     Return a list of chunk strings.
 
-    NOTE: this function has a real limitation when used on PDF-extracted
-    text. Keep that in mind for Part 4 -- you'll diagnose it yourself.
+    NOTE: this function has a real limitation on this specific corpus.
+    Keep that in mind for Part 4.
     """
     raise NotImplementedError("Fill in chunk_text()")
 
@@ -81,8 +81,7 @@ def build_corpus_chunks(docs: dict, target_words: int = 80) -> list:
     TODO: For every (filename, text) pair in docs, chunk the text with
     chunk_text(), and return a flat list of dicts:
         {"doc": filename, "text": chunk_text}
-    across ALL documents combined. Keeping "doc" attached to every chunk
-    is what lets the bot say which policy it pulled an answer from.
+    across ALL documents.
     """
     raise NotImplementedError("Fill in build_corpus_chunks()")
 
@@ -92,7 +91,7 @@ def build_corpus_chunks(docs: dict, target_words: int = 80) -> list:
 # ---------------------------------------------------------------------------
 
 def tokenize(text: str) -> list:
-    """Already implemented for you -- same tokenizer as 3.2/3.3."""
+    """Already implemented for you -- same tokenizer as earlier sessions."""
     words = re.findall(r"[a-z']+", text.lower())
     return [w for w in words if w not in STOPWORDS and len(w) > 2]
 
@@ -113,8 +112,8 @@ def cosine_sim(c1: Counter, c2: Counter) -> float:
     return dot / (mag1 * mag2)
 
 
-class PolicyVectorStore:
-    """A tiny in-memory vector store across multiple source documents."""
+class CampusVectorStore:
+    """A tiny in-memory vector store across multiple campus documents."""
 
     def __init__(self, corpus_chunks: list):
         """
@@ -122,7 +121,7 @@ class PolicyVectorStore:
         build self.entries as a list of dicts:
             {"doc": ..., "text": ..., "vector": vectorize(text)}
         """
-        raise NotImplementedError("Fill in PolicyVectorStore.__init__()")
+        raise NotImplementedError("Fill in CampusVectorStore.__init__()")
 
     def search(self, query: str, k: int = 3) -> list:
         """
@@ -130,10 +129,9 @@ class PolicyVectorStore:
           1. Vectorize the query.
           2. Score every entry by cosine_sim(query_vector, entry_vector).
           3. Sort descending by score.
-          4. Return the top k as a list of dicts:
-                {"doc": ..., "text": ..., "score": ...}
+          4. Return the top k as {"doc", "text", "score"} dicts.
         """
-        raise NotImplementedError("Fill in PolicyVectorStore.search()")
+        raise NotImplementedError("Fill in CampusVectorStore.search()")
 
 
 # ---------------------------------------------------------------------------
@@ -143,18 +141,14 @@ class PolicyVectorStore:
 def format_context(results: list) -> str:
     """
     TODO: Number each retrieved result [1], [2], [3]... starting at 1.
-    Tag each with a human-readable source label (the doc filename with
-    underscores replaced by spaces, ".pdf" removed, and title-cased --
-    e.g. "remote_work_policy.pdf" -> "Remote Work Policy").
+    Tag each with a human-readable source label (filename with
+    underscores replaced by spaces, ".pdf" removed, title-cased --
+    e.g. "housing_handbook.pdf" -> "Housing Handbook").
 
-    Format each line like:
-        [1] (Source: Remote Work Policy) <chunk text>
-
+    Format each line: "[1] (Source: Housing Handbook) <chunk text>"
     Join all lines with a blank line between them.
 
-    IMPORTANT: do NOT include the similarity score anywhere in the
-    output. The model has no idea what "0.42" means and may parrot it
-    back as if it were a fact.
+    IMPORTANT: do NOT include the similarity score in the output.
     """
     raise NotImplementedError("Fill in format_context()")
 
@@ -162,7 +156,7 @@ def format_context(results: list) -> str:
 def build_rag_prompt(question: str, context: str) -> str:
     """
     TODO: Build a prompt that:
-      - Instructs the model to act as a company policy assistant
+      - Instructs the model to act as a campus student services assistant
       - Says to use ONLY the provided context to answer
       - Requires every sentence in the answer to end with a citation
         marker like [1] or [2]
@@ -199,7 +193,7 @@ def call_llm(prompt: str) -> str:
     return response.content[0].text
 
 
-def answer_question(store: "PolicyVectorStore", question: str, k: int = 3) -> dict:
+def answer_question(store: "CampusVectorStore", question: str, k: int = 3) -> dict:
     """
     TODO: Wire the full pipeline together:
       1. retrieved = store.search(question, k=k)
@@ -217,51 +211,58 @@ def answer_question(store: "PolicyVectorStore", question: str, k: int = 3) -> di
 
 
 # ---------------------------------------------------------------------------
-# Part 4: Find AND fix a real retrieval bug (this is the 3.5 skill, applied)
+# Part 4: Find AND fix a real retrieval bug
 # ---------------------------------------------------------------------------
 #
 # Once Parts 1-3 pass offline_test(), run this:
 #
 #   docs = load_documents()
 #   corpus = build_corpus_chunks(docs)
-#   store = PolicyVectorStore(corpus)
-#   results = store.search("What is the home office equipment stipend amount?", k=1)
+#   store = CampusVectorStore(corpus)
+#   results = store.search("What is the maximum course load for a "
+#                           "student on probation?", k=1)
 #   print(results[0]["doc"])
 #
-# It should print "remote_work_policy.pdf" (that's where the $500 stipend
-# fact actually lives) -- but with your Part 1 chunker, it probably won't.
+# It should print "academic_standing_policy.pdf" -- but with your Part 1
+# chunker, it almost certainly won't.
 #
 # YOUR TASK:
-#   1. Print out every chunk for remote_work_policy.pdf and look at how
+#   1. Print out every chunk for registration_guide.pdf and look at how
 #      big they are. (Hint: try chunk_text() at a few different
-#      target_words values, like 80, 50, 25 -- does the chunk boundary
-#      ever move? If not, the bug isn't actually about target_words.)
+#      target_words values -- does the chunk boundary ever move? If not,
+#      the bug isn't actually about target_words.)
 #   2. Figure out why re.split(r"\n\s*\n", text) might not be doing what
-#      you'd expect on text that came out of a PDF, specifically.
-#      (Hint: print(repr(text[:300])) for one of the loaded documents
-#      and look closely at where the newlines actually are.)
-#   3. Write a NEW chunking function below, chunk_text_by_section(), that
-#      splits on the numbered section headers ("1. Eligibility",
-#      "2. Remote Work Days", etc.) instead of blank lines.
-#   4. Write build_corpus_chunks_fixed() using your new chunker, and
-#      confirm the stipend question now retrieves the right document.
+#      you'd expect on text that came out of a PDF. (Hint: print
+#      repr(text[:300]) for one of the loaded documents and look closely
+#      at where the newlines actually are.)
+#   3. Look at how THIS corpus's section headers are actually written --
+#      they're different from a numbered-list style. What pattern would
+#      reliably mark the start of a new section here?
+#   4. Write a NEW chunking function, chunk_text_by_caps_header(), that
+#      splits on that pattern instead of blank lines.
+#   5. Write build_corpus_chunks_fixed() using your new chunker, and
+#      confirm the probation/course-load question (and the full-time/
+#      housing question) now retrieve the right documents.
 
 
-def chunk_text_by_section(text: str) -> list:
+def chunk_text_by_caps_header(text: str) -> list:
     """
-    TODO: Split text on numbered section headers instead of blank lines.
+    TODO: Split text on this corpus's actual section header style
+    instead of blank lines.
 
-    Hint: re.split(r"(?=\\d+\\.\\s)", text) splits right BEFORE each match
-    without consuming it, but you'll need to handle the newline before
-    the number too. Strip whitespace and drop empty chunks from the result.
+    Hint: look at how a section header appears in the extracted text --
+    is it numbered? Is it capitalized in some distinctive way? A regex
+    like r"(?=\\n[A-Z][A-Z /]+\\n)" splits right before a line that's
+    entirely uppercase (allowing spaces and slashes) without consuming
+    it. Strip whitespace and drop empty chunks from the result.
     """
-    raise NotImplementedError("Fill in chunk_text_by_section() -- this is the fix!")
+    raise NotImplementedError("Fill in chunk_text_by_caps_header() -- this is the fix!")
 
 
 def build_corpus_chunks_fixed(docs: dict) -> list:
     """
     TODO: Same shape as build_corpus_chunks(), but using
-    chunk_text_by_section() instead of chunk_text().
+    chunk_text_by_caps_header() instead of chunk_text().
     """
     raise NotImplementedError("Fill in build_corpus_chunks_fixed()")
 
@@ -273,55 +274,52 @@ def build_corpus_chunks_fixed(docs: dict) -> list:
 def offline_test():
     print("=== Part 1: load_documents + chunk_text ===")
     docs = load_documents()
-    assert len(docs) == 4, f"Expected 4 policy PDFs, found {len(docs)}"
+    assert len(docs) == 4, f"Expected 4 campus PDFs, found {len(docs)}"
     print(f"Loaded {len(docs)} documents: {list(docs.keys())}")
 
     corpus = build_corpus_chunks(docs)
     assert len(corpus) > 0
     print(f"Chunked into {len(corpus)} chunks\n")
 
-    print("=== Part 2: PolicyVectorStore ===")
-    store = PolicyVectorStore(corpus)
-    results = store.search("How many sick days do I get?", k=2)
+    print("=== Part 2: CampusVectorStore ===")
+    store = CampusVectorStore(corpus)
+    results = store.search("How many nights can an overnight guest stay?", k=2)
     assert len(results) == 2
-    assert all("score" in r and "doc" in r and "text" in r for r in results)
-    print(f"Top result for sick-day query: {results[0]['doc']} (score={results[0]['score']:.3f})")
-    assert results[0]["doc"] == "leave_policy.pdf", "Sick day question should retrieve leave_policy.pdf"
-    print("Correctly retrieved leave_policy.pdf.\n")
+    assert results[0]["doc"] == "housing_handbook.pdf"
+    print(f"Top result for guest-policy query: {results[0]['doc']} (score={results[0]['score']:.3f})")
+    print("Correctly retrieved housing_handbook.pdf.\n")
 
     print("=== Part 3: format_context / build_rag_prompt / extract_citations ===")
     fake_results = [
-        {"doc": "leave_policy.pdf", "text": "Employees accrue 18 PTO days per year.", "score": 0.5},
-        {"doc": "expense_policy.pdf", "text": "Expense reports are due within 30 days.", "score": 0.3},
+        {"doc": "financial_aid_handbook.pdf", "text": "Aid is disbursed within 10 business days.", "score": 0.5},
+        {"doc": "housing_handbook.pdf", "text": "The housing deposit is $200.", "score": 0.3},
     ]
     context = format_context(fake_results)
-    print(context)
     assert "0.5" not in context, "Similarity score leaked into context!"
     assert "[1]" in context and "[2]" in context
-    assert "Leave Policy" in context, "Doc label should be human-readable"
+    assert "Financial Aid Handbook" in context
     print("format_context() OK.\n")
 
-    prompt = build_rag_prompt("How many PTO days?", context)
-    assert "How many PTO days?" in prompt
+    prompt = build_rag_prompt("When is aid disbursed?", context)
+    assert "When is aid disbursed?" in prompt
     print("build_rag_prompt() OK.\n")
 
-    fake_answer = "You get 18 PTO days per year [1]. Expense reports are due in 30 days [2][2]."
+    fake_answer = "Aid is disbursed within 10 days [1]. The deposit is $200 [2][2]."
     citations = extract_citations(fake_answer)
     assert citations == [1, 2], f"Expected [1, 2], got {citations}"
-    no_citation = "I don't have enough information to answer that."
-    assert extract_citations(no_citation) == []
+    assert extract_citations("I don't have enough information.") == []
     print("extract_citations() OK, including the no-citation edge case.\n")
 
     print("=== Part 4: find and fix the chunking bug ===")
     fixed_corpus = build_corpus_chunks_fixed(docs)
-    fixed_store = PolicyVectorStore(fixed_corpus)
-    query = "What is the home office equipment stipend amount?"
+    fixed_store = CampusVectorStore(fixed_corpus)
+    query = "What is the maximum course load for a student on probation?"
     fixed_top = fixed_store.search(query, k=1)[0]
     print(f"Fixed chunking top doc: {fixed_top['doc']} (score={fixed_top['score']:.3f})")
-    assert fixed_top["doc"] == "remote_work_policy.pdf", (
-        "Your section-aware chunking should fix this retrieval -- "
-        "check that chunk_text_by_section() is actually isolating "
-        "the 'Home Office Equipment Stipend' section on its own."
+    assert fixed_top["doc"] == "academic_standing_policy.pdf", (
+        "Your caps-header chunking should fix this retrieval -- check "
+        "that chunk_text_by_caps_header() is actually isolating each "
+        "section on its own."
     )
     print("Bug fixed -- the right document now wins.\n")
 

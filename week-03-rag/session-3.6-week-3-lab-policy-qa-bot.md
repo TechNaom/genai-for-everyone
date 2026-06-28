@@ -1,208 +1,62 @@
-# Session 3.6 — Week 3 Lab: Building a Company Policy Q&A Bot
+# Session 3.6 — Week 3 Lab: Building a Campus Student Services Q&A Bot
 
-## The Monday morning test
+## The question nobody can answer fast
 
-Imagine it's your first week at a new job. You don't know the company's
-remote work rules, you're not sure how to expense a client dinner, and
-you have no idea whether your laptop needs a password rotation every
-month or every six. In most companies, the honest answer to "where do I
-find this out" is: *ask around, dig through a shared drive, hope someone
-remembers, and probably get a slightly wrong answer from three different
-people.*
+Picture a college sophomore, mid-semester, trying to figure out something urgent: she just dropped a class and fell below full-time enrollment, and she lives in a dorm. Does that put her housing at risk? Does it affect the financial aid she's counting on for next semester? She doesn't know which office to call, doesn't know which of four different PDFs scattered across the university's website actually has the answer, and the people staffing the help desk are juggling forty other students with forty other questions.
 
-This is, by a wide margin, the single most common reason companies build
-a RAG system. Not chatbots that write poetry. Not agents that browse the
-web. A bot that can correctly answer "how many sick days do I get" by
-pulling from the actual HR policy document and saying exactly where it
-got the answer from. It's unglamorous, and it's also probably the
-single most economically valuable application of everything you've
-learned this week.
+This is the scenario behind today's lab, and it's also, not coincidentally, close to the single most common real-world reason organizations build a RAG system in the first place: a question that has a real, correct, document-backed answer — but that answer is buried across more than one document, written by more than one office, on more than one schedule, and nobody wants to make a student (or an employee, or a customer) hunt for it themselves.
 
-That's what you're building today. Not a new concept — you've already
-learned every piece. Today is about **putting them together and finding
-out what breaks when you do.**
+Today you build that system. Not a new concept — you've already learned every piece this week. Today is about putting them together, over a genuinely messier set of documents than you've worked with before, and discovering exactly where that extra messiness breaks something you'd otherwise have assumed was solid.
 
-## What "putting it together" actually means
+## What you already know, applied to something harder
 
-Here's the arc of the week, compressed:
+Quick recap of the arc that gets you here: **3.2** showed you that text becomes a vector, and that similar meaning produces similar vectors. **3.3** showed you how to chunk a document and search those chunks. **3.4** showed you how to hand retrieved chunks to a model with strict citation instructions, so you can verify what it actually used. **3.5** showed you the named ways this breaks — chunking errors, retrieval misses, context stuffing — and how to diagnose each one from its symptom.
 
-- **3.1** asked: does this problem even need retrieval, or is it better
-  solved another way?
-- **3.2** showed you that text can become a vector, and that vectors
-  close together mean "about the same topic."
-- **3.3** showed you how to chunk a document and search those chunks by
-  similarity.
-- **3.4** showed you how to take retrieved chunks, hand them to a model
-  with strict citation instructions, and verify the model actually
-  cited what it claimed to.
-- **3.5** showed you the ways this breaks — bad chunking, retrieval
-  misses, too much irrelevant context, no re-ranking — and how a real
-  engineer goes about fixing each one.
+Sessions 3.3 and 3.4 deliberately used a single, self-contained document to teach those ideas cleanly. Today's lab does something different on purpose: it gives you **four separate documents** — a Registration Guide, a Financial Aid Handbook, an Academic Standing Policy, and a Housing Handbook — that were clearly written by different offices, at different times, and that genuinely cross-reference each other the way real institutional documents do. The Registration Guide mentions financial aid holds. The Housing Handbook mentions full-time enrollment status. The Academic Standing Policy mentions both financial aid suspension and course load limits. None of this overlap is an accident in the writing — it's exactly how real policy documents actually behave, because the topics genuinely are connected to each other in the real world, even though they live in separate files.
 
-Today's lab does something the earlier sessions deliberately avoided
-doing: it gives you **more than one source document.** Sessions 3.3 and
-3.4 worked with a single, self-contained company handbook. That's a
-reasonable place to start, but it hides a problem that shows up almost
-immediately in real RAG systems: **which document should answer this
-question?**
-
-## Why multiple documents change everything
-
-Think about how policy documents actually get written inside a real
-company. The remote work policy was probably written by the People
-team. The expense policy was probably written by Finance, possibly a
-year later, by someone who had never read the remote work policy. The
-IT security policy was written by a different team entirely, on a
-different schedule, possibly referencing "equipment" or "devices" in a
-totally different sense than the other two documents do.
-
-These documents will **overlap**. They'll sometimes **cross-reference**
-each other ("see the Remote Work Policy for stipend details"). And they
-were never designed, as a set, to be machine-searchable. Your retrieval
-system has to cope with all of that — and a system that worked
-perfectly on one tidy handbook can fail in genuinely surprising ways
-the moment you add a second document.
-
-In today's lab, you'll build a retrieval system over four policy PDFs:
-remote work, expenses, leave, and IT security. And you're going to hit
-a real bug — one that was discovered by actually running this code
-against actual generated PDFs, not invented to make a point.
+That overlap is precisely what makes multi-document retrieval harder than single-document retrieval. With one document, every retrieved chunk is at least from "the right place" by definition — the worst case is an imprecise match. With four overlapping documents, retrieval can confidently hand back a chunk from the *wrong document entirely*, and that chunk might even look like a strong match, because it touches the right topic in passing without actually containing the right answer.
 
 ## The bug you're going to find
 
-Here's the question that breaks things:
+Here are the two questions that break things, and they break in the same way for a connected reason:
 
-> "What is the home office equipment stipend amount?"
+> "What is the maximum course load for a student on probation?"
+> "What happens if I drop below full-time enrollment while living in a dorm?"
 
-The correct answer — a one-time $500 stipend — lives in the Remote Work
-Policy, under a section called "Home Office Equipment Stipend." It's
-right there, clearly labeled, easy for a human to find in about four
-seconds.
+The first question's real answer — 13 credit hours — lives in the Academic Standing Policy, under a section called "Academic Probation." The second question's real answer lives in the Housing Handbook, under "Housing Eligibility and Course Load." Both are clearly written, clearly labeled, easy for a human to find.
 
-But if you chunk that document the same way you did in Session 3.3 —
-splitting on blank lines between paragraphs — something unexpected
-happens. The retrieval system pulls up the **Expense Policy** instead,
-specifically a short section about equipment procurement that happens
-to mention the word "stipend" once, in passing, as a cross-reference.
+But if you chunk these documents the way you did in Session 3.3 — splitting on blank lines between paragraphs — both questions get answered from the wrong document. Both retrieve the **Registration Guide** instead, specifically its course-load and enrollment-status sections, which mention "course load" and "full-time" in passing while cross-referencing the Academic Standing Policy and discussing on-campus housing eligibility — without actually containing the specific facts either question is asking about.
 
-Why? Two things are happening at once, and you need to find both.
+Why? The same upstream mechanism you may already be alert to: PDF text extraction does not reliably preserve the blank lines that visually separated sections on the page. The Registration Guide has five sections — Add/Drop Deadlines, Course Load Requirements, Waitlists, Registration Holds, Transfer Credit — and when extracted as text, there's no blank line anywhere between them. A blank-line-based chunker finds exactly one giant "paragraph" for the entire document, and the whole 240-word block becomes a single chunk. Inside that one chunk, words like "course load," "full-time," "financial aid," and "Academic Standing Policy" all appear together — not because that section is actually about probation or housing, but because policy writers naturally cross-reference related topics in passing. That cross-referencing language is exactly what makes the merged chunk score deceptively well against questions that are really about *other* documents.
 
-**The first problem is upstream of anything you'd normally think to
-check.** PDF text extraction doesn't reliably preserve the blank lines
-that visually separated sections in the original document. When you
-pull text out of a PDF with a library like `pypdf`, you typically get a
-single newline between lines of text — but not necessarily a blank line
-between Section 1 and Section 2, even though they were visibly separated
-on the page. If your chunker's whole strategy is "split on blank lines,"
-and there *are* no blank lines in the extracted text, the splitter finds
-exactly one giant "paragraph": the entire five-section document. No
-amount of fiddling with `target_words` fixes this, because the chunker
-never even gets a second candidate paragraph to consider starting a new
-chunk with. The chunk boundaries simply don't move.
+## Why the earlier fix doesn't just transfer over
 
-**The second problem is what that giant chunk does to your vector.**
-With Eligibility, Remote Work Days, Core Hours, the Stipend section, and
-International Remote Work all crammed into one 220-word chunk, the word
-"stipend" is just a handful of words out of two hundred. Its weight in
-the bag-of-words vector gets diluted by everything else jammed in
-alongside it. Meanwhile, the Expense Policy's "Equipment Purchases"
-section is short, tightly focused, and happens to contain the word
-"stipend" as a one-line cross-reference. A short, hyper-focused chunk
-scores *higher* on cosine similarity for a stipend-related query than a
-diluted, multi-topic chunk does — even though the short chunk doesn't
-actually contain the dollar amount you're looking for.
+If you've worked with a different RAG corpus before today, you might already know a fix for "blank lines don't survive PDF extraction": split on the document's own section headers instead. That instinct is correct — but notice that it isn't a fact about *this specific fix*, it's a fact about *needing a fix that matches your document's structure*. And this corpus's documents don't number their sections. They use headers written in ALL CAPS on their own line — "COURSE LOAD REQUIREMENTS," "ACADEMIC PROBATION," "HOUSING ELIGIBILITY AND COURSE LOAD." A splitting rule built for numbered headers would find nothing to split on here at all.
 
-This is exactly the "chunking errors" failure mode from Session 3.5,
-showing up organically instead of being handed to you pre-broken.
+This is the actual lesson underneath today's lab, stated as plainly as possible: **there is no universal chunking fix, only a universal chunking *principle*** — look at how your real documents are actually structured, and split on whatever pattern reliably survives whatever transformation your text went through to reach you. For numbered documents, that's the numbering. For documents like these, written by people who format with capitalized headers instead, the fix is to split on lines that are entirely uppercase. The code is different. The principle — match your strategy to your actual documents, verified by actually running it, not assumed from a previous success — is identical.
 
-## The fix isn't a number — it's a strategy
+## Multi-document citation labeling, carried forward
 
-It would be tempting to "fix" this by just trying smaller and smaller
-`target_words` values until something works. Don't — you tested that in
-the lab and it does nothing, because the bug isn't about chunk *size*,
-it's about the chunker never finding a second paragraph to split on in
-the first place.
-
-The actual fix is to stop assuming blank lines mean anything in
-PDF-extracted text, and instead split on something that **is** reliably
-present: the document's own numbered section headers. "1. Eligibility,"
-"2. Remote Work Days," "3. Core Hours" — these patterns survive PDF
-extraction intact, because they're literal text, not formatting
-whitespace. Split on those instead, and each policy topic becomes its
-own chunk, the stipend fact stops being diluted, and retrieval finds the
-right document.
-
-This is the deeper lesson of the whole week, stated plainly: **there is
-no universal chunking strategy.** A strategy that's exactly right for
-one document type (clean markdown with reliable blank-line paragraphs)
-can be silently, catastrophically wrong for another (PDFs where layout
-whitespace doesn't survive text extraction). Production RAG systems
-don't pick one chunking function and apply it everywhere — they inspect
-their actual source documents and choose a splitting strategy that
-matches how those documents are really structured.
-
-## Multi-document citation: a small but important upgrade
-
-There's one more thing this lab adds that the earlier sessions didn't
-need: every retrieved chunk now carries a **source document label**
-alongside its content. When the bot answers a question, it doesn't just
-cite "[1]" — it can tell you "[1] (Source: Remote Work Policy)." This
-matters more than it might look like at first. If an employee asks
-about VPN requirements and the bot's answer is grounded in the IT
-Security Policy, that's reassuring. If it's somehow grounded in the
-Leave Policy, something has clearly gone wrong, and you want that to be
-*visible*, not buried inside an answer that merely says "[1]" and gives
-no way to sanity-check where [1] came from.
-
-This is a small design choice, but it's the kind of small choice that
-separates a demo from something a real team would actually trust enough
-to deploy. Citation grounding (from 3.4) plus source-document labeling
-(new today) together let anyone — a user, a QA reviewer, you — catch a
-wrong-document retrieval at a glance, instead of only discovering it
-when someone acts on bad information.
+Just as in earlier multi-document work, every retrieved chunk in today's pipeline carries a source-document label, surfaced directly in the citation: "[1] (Source: Housing Handbook)," not just "[1]." This is what makes a wrong-document retrieval visible at a glance instead of something you'd only discover by manually re-reading the chunk text behind every citation. If a student asks about dorm eligibility and the answer is grounded in the Registration Guide instead of the Housing Handbook, that mismatch should be obvious the instant you look at the citation — not something a reviewer has to go digging for.
 
 ## Points to remember
 
-- The most common real-world RAG use case isn't exotic — it's exactly
-  this: a Q&A bot over a company's own internal documents.
-- Multiple source documents introduce a failure mode that single-document
-  systems hide: retrieval can confidently return the *wrong document*,
-  not just an imperfect chunk.
-- PDF text extraction often does not preserve blank lines between
-  sections, which silently breaks blank-line-based chunking — and no
-  amount of adjusting `target_words` will fix a bug that's upstream of
-  chunk size entirely.
-- The fix for a chunking bug is rarely "try a different number." It's
-  usually "look at how this specific document is actually structured,
-  and split on something that survives whatever transformation your
-  text went through to get to you."
-- Tagging every retrieved chunk with its source document, and surfacing
-  that tag in the final citation, makes wrong-document retrieval
-  visible instead of silent.
-- There is no single "correct" chunk size or chunking strategy that
-  works for every document type. Production systems choose their
-  strategy per document type, based on real inspection, not a default.
+- Multi-document RAG systems fail in a way single-document systems structurally can't: retrieval can confidently return the *wrong document*, not just an imprecise chunk from the right one.
+- Real institutional documents — policies, handbooks, guides — genuinely cross-reference each other, and that overlap is exactly what makes a merged, overly broad chunk look deceptively relevant to questions it can't actually answer.
+- PDF text extraction unreliably preserves blank lines between sections, which can silently break blank-line-based chunking regardless of `target_words` — the failure is upstream of chunk size entirely.
+- A chunking fix that worked for one document's structure (e.g. numbered sections) does not automatically transfer to a different document's structure (e.g. all-caps headers). The fix has to match the actual document.
+- The universal lesson is a *principle*, not a specific regex: inspect how your real documents are structured, and split on whatever survives extraction intact — verified by running it, not assumed from a previous fix that worked elsewhere.
+- Source-document labels on every citation make a wrong-document retrieval visible at a glance, rather than something a reviewer has to manually dig for.
 
 ## Fill in the blanks
 
-1. PDF text extraction libraries often do not preserve __________ between
-   sections, which can break a chunker that assumes paragraphs are
-   separated by blank lines.
-2. In this lab's bug, the word "stipend" had its weight in the bag-of-
-   -words vector __________ because it was crammed into one 220-word
-   chunk alongside four unrelated sections.
-3. The real fix for the bug was to split on __________ headers instead
-   of blank lines, because that pattern survives PDF text extraction
-   intact.
-4. Adding a __________ label to every retrieved chunk lets a human catch
-   a wrong-document retrieval at a glance, instead of discovering it only
-   after acting on a bad answer.
-5. The deeper lesson of this lab is that there is no single __________
-   chunking strategy — production systems match their splitting approach
-   to how their actual source documents are structured.
+1. Real institutional documents often __________ each other, which is exactly what makes an overly broad, merged chunk look deceptively relevant to questions it can't actually answer.
+2. PDF text extraction does not reliably preserve __________ between sections, which can break a blank-line-based chunker no matter what `target_words` is set to.
+3. This lab's documents use __________ headers on their own line, instead of numbered headers, which means a numbered-section chunking fix would not work here.
+4. The real, transferable lesson of this lab is a __________, not a specific regex: match your chunking strategy to how your actual documents are structured.
+5. A __________ label on every citation makes a wrong-document retrieval visible at a glance, rather than requiring a reviewer to manually re-check the chunk text.
 
-*(Answers: 1. blank lines, 2. diluted, 3. numbered section, 4. source
-document / source, 5. universal / one-size-fits-all)*
+*(Answers: 1. cross-reference, 2. blank lines, 3. ALL-CAPS / all-caps, 4. principle, 5. source document / source)*
 
 ## Quiz and Interview Questions
 
@@ -210,30 +64,19 @@ Full quiz: [`assessments/quizzes/week-03/session-3.6-quiz.md`](../../assessments
 
 Interview-style questions for this topic:
 
-1. "You've built a RAG system that works perfectly in testing but starts
-   returning wrong answers once you add a second source document. Walk
-   me through how you'd debug that."
-2. "Why might a chunking strategy that works well on Markdown
-   documentation fail silently on PDF-sourced content?"
-3. "What's the difference between a retrieval failure and a generation
-   failure in a RAG system, and how would you tell which one you're
-   looking at?"
-4. "How would you design a RAG system's output so that a wrong-document
-   retrieval is easy for a reviewer to catch, without requiring them to
-   read the model's full reasoning?"
-5. "If you had to support ten different internal documents instead of
-   four, each maintained by a different team, what would you change
-   about how you approach chunking?"
+1. "Why can real institutional documents that cross-reference each other be *harder* for retrieval than documents that don't overlap at all?"
+2. "You fix a chunking bug for one document type by splitting on numbered headers. A new document type uses different formatting entirely. Walk me through how you'd approach it."
+3. "What's the difference between a chunking error and a retrieval miss, and how would you tell which one you're looking at from a wrong answer alone?"
+4. "How would you design a multi-document RAG system's citations so a wrong-document retrieval is obvious without reading the model's full answer?"
 
 ## Core path — guided activity
 
-**Company Policy Q&A Bot.** You'll integrate everything from this week — chunking, embedding, a multi-document vector store, and citation-grounded generation — into a single bot that answers employee questions over four real policy PDFs, tagging every retrieved chunk with its source document so a wrong-document retrieval is visible at a glance. Full instructions: [`codebase/exercises/week-03/session-3.6/`](../../codebase/exercises/week-03/session-3.6/).
+**Campus Student Services Q&A Bot.** You'll integrate chunking, embeddings, a multi-document vector store, and citation-grounded generation into a bot that answers student questions over four real campus PDFs, tagging every retrieved chunk with its source document. Full instructions: [`codebase/exercises/week-03/session-3.6/`](../../codebase/exercises/week-03/session-3.6/).
 
 ## Pro path — extended challenge
 
-Before reading the solution's diagnosis, find the chunking bug yourself: run the Core path pipeline against "What is the home office equipment stipend amount?" and confirm it retrieves the wrong document. Then inspect the actual chunk boundaries for `remote_work_policy.pdf` at a few different `target_words` settings — if the boundaries never move no matter what you set, you've found the real upstream cause yourself, the same way it was originally discovered: by actually running the code and looking at what came back, not by guessing from the symptom.
+Before reading the solution's diagnosis, find both chunking bugs yourself: run the Core path pipeline against both failing questions and confirm they retrieve the wrong document. Then inspect the actual chunk boundaries for `registration_guide.pdf` — print them out, try a few different `target_words` values, and confirm the boundaries don't move no matter what you set. That's your evidence the bug is upstream of chunk size. Only then look at how the section headers are actually written in the extracted text, and design your own fix before checking it against the reference solution.
 
 ## What's next
 
-Week 4 — **Tool Use, Agents & Automation**. You've spent this week teaching a model to *find and use* the right information. Next week, you'll teach it to *take actions* in the world based on what it finds.
-
+Week 4 — **Tool Use, Agents & Automation**. You've spent this week teaching a model to *find and use* the right information, even when that information is scattered across documents that don't agree on how to organize themselves. Next week, you'll teach it to *take actions* in the world based on what it finds.

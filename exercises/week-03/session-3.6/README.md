@@ -1,21 +1,21 @@
-# Session 3.6 — Week 3 Lab: Company Policy Q&A Bot
+# Session 3.6 — Week 3 Lab: Campus Student Services Q&A Bot
 
 ## What you're building
 
-A Q&A bot that answers employee questions by retrieving from **four
-separate company policy documents** instead of one handbook:
+A Q&A bot that answers student questions by retrieving from **four
+separate campus documents** instead of one handbook:
 
-- `remote_work_policy.pdf`
-- `expense_policy.pdf`
-- `leave_policy.pdf`
-- `it_security_policy.pdf`
+- `registration_guide.pdf`
+- `financial_aid_handbook.pdf`
+- `academic_standing_policy.pdf`
+- `housing_handbook.pdf`
 
 This is the integration lab for everything in Week 3. You'll use:
 
 | Week 3 session | What you're reusing here |
 |---|---|
 | 3.2 Embeddings | `tokenize()`, `vectorize()`, `cosine_sim()` |
-| 3.3 Vector stores | Chunking + a searchable `PolicyVectorStore` |
+| 3.3 Vector stores | Chunking + a searchable `CampusVectorStore` |
 | 3.4 RAG pipeline | `format_context()`, `build_rag_prompt()`, `extract_citations()` |
 | 3.5 Failure modes | Diagnosing and fixing a real chunking bug (Part 4) |
 
@@ -24,12 +24,12 @@ This is the integration lab for everything in Week 3. You'll use:
 - `exercise.py` — your starter file. Every `TODO` needs filling in.
 - `solution.py` — the reference answer key. Don't open it until you've
   given Part 1–4 a real attempt.
-- `policy_docs/` — the four source PDFs (already generated, don't edit).
+- `campus_docs/` — the four source PDFs (already generated, don't edit).
 
 ## How to work through it
 
 1. **Parts 1–3**: fill in `load_documents`, `chunk_text`,
-   `build_corpus_chunks`, `PolicyVectorStore`, `format_context`,
+   `build_corpus_chunks`, `CampusVectorStore`, `format_context`,
    `build_rag_prompt`, `extract_citations`, and `answer_question`.
    Run:
    ```
@@ -41,49 +41,60 @@ This is the integration lab for everything in Week 3. You'll use:
 2. **Part 4 — this is the real lesson of the lab.** Once Parts 1–3
    pass, the Part 4 check will almost certainly **fail**:
    ```
-   AssertionError: Your section-aware chunking should fix this retrieval...
+   AssertionError: Your caps-header chunking should fix this retrieval...
    ```
-   That's expected — `chunk_text_by_section()` is still a stub. But
-   before you fill it in, go diagnose *why* the bot gets this question
-   wrong using your Part 1 chunker:
+   That's expected — `chunk_text_by_caps_header()` is still a stub.
+   Before filling it in, diagnose why the bot gets these questions
+   wrong with your Part 1 chunker:
 
-   > "What is the home office equipment stipend amount?"
+   > "What is the maximum course load for a student on probation?"
+   > "What happens if I drop below full-time enrollment while living in a dorm?"
 
-   It should come from `remote_work_policy.pdf`, but with blank-line
-   chunking it pulls from `expense_policy.pdf` instead. Investigate:
-   - Print out the chunks for `remote_work_policy.pdf`. How many are
+   Both should come from `academic_standing_policy.pdf` and
+   `housing_handbook.pdf` respectively — but with blank-line chunking,
+   both incorrectly pull from `registration_guide.pdf` instead, because
+   that document's one giant merged chunk happens to mention "course
+   load" and "full-time" in passing, even though it isn't the right
+   answer to either question.
+
+   Investigate:
+   - Print out the chunks for `registration_guide.pdf`. How many are
      there? How big is the biggest one?
    - Try changing `target_words` in `chunk_text()` to 80, then 50, then
      25. Does the chunk boundary move at all?
-   - Print `repr(text[:300])` for one loaded document and look closely
-     at where the actual newlines are.
+   - Print `repr(text[:300])` for one loaded document and look at how
+     the section headers are actually written in the extracted text —
+     are they numbered? Something else?
 
    Once you understand *why* it's broken, write
-   `chunk_text_by_section()` to split on numbered section headers
-   instead of blank lines, and confirm the bug is fixed.
+   `chunk_text_by_caps_header()` to split on this corpus's actual
+   header style, and confirm the bug is fixed for both questions.
 
-3. **Optional — live model answers.** Set `ANTHROPIC_API_KEY` in your
-   environment and try the full pipeline end-to-end with real generated
-   answers (the questions in `DEMO_QUESTIONS` inside `solution.py`
-   include one that's genuinely unanswerable from the corpus — watch
+3. **Optional — live model answers.** Set `ANTHROPIC_API_KEY` and try
+   the full pipeline end-to-end (the `DEMO_QUESTIONS` in `solution.py`
+   include one that's genuinely unanswerable from this corpus — watch
    what an honest, well-grounded RAG system says when it can't find the
-   answer, instead of guessing).
+   answer).
 
 ## A note on the Part 4 bug
 
-This bug isn't a contrived classroom example — it's a real failure mode
-you'll hit with PDF-sourced documents in production. PDF text extraction
-libraries (here, `pypdf`) generally do **not** preserve the blank lines
-that separated sections in the original layout. A chunker that assumes
-"blank line = paragraph break" — which is a completely reasonable
-assumption for clean markdown or plain text — can silently collapse an
-entire multi-section PDF into a single oversized chunk, no matter what
-`target_words` is set to. The fix isn't a magic number; it's matching
-your chunking strategy to the actual structure of your source documents.
+This is a different chunking bug than you may have seen elsewhere in
+this course, on purpose. The underlying cause is the same general
+problem — PDF text extraction doesn't reliably preserve blank lines
+between sections — but the *fix* is genuinely different, because this
+corpus's documents use a different section-header style (ALL CAPS on
+their own line, not numbered headers). A fix that worked for a numbered
+document wouldn't catch a single header here. The actual lesson isn't
+"split on caps headers" as a universal rule — it's that you have to
+look at how *your specific documents* are actually structured before
+choosing a splitting strategy, every time, for every new document type
+you bring into a RAG system.
 
 ## Pro path
 
-If you finish early: add a second source document type (try a `.txt`
-file alongside the PDFs) and confirm your pipeline handles a mixed
-corpus without any changes to `PolicyVectorStore` — that's the payoff of
-keeping retrieval and document-loading cleanly separated.
+If you finish early: write a quick script that runs every test question
+in `offline_test()` against BOTH the baseline and fixed chunkers, and
+report how many of the 8 questions each gets right. Confirm the fixed
+chunker doesn't just fix the two known bugs — check whether it changes
+the result on any of the other six questions too, and if so, whether
+that's an improvement or a regression.

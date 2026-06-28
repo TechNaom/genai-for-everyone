@@ -1,49 +1,28 @@
-# Session 3.6 Quiz — Week 3 Lab: Company Policy Q&A Bot
+# Session 3.6 Quiz — Week 3 Lab: Campus Student Services Q&A Bot
 
-1. (Multiple choice) In this lab's policy Q&A bot, why does adding a
-   second source document introduce a new failure mode that a single-
-   document system (like Session 3.3/3.4's handbook) doesn't have?
+1. (Multiple choice) Why does retrieval over four cross-referencing campus documents introduce a failure mode that a single-document system doesn't have?
 
-   A. More documents always mean more total information, which always
-      improves answer quality
-   B. Retrieval can now confidently return the wrong *document*, not
-      just an imperfect chunk within the right one
-   C. Multiple PDFs cannot be loaded by the same Python program
-   D. Cosine similarity only works correctly with exactly one source
-      document
+   A. Cosine similarity cannot be computed when there is more than one document
+   B. Retrieval can confidently return a chunk from the *wrong document entirely*, not just an imprecise chunk from the right one
+   C. PDFs cannot be loaded into the same Python program as each other
+   D. Vector stores have a hard limit of one document per store
 
-2. (Multiple choice) The lab's chunking bug causes the system to
-   retrieve the wrong document for "What is the home office equipment
-   stipend amount?" What is the root cause?
+2. (Multiple choice) What is the root cause of this lab's chunking bug?
 
-   A. The dollar amount $500 is written in a font the PDF parser can't read
-   B. Blank-line-based chunking finds only one giant "paragraph" in the
-      PDF-extracted text, so the whole multi-section document becomes one
-      diluted chunk
-   C. The vector store has a hard limit of 4 chunks per document
-   D. Cosine similarity cannot handle numbers in queries
+   A. The PDF files are corrupted and cannot be read at all
+   B. Blank-line-based chunking merges an entire multi-section document into one diluted chunk, because PDF text extraction doesn't reliably preserve blank lines between sections
+   C. Cosine similarity cannot handle questions phrased as "what happens if"
+   D. The vector store only stores the first chunk of each document
 
-3. (Short answer) Explain, in your own words, why simply lowering
-   `target_words` (e.g. from 80 to 25) does NOT fix the chunking bug
-   in this lab, even though smaller target word counts usually produce
-   smaller chunks.
+3. (Short answer) A teammate suggests reusing the exact same "split on numbered headers" fix that worked on a different document set. Explain why that fix might not work on this lab's documents, and what you'd check before assuming any fix transfers.
 
-4. (Multiple choice) What was the actual fix applied to
-   `chunk_text_by_section()` to resolve the retrieval bug?
+4. (Multiple choice) What pattern does the actual fix in this lab split on?
 
-   A. Splitting on blank lines with a smaller target word count
-   B. Splitting on the document's numbered section headers, since that
-      pattern survives PDF text extraction even when blank lines don't
-   C. Removing the word "stipend" from the query before searching
-   D. Increasing `k` so more chunks are retrieved
+   A. Blank lines, but with a smaller target word count
+   B. Lines that are entirely uppercase, since that's how this corpus's section headers are written
+   C. The word "Section" appearing anywhere in the text
+   D. Page breaks in the original PDF
 
-5. (Short answer) Why does the lab add a human-readable "Source:
-   <document name>" label to every retrieved chunk in `format_context()`,
-   instead of just numbering chunks `[1]`, `[2]`, `[3]` like Session 3.4
-   did?
+5. (Short answer) Why does the merged Registration Guide chunk score deceptively well against questions about academic probation and housing eligibility, even though it isn't the right answer to either one?
 
-6. (Short answer) A teammate suggests: "Let's just always use the
-   smallest possible chunk size everywhere, so we never run into a
-   chunking bug like this again." Give one real downside of always
-   using very small chunks, and explain why "smaller is always safer"
-   is not the right takeaway from this lab.
+6. (Short answer) What is the actual transferable lesson of this lab — not the specific regex used, but the underlying principle? Explain it in your own words.

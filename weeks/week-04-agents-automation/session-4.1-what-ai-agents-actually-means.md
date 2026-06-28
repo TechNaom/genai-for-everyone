@@ -163,7 +163,7 @@ Every session this week, ask: *is this piece of the system genuinely agentic —
 
 ## Quiz and Interview Questions
 
-Full quiz: `assessments/quizzes/week-04/session-4.1-quiz.md`
+Full quiz (includes answer key): `assessments/quizzes/week-04/session-4.1-quiz.md`
 
 Interview-style questions for this topic:
 

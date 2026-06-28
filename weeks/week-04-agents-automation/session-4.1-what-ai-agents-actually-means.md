@@ -163,11 +163,10 @@ Every session this week, ask: *is this piece of the system genuinely agentic —
 
 ## Quiz and Interview Questions
 
-<<<<<<< HEAD
+
 Full quiz (includes answer key): [session-4.1-quiz.md](../../assessments/quizzes/week-04/session-4.1-quiz.md)
 =======
 This chapter's full quiz lives in [session-4.1-quiz.md](../../assessments/quizzes/week-04/session-4.1-quiz.md), and the answer key is in [session-4.1-quiz-answers.md](../../assessments/answer-keys/week-04/session-4.1-quiz-answers.md).
->>>>>>> 5b2640c (Fix Session 4.1: split quiz/answer-key, real markdown links matching 1.1 convention)
 
 Interview-style questions for this topic:
 

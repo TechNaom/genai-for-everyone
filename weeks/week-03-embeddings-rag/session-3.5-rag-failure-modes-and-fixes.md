@@ -77,3 +77,53 @@ Not at the answer's wording — you already know from Session 3.4 that fluency t
 You'll be handed a RAG pipeline today, not one you build from scratch — a working but deliberately broken system, with one or more of today's three failure modes built into it on purpose. Your job is diagnostic: given a real question and a real wrong (or weak) answer, figure out *which* failure mode is responsible, using the same kind of direct inspection you practiced in Sessions 3.3 and 3.4 — looking at what was actually retrieved, not just trusting that the final answer's fluency means the pipeline worked.
 
 This is a different skill than the building you've done all week, and it's worth taking seriously as its own skill. Building a RAG pipeline that works on your test questions is necessary but not sufficient for production use — the real test is whether you, or someone on your team, can diagnose it quickly and correctly when a user reports that it gave a bad answer on a question you never thought to test yourself. That diagnostic instinct — check the retrieved chunks first, not the final answer's tone — is the single most transferable thing this entire session has to teach, and it's exactly what tomorrow's Week 3 lab will ask you to apply, unprompted, while building something new.
+
+---
+
+## Points to Remember
+
+- **A chunking error, a retrieval miss, and context stuffing can all produce the identical visible symptom** — a wrong or weak final answer — but they point to different stages of the pipeline and require different fixes.
+- **The diagnostic move is always the same: inspect what was actually retrieved, not just whether the final answer sounds right.** Fluency tells you nothing about which failure mode (if any) you're looking at.
+- **Retrieval misses and context stuffing call for opposite fixes.** One needs more or better-targeted retrieval; the other needs less, more precisely chosen context. Reaching for "just increase k" without diagnosing first risks trading one failure mode for the other.
+- **Re-ranking helps with both misses and stuffing at once**: cast a wider initial net (so near-misses survive the first cutoff), then apply a more expensive, more precise second-pass comparison to keep only the genuinely best few before generation.
+- **A pipeline failure and a trust/evaluation failure are different categories of problem**, even though both can produce a wrong answer. Today is about the first category; Week 5 covers the second.
+- **The same symptom can have more than one cause traveling together** — a chunking error and a retrieval miss often show up hand in hand, since awkward chunk boundaries are one common cause of a chunk failing to be retrieved at all.
+
+---
+
+## Quick Check: Fill in the Blanks
+
+1. A __________ error happens when the way a document is split actively works against retrieval — either orphaning an idea across a boundary, or diluting a fact inside an overly broad chunk.
+2. A retrieval __________ means the correct chunk exists somewhere in the document set, but it didn't make it into the top-k results at all.
+3. __________ is what happens when a generously high k buries the one genuinely relevant chunk inside a large pile of weakly relevant or irrelevant ones.
+4. Re-ranking works by retrieving a larger __________ pool of candidates first, then applying a more careful, more expensive comparison to keep only the best few.
+5. When diagnosing a wrong answer, the correct first move is to inspect the actual __________, not the fluency or tone of the final answer.
+
+**Answers:** 1. chunking — 2. miss — 3. Context stuffing — 4. initial / candidate — 5. retrieved chunks
+
+---
+
+## Quiz and Interview Questions
+
+Full quiz: [`assessments/quizzes/week-03/session-3.5-quiz.md`](../../assessments/quizzes/week-03/session-3.5-quiz.md) · Answer key: [`assessments/answer-keys/week-03/session-3.5-quiz-answers.md`](../../assessments/answer-keys/week-03/session-3.5-quiz-answers.md)
+
+Interview-style questions for this topic:
+
+1. *"A RAG system gives a wrong answer. Walk me through exactly what you'd check first, second, and third."*
+2. *"Explain why 'just increase k' can sometimes make a RAG system worse, not better."*
+3. *"How does re-ranking address both retrieval misses and context stuffing with a single mechanism?"*
+4. *"What's the difference between a pipeline failure and a trust/evaluation failure in a RAG system, and why does the distinction matter?"*
+
+---
+
+## Core path — guided activity
+
+**Debug a Broken RAG Pipeline (Given).** You'll be handed `broken_pipeline.py` — a working RAG pipeline with three bugs planted on purpose, one per failure mode from this session. Your job is purely diagnostic: run it against the provided test questions, inspect the actual retrieved chunks for each, and record your diagnosis (which failure mode, and your evidence for it) in `diagnosis_worksheet.py`. You are not asked to fix the bugs — only to correctly name what's wrong and show the retrieval-level evidence that proves it. Full instructions: [`codebase/exercises/week-03/session-3.5/`](../../codebase/exercises/week-03/session-3.5/).
+
+## Pro path — extended challenge
+
+For the retrieval-miss case specifically, don't just confirm the correct chunk is absent from the top-k — look at what *did* get retrieved instead, and check whether any of those chunks contain a surface-level word overlap with the query that explains why they outranked the actually-correct chunk. Real retrieval misses are rarely "nothing relevant came back" — they're usually "something plausible-looking but wrong came back instead," and learning to spot the specific shared vocabulary that caused the confusion is a sharper diagnostic skill than just confirming absence.
+
+## What's next
+
+Session 3.6 — **Week 3 Lab: Mini Build Day** — building a company policy Q&A bot, integrating everything from this week, with no failure mode handed to you this time. You'll need to apply today's diagnostic instinct yourself, unprompted, the moment something looks off.

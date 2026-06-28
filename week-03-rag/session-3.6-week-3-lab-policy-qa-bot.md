@@ -204,7 +204,11 @@ when someone acts on bad information.
 *(Answers: 1. blank lines, 2. diluted, 3. numbered section, 4. source
 document / source, 5. universal / one-size-fits-all)*
 
-## Interview questions to sit with
+## Quiz and Interview Questions
+
+Full quiz: [`assessments/quizzes/week-03/session-3.6-quiz.md`](../../assessments/quizzes/week-03/session-3.6-quiz.md) · Answer key: [`assessments/quizzes/week-03/session-3.6-quiz-answers.md`](../../assessments/quizzes/week-03/session-3.6-quiz-answers.md)
+
+Interview-style questions for this topic:
 
 1. "You've built a RAG system that works perfectly in testing but starts
    returning wrong answers once you add a second source document. Walk
@@ -221,6 +225,15 @@ document / source, 5. universal / one-size-fits-all)*
    four, each maintained by a different team, what would you change
    about how you approach chunking?"
 
-Next up: Week 4 — Tool Use, Agents & Automation. You've spent this week
-teaching a model to *find and use* the right information. Next week,
-you'll teach it to *take actions* in the world based on what it finds.
+## Core path — guided activity
+
+**Company Policy Q&A Bot.** You'll integrate everything from this week — chunking, embedding, a multi-document vector store, and citation-grounded generation — into a single bot that answers employee questions over four real policy PDFs, tagging every retrieved chunk with its source document so a wrong-document retrieval is visible at a glance. Full instructions: [`codebase/exercises/week-03/session-3.6/`](../../codebase/exercises/week-03/session-3.6/).
+
+## Pro path — extended challenge
+
+Before reading the solution's diagnosis, find the chunking bug yourself: run the Core path pipeline against "What is the home office equipment stipend amount?" and confirm it retrieves the wrong document. Then inspect the actual chunk boundaries for `remote_work_policy.pdf` at a few different `target_words` settings — if the boundaries never move no matter what you set, you've found the real upstream cause yourself, the same way it was originally discovered: by actually running the code and looking at what came back, not by guessing from the symptom.
+
+## What's next
+
+Week 4 — **Tool Use, Agents & Automation**. You've spent this week teaching a model to *find and use* the right information. Next week, you'll teach it to *take actions* in the world based on what it finds.
+

@@ -163,9 +163,6 @@ Every session this week, ask: *is this piece of the system genuinely agentic —
 
 ## Quiz and Interview Questions
 
-
-Full quiz (includes answer key): [session-4.1-quiz.md](../../assessments/quizzes/week-04/session-4.1-quiz.md)
-=======
 This chapter's full quiz lives in [session-4.1-quiz.md](../../assessments/quizzes/week-04/session-4.1-quiz.md), and the answer key is in [session-4.1-quiz-answers.md](../../assessments/answer-keys/week-04/session-4.1-quiz-answers.md).
 
 Interview-style questions for this topic:

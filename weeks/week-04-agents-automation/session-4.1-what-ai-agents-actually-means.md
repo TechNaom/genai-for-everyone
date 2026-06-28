@@ -163,7 +163,7 @@ Every session this week, ask: *is this piece of the system genuinely agentic —
 
 ## Quiz and Interview Questions
 
-Full quiz (includes answer key): `assessments/quizzes/week-04/session-4.1-quiz.md`
+Full quiz (includes answer key): [session-4.1-quiz.md](../../assessments/quizzes/week-04/session-4.1-quiz.md)
 
 Interview-style questions for this topic:
 
@@ -176,7 +176,7 @@ Interview-style questions for this topic:
 
 ## Core path
 
-In the Core path exercise, you'll run and inspect the plan-act-observe loop yourself on a two-tool task (the same umbrella/weather example from this chapter), then deliberately break it by feeding it a city the weather tool doesn't know about — and watch a rigid, hard-coded version crash while a version that checks its own observations recovers gracefully. You won't be writing the loop from scratch; you'll be reading, running, and annotating a working trace to build the right mental model before you write your own tool-calling agent next session. Full instructions: `codebase/exercises/week-04/session-4.1/`.
+In the Core path exercise, you'll run and inspect the plan-act-observe loop yourself on a two-tool task (the same umbrella/weather example from this chapter), then deliberately break it by feeding it a city the weather tool doesn't know about — and watch a rigid, hard-coded version crash while a version that checks its own observations recovers gracefully. You won't be writing the loop from scratch; you'll be reading, running, and annotating a working trace to build the right mental model before you write your own tool-calling agent next session. Full instructions: [codebase/exercises/week-04/session-4.1/](../../codebase/exercises/week-04/session-4.1/README.md).
 
 ## Pro path
 

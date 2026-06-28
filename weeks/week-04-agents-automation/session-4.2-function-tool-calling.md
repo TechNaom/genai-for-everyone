@@ -89,11 +89,11 @@ This is also where Session 4.1's chatbot-vs-workflow-vs-agent distinction gets s
 
 ---
 
-## Quiz and Interview Questions
+## Quiz
 
-Full quiz: `assessments/quizzes/week-04/session-4.2-quiz.md`
+This chapter's full quiz lives in [session-4.2-quiz.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/quizzes/week-04/session-4.2-quiz.md), and the answer key is in [session-4.2-quiz-answers.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/answer-keys/week-04/session-4.2-quiz-answers.md).
 
-Interview-style questions for this topic:
+## Interview Questions
 
 1. "A junior engineer says, 'I gave the model a tool, so now it can run code.' What's wrong with that statement, and how would you correct it?"
 2. "Walk me through what happens, step by step, between a model deciding to call a tool and that tool's result reaching the model again."
@@ -104,7 +104,7 @@ Interview-style questions for this topic:
 
 ## Core path — guided activity
 
-**An LLM that calls a real weather/calculator tool.** You'll take the same `calculator` and `weather_lookup` functions from Session 4.1 — already real, already tested — and wire them up to an actual LLM via the Anthropic API's tool-use feature. You'll define both tools' schemas, send a real question to the model, execute whichever tool(s) it actually decides to call, and feed the results back to get a final, grounded answer. Full instructions: `codebase/exercises/week-04/session-4.2/`.
+**An LLM that calls a real weather/calculator tool.** You'll take the same `calculator` and `weather_lookup` functions from Session 4.1 — already real, already tested — and wire them up to an actual LLM via the Anthropic API's tool-use feature. You'll define both tools' schemas, send a real question to the model, execute whichever tool(s) it actually decides to call, and feed the results back to get a final, grounded answer. Full instructions: [codebase/exercises/week-04/session-4.2/](https://github.com/TechNaom/genai-for-everyone/blob/main/codebase/exercises/week-04/session-4.2/README.md).
 
 ## Pro path — extended challenge
 

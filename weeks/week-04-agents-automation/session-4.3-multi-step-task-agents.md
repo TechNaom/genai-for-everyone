@@ -8,14 +8,17 @@
 
 ## Why this chapter exists
 
-So far, you've learned what agents are (Session 4.1) and how to make them call functions (Session 4.2). But in Session 4.2, you were giving the agent a single, well-defined task: "Get the weather. Call the weather tool." The agent observed the result and returned it.
+You've learned what agents are (Session 4.1) and how to make them call functions (Session 4.2). But so far, every task you've given your agent has been trivial: "Get today's weather" or "Calculate 15 × 8." The agent makes one tool call, gets a result, and you're done.
 
-Real-world tasks aren't that simple. If your manager asks you to "Research competitor pricing strategies for Q3 and summarize the findings," you don't just call one function and you're done. You need to:
-1. **Plan** what steps to take
-2. **Execute** them in sequence, adapting as you go
-3. **Know when to stop** — when you have enough information
+Real work doesn't work that way. Your manager asks: *"Research our three biggest competitors' pricing strategies for Q3 and tell me how we compare."* Your partner asks: *"Find three good vegan restaurants near me that have outdoor seating and are open after 9pm."* A journalist needs: *"Investigate whether this politician's claim about unemployment rates is accurate — find current data, historical context, and any conflicting sources."*
 
-That's a *multi-step agent*. It's still calling tools, but now the agent has to reason about *what* to do, *when* to do it, and *whether it's done*. This chapter teaches you how to build one, and just as importantly, how to debug it when it goes off the rails — because it *will*.
+These aren't one-tool-call problems. They're *multi-step tasks*, and they're where agents start to earn their keep. To solve them, an agent needs to:
+
+1. **Break down the problem** — What steps does this actually require?
+2. **Execute in sequence** — Search, observe, adapt, search again.
+3. **Know when it's done** — When is there enough information to stop?
+
+This is what separates a toy chatbot from something that can actually *do work*. And unlike simple agents, multi-step agents can break in interesting ways — they get stuck in loops, forget what they found, stop too early, or reason backward (trying to conclude before gathering data). This chapter teaches you how to build one *and* how to debug it when it inevitably goes sideways.
 
 ---
 

@@ -442,9 +442,9 @@ Key improvements:
 
 ## Quiz and Interview Questions
 
-Quiz: https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/quizzes/week-04/session-4.3-quiz.md
-Answer key: https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/answer-keys/week-04/session-4.3-quiz-answers.md
-Interview questions: https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/interview-questions/week-04-interview-qs.md
+**Full quiz:** [assessments/quizzes/week-04/session-4.3-quiz.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/quizzes/week-04/session-4.3-quiz.md)  
+**Answer key:** [assessments/answer-keys/week-04/session-4.3-quiz-answers.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/answer-keys/week-04/session-4.3-quiz-answers.md)  
+**Interview questions:** [assessments/interview-questions/week-04-interview-qs.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/interview-questions/week-04-interview-qs.md)
 
 ---
 

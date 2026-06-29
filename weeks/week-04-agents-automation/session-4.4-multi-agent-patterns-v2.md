@@ -418,8 +418,8 @@ ask_human_to_choose()
 
 ## Quiz and Interview Questions
 
-**Full quiz:** [assessments/quizzes/week-04/session-4.4-quiz.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/quizzes/week-04/session-4.4-quiz.md)  
-**Answer key:** [assessments/answer-keys/week-04/session-4.4-quiz-answers.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/answer-keys/week-04/session-4.4-quiz-answers.md)  
+**Full quiz:** [assessments/quizzes/week-04/session-4.4-quiz.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/quizzes/week-04/session-4.4-quiz-v2.md)  
+**Answer key:** [assessments/answer-keys/week-04/session-4.4-quiz-answers.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/answer-keys/week-04/session-4.4-quiz-answers-v2.md)  
 **Interview questions:** [assessments/interview-questions/week-04-interview-qs.md](https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/interview-questions/week-04-interview-qs.md)
 
 ---

@@ -2,7 +2,7 @@
 
 **Week 4 | Session 4.3**
 
-Answer the following 6 questions. Mix of multiple-choice and short-answer. Answers are in `assessments/answer-keys/week-04/session-4.3-quiz-answers.md`.
+Answer the following 6 questions. Mix of multiple-choice and short-answer. Answers are in `assessments/answer-keys/week-04/session-4.3-quiz-answers-v2.md`.
 
 ---
 

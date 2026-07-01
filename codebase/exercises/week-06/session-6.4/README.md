@@ -1,18 +1,25 @@
 # Exercise — Session 6.4: Monitoring & Observability
 
+## Overview
+
+Add structured logging and stats to a mock LLM service.
+
+- **Core path:** Log every request (input, output, latency, tokens) and expose a `/stats`-style summary
+- **Pro path:** Add a feedback log and a drift check that flags when a re-scored golden dataset drops below a threshold
+
 ## Setup
 
 ```bash
-pip install -r requirements.txt  # if this exercise has its own deps
+pip install -r requirements.txt
 ```
 
 ## Free/open path
 
-_Instructions using free/open tools — always works, no cost._
+Everything runs with mocked requests and in-memory logging — no API key or network calls needed.
 
 ## Optional paid-API path
 
-_If applicable: how to swap in a paid API for stronger results, and why you might want to._
+Point `mock_service_call()` at your real Session 6.1 Flask service or Week 3/4 project to log real requests instead of simulated ones.
 
 ## Starter code
 

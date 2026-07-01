@@ -75,9 +75,9 @@ pip install -r requirements.txt
 
 Copy `.env.example` to `.env` and fill in any API keys you choose to use (only needed for sessions that call a paid API — noted in that session's doc).
 
-## Contributing / adding new content
+## Maintenance
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the workflow on adding or editing sessions, including the file-naming convention and the scaffold script that generates a new session's folder structure for you.
+This repo is solo-maintained (with AI assistance) and isn't open to external contributions — issues and PRs from outside contributors aren't reviewed. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the maintainer's own workflow notes, including the file-naming convention and the scaffold script used to add new sessions.
 
 ## CI
 

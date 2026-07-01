@@ -13,5 +13,8 @@ tiktoken>=0.7.0
 numpy>=1.26.0
 pandas>=2.2.0
 
+# Week 6: deployment/serving
+flask>=3.0.0
+
 # Notebook support (used in some exercises)
 jupyter>=1.0.0

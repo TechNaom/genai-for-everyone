@@ -1,18 +1,25 @@
-# Exercise — Session 7.4: Real-World Case Study Day II + Capstone Build Day II
+# Exercise — Session 7.4: Case Study Day II + Capstone Build Day II
+
+## Overview
+
+Complete a second case study worksheet, then run a peer-review checklist against your capstone v1.
+
+- **Core path:** Fill in the Session 7.4 case study worksheet
+- **Pro path:** Run `peer_review_checklist.py` against your own capstone (self-review) or a peer's, and produce written findings
 
 ## Setup
 
 ```bash
-pip install -r requirements.txt  # if this exercise has its own deps
+pip install -r requirements.txt  # no extra deps needed
 ```
 
 ## Free/open path
 
-_Instructions using free/open tools — always works, no cost._
+Pure analysis and writing — no API calls, no cost.
 
 ## Optional paid-API path
 
-_If applicable: how to swap in a paid API for stronger results, and why you might want to._
+Not applicable.
 
 ## Starter code
 

@@ -1,18 +1,25 @@
 # Exercise — Session 7.3: Capstone Build Day I
 
+## Overview
+
+Use a checkpoint tracker to log progress on your actual capstone build, practicing the MVP-first/checkpoint discipline from the lesson.
+
+- **Core path:** Log start/finish times for Checkpoints 1-3 and get a status report
+- **Pro path:** Require a justification note for each checkpoint before it can be marked complete
+
 ## Setup
 
 ```bash
-pip install -r requirements.txt  # if this exercise has its own deps
+pip install -r requirements.txt  # no extra deps needed
 ```
 
 ## Free/open path
 
-_Instructions using free/open tools — always works, no cost._
+This is a plain time/progress tracker — no API calls, no cost. Use it alongside whatever capstone project you're actually building.
 
 ## Optional paid-API path
 
-_If applicable: how to swap in a paid API for stronger results, and why you might want to._
+Not applicable.
 
 ## Starter code
 

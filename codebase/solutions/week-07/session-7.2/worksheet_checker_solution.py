@@ -1,9 +1,10 @@
 """
-Session 7.2: Core Path — Case Study Worksheet Completeness Checker
+Reference solution — Session 7.2: Case Study Worksheet Completeness Checker
 
-Run: python3 starter.py your_worksheet.md
+Run: python3 worksheet_checker_solution.py filled_worksheet_example.md
 """
 
+import re
 import sys
 
 REQUIRED_SECTIONS = [
@@ -22,12 +23,15 @@ def load_worksheet(path: str) -> str:
 
 
 def split_sections(text: str) -> dict:
-    """
-    TODO 1: split `text` into a dict of {section_header: section_body} for
-    each header in REQUIRED_SECTIONS. Section body is the text between one
-    header and the next (or end of file).
-    """
-    raise NotImplementedError
+    sections = {}
+    headers_pattern = "|".join(re.escape(h) for h in REQUIRED_SECTIONS)
+    matches = list(re.finditer(headers_pattern, text))
+    for i, match in enumerate(matches):
+        header = match.group(0)
+        start = match.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        sections[header] = text[start:end].strip()
+    return sections
 
 
 def check_worksheet(path: str) -> None:
@@ -48,6 +52,6 @@ def check_worksheet(path: str) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 starter.py your_worksheet.md")
+        print("Usage: python3 worksheet_checker_solution.py filled_worksheet_example.md")
         sys.exit(1)
     check_worksheet(sys.argv[1])

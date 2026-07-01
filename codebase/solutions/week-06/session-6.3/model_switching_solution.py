@@ -1,7 +1,7 @@
 """
-Session 6.3: Choosing & Switching Models — Adapter + Fallback
+Reference solution — Session 6.3: Choosing & Switching Models — Adapter + Fallback
 
-Run: python3 starter.py
+Run: python3 model_switching_solution.py
 """
 
 import random
@@ -11,7 +11,7 @@ from typing import Dict
 
 def _call_provider_a(prompt: str) -> Dict:
     """Mock 'strong but occasionally unavailable' provider."""
-    if random.random() < 0.3:  # simulate a 30% outage rate for the exercise
+    if random.random() < 0.3:
         raise ConnectionError("provider_a: simulated outage")
     time.sleep(0.05)
     return {"text": f"[provider_a] answer to: {prompt}", "cost": 0.02, "latency_ms": 50}
@@ -27,21 +27,20 @@ PROVIDERS = {"provider_a": _call_provider_a, "provider_b": _call_provider_b}
 
 
 def call_model(prompt: str, provider: str = "provider_a") -> Dict:
-    """
-    TODO 1: look up the provider function in PROVIDERS and call it.
-    Raise a clear ValueError if the provider name isn't recognized.
-    """
-    raise NotImplementedError
+    if provider not in PROVIDERS:
+        raise ValueError(f"Unknown provider: {provider!r}. Known providers: {list(PROVIDERS)}")
+    return PROVIDERS[provider](prompt)
 
 
 def call_model_with_fallback(prompt: str, primary: str, fallback: str) -> Dict:
-    """
-    TODO 2 (Pro path): call the primary provider. If it raises an exception,
-    catch it and call the fallback provider instead. Return the result with
-    an extra "used_provider" key so the caller knows which one actually served
-    the request.
-    """
-    raise NotImplementedError
+    try:
+        result = call_model(prompt, provider=primary)
+        result["used_provider"] = primary
+        return result
+    except ConnectionError:
+        result = call_model(prompt, provider=fallback)
+        result["used_provider"] = f"{fallback} (fallback from {primary})"
+        return result
 
 
 if __name__ == "__main__":
@@ -54,6 +53,10 @@ if __name__ == "__main__":
             print(f"{provider}: FAILED — {e}")
 
     print("\n=== With fallback (run several times to see the fallback trigger) ===")
-    for _ in range(5):
+    fallback_used_count = 0
+    for _ in range(20):
         result = call_model_with_fallback("What is RAG?", primary="provider_a", fallback="provider_b")
-        print(result)
+        if "fallback" in result["used_provider"]:
+            fallback_used_count += 1
+    print(f"Fallback triggered on {fallback_used_count}/20 calls "
+          f"(expect roughly 30% given provider_a's simulated outage rate)")

@@ -1,6 +1,6 @@
 # Maintenance Guide (Solo-Maintained Project)
 
-This repo is maintained solely by its owner (with AI assistance) — it is **not open to external contributions**. Issues and pull requests from outside contributors are not reviewed or merged. If you found this repo useful, feel free to fork it for your own cohort per the license, but please don't open issues or PRs here.
+This repo is maintained solely by its owner  — it is **not open to external contributions**. Issues and pull requests from outside contributors are not reviewed or merged. If you found this repo useful, feel free to fork it for your own cohort per the license, but please don't open issues or PRs here.
 
 This doc is my own working reference for how content gets added/updated, so nothing drifts from the naming convention as the repo grows.
 

@@ -1,11 +1,10 @@
 """
-Session 7.1: Core Path — Capstone Proposal Scope Checker
+Reference solution — Session 7.1: Capstone Proposal Scope Checker
 
-Task: check a filled-in proposal_template.md for common scoping red flags.
-
-Run: python3 starter.py your_proposal.md
+Run: python3 scope_checker_solution.py example_proposal.md
 """
 
+import re
 import sys
 
 VAGUE_PHRASES = ["everything", "anything", "all my", "helps with", "some kind of"]
@@ -24,28 +23,20 @@ def load_proposal(path: str) -> str:
 
 
 def check_required_sections(text: str) -> list:
-    """
-    TODO 1: return a list of missing section headers (from REQUIRED_SECTIONS)
-    that aren't present in `text`.
-    """
-    raise NotImplementedError
+    return [section for section in REQUIRED_SECTIONS if section not in text]
 
 
 def check_vague_phrases(text: str) -> list:
-    """
-    TODO 2: return a list of vague phrases (from VAGUE_PHRASES, case-insensitive)
-    that appear in `text`.
-    """
-    raise NotImplementedError
+    lowered = text.lower()
+    return [phrase for phrase in VAGUE_PHRASES if phrase in lowered]
 
 
 def check_success_criteria_has_number(text: str) -> bool:
-    """
-    TODO 3: extract the "Success criteria" section's content and check whether
-    it contains at least one digit (a proxy for "has a measurable target").
-    Return True if it does, False otherwise.
-    """
-    raise NotImplementedError
+    match = re.search(r"## Success criteria(.*?)(##|\Z)", text, re.DOTALL)
+    if not match:
+        return False
+    section_text = match.group(1)
+    return bool(re.search(r"\d", section_text))
 
 
 def check_proposal(path: str) -> None:
@@ -73,6 +64,6 @@ def check_proposal(path: str) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 starter.py your_proposal.md")
+        print("Usage: python3 scope_checker_solution.py example_proposal.md")
         sys.exit(1)
     check_proposal(sys.argv[1])

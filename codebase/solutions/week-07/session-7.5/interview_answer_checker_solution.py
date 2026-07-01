@@ -1,7 +1,7 @@
 """
-Session 7.5: Core Path — "Walk Me Through Your Project" Self-Checker
+Reference solution — Session 7.5: "Walk Me Through Your Project" Self-Checker
 
-Run: python3 starter.py your_answer.txt
+Run: python3 interview_answer_checker_solution.py example_answer.txt
 """
 
 import sys
@@ -20,12 +20,11 @@ def load_answer(path: str) -> str:
 
 
 def check_answer(text: str) -> dict:
-    """
-    TODO 1: for each element in REQUIRED_ELEMENTS, check (case-insensitive)
-    whether ANY of its keyword list appears in `text`. Return a dict
-    {element_name: True/False}.
-    """
-    raise NotImplementedError
+    lowered = text.lower()
+    return {
+        element: any(keyword in lowered for keyword in keywords)
+        for element, keywords in REQUIRED_ELEMENTS.items()
+    }
 
 
 def print_report(path: str):
@@ -41,6 +40,6 @@ def print_report(path: str):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 starter.py your_answer.txt")
+        print("Usage: python3 interview_answer_checker_solution.py example_answer.txt")
         sys.exit(1)
     print_report(sys.argv[1])

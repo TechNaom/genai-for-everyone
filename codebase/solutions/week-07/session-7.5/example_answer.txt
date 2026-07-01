@@ -1,0 +1,7 @@
+Solo freelancers who invoice several clients a month often lose track of which invoices are overdue and what payment terms each client agreed to — that's the user and problem I built for.
+
+I chose a RAG approach instead of just asking the model to remember invoice details from a summary, because grounding every answer in the actual uploaded documents was the only way to avoid the model guessing at dollar amounts.
+
+The hardest trade-off I made was deciding to require the user to confirm any answer involving a specific dollar figure before treating it as final, even though this added friction, because a wrong invoice amount is worse than a small delay.
+
+I measured success against a 10-question golden dataset and required at least 80% accuracy, with zero hallucinated dollar amounts, before considering the core path done.

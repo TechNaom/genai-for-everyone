@@ -1,18 +1,25 @@
 # Exercise — Session 7.6: Capstone Demo Day & Program Wrap
 
+## Overview
+
+Write a portfolio README for your capstone and check it against the required structure from the lesson.
+
+- **Core path:** Write `PORTFOLIO_README.md` for your capstone, run the checker
+- **Pro path:** Write and time a 5-minute demo script following the five-beat structure
+
 ## Setup
 
 ```bash
-pip install -r requirements.txt  # if this exercise has its own deps
+pip install -r requirements.txt  # no extra deps needed
 ```
 
 ## Free/open path
 
-_Instructions using free/open tools — always works, no cost._
+Pure writing and a small checker script — no API calls, no cost.
 
 ## Optional paid-API path
 
-_If applicable: how to swap in a paid API for stronger results, and why you might want to._
+Not applicable.
 
 ## Starter code
 

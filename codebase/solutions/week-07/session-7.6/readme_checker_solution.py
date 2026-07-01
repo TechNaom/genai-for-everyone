@@ -1,7 +1,7 @@
 """
-Session 7.6: Core Path — Portfolio README Checker
+Reference solution — Session 7.6: Portfolio README Checker
 
-Run: python3 starter.py your_readme.md
+Run: python3 readme_checker_solution.py example_portfolio_readme.md
 """
 
 import sys
@@ -21,12 +21,11 @@ def load_readme(path: str) -> str:
 
 
 def check_readme(text: str) -> dict:
-    """
-    TODO 1: for each section in REQUIRED_SECTIONS, check (case-insensitive)
-    whether ANY of its keyword list appears in `text`. Return a dict
-    {section_name: True/False}.
-    """
-    raise NotImplementedError
+    lowered = text.lower()
+    return {
+        section: any(keyword in lowered for keyword in keywords)
+        for section, keywords in REQUIRED_SECTIONS.items()
+    }
 
 
 def print_report(path: str):
@@ -44,6 +43,6 @@ def print_report(path: str):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 starter.py your_readme.md")
+        print("Usage: python3 readme_checker_solution.py example_portfolio_readme.md")
         sys.exit(1)
     print_report(sys.argv[1])

@@ -246,7 +246,9 @@ main,
   font-weight: 700;
 }
 
+.roadmap-band,
 .experience-band,
+.ritual-band,
 .course-board,
 .capstone-band {
   padding: 90px 0 0;
@@ -287,6 +289,85 @@ main,
 .capstone-band p {
   color: var(--muted);
   line-height: 1.65;
+}
+
+.roadmap-rail {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow);
+}
+
+.roadmap-rail article {
+  min-height: 154px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid var(--line);
+  padding: 16px;
+}
+
+.roadmap-rail article:last-child {
+  border-right: 0;
+}
+
+.roadmap-rail article:nth-child(2n) {
+  background: rgba(183, 227, 92, 0.12);
+}
+
+.roadmap-rail span {
+  color: var(--green);
+  font-weight: 900;
+}
+
+.roadmap-rail strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.roadmap-rail small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.ritual-band {
+  display: grid;
+  grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.ritual-band h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 1;
+}
+
+.ritual-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ritual-flow article {
+  min-height: 168px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.62));
+}
+
+.ritual-flow span {
+  display: inline-flex;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: white;
+  font-weight: 900;
 }
 
 .board-heading {
@@ -340,6 +421,20 @@ main,
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  border: 1px dashed rgba(16, 33, 27, 0.3);
+  border-radius: var(--radius);
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.empty-state strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.2rem;
 }
 
 .session-card {
@@ -469,8 +564,16 @@ main,
 
   .metric-band,
   .experience-grid,
-  .session-grid {
+  .session-grid,
+  .roadmap-rail,
+  .ritual-band,
+  .ritual-flow {
     grid-template-columns: 1fr;
+  }
+
+  .roadmap-rail article {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
   }
 }
 

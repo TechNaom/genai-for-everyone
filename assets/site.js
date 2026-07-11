@@ -182,7 +182,12 @@ function renderCards() {
         </div>
       </article>
     `;
-  }).join("");
+  }).join("") || `
+    <div class="empty-state">
+      <strong>No matching sessions yet.</strong>
+      <p>Try searching for prompting, RAG, agents, evaluation, deployment, safety, or capstone.</p>
+    </div>
+  `;
 
   const active = visible.find(({ session }) => session[0] === activeSessionKey) || visible[0] || allSessions()[0];
   activeSessionKey = active.session[0];

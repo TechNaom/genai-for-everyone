@@ -3,143 +3,129 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GenAI for Everyone</title>
+  <title>GenAI for Everyone - Free, Visual GenAI Course</title>
+  <meta name="description" content="A free, visual, production-aware GenAI course with prompts, RAG, agents, evals, safety, deployment, and portfolio projects.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-  <header class="site-shell">
-    <nav class="top-nav" aria-label="Primary navigation">
-      <a class="brand" href="index.html" aria-label="GenAI for Everyone home">
-        <span class="brand-mark">G</span>
-        <span>
-          <strong>GenAI for Everyone</strong>
-          <small>TechNaom learning experience</small>
-        </span>
-      </a>
-      <div class="nav-actions">
-        <a href="docs/curriculum/CURRICULUM_MAP.md">Curriculum</a>
+  <header class="top-bar">
+    <div class="page nav-page">
+      <a class="brand" href="index.html">GenAI for Everyone</a>
+      <nav aria-label="Primary navigation">
+        <a href="#sessions">All Sessions</a>
+        <a href="docs/curriculum/CURRICULUM_MAP.md">Roadmap</a>
         <a href="assessments/interview-questions/week-01-interview-qs.md">Interview Prep</a>
-        <a class="nav-cta" href="#sessions">Start learning</a>
-      </div>
-    </nav>
-
-    <section class="hero-grid" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <p class="eyebrow">7 weeks. 42 sessions. Build real GenAI instincts.</p>
-        <h1 id="hero-title">A learning cockpit for becoming production-ready with GenAI.</h1>
-        <p class="hero-text">Move from mental models to prompts, RAG, agents, evaluation, safety, deployment, and a portfolio capstone. The content is already here. This interface turns it into a guided, visual, review-friendly learning journey.</p>
-        <div class="hero-actions">
-          <a class="primary-action" href="#sessions">Explore sessions</a>
-          <a class="secondary-action" href="weeks/week-01-foundations/session-1.1-what-genai-actually-is-and-isnt.md">Open first lesson</a>
-        </div>
-      </div>
-
-      <aside class="mission-panel" aria-label="Program snapshot">
-        <div class="pulse-strip">
-          <span></span><span></span><span></span><span></span>
-        </div>
-        <h2>Current learning loop</h2>
-        <div class="loop-map">
-          <span>Lesson</span>
-          <span>Slides</span>
-          <span>Code</span>
-          <span>Quiz</span>
-          <span>Interview</span>
-          <span>Project</span>
-        </div>
-        <p>Every session should leave the learner with an artifact, not just notes.</p>
-      </aside>
-    </section>
+      </nav>
+    </div>
   </header>
 
-  <main>
-    <section class="metric-band" aria-label="Program metrics">
-      <article>
-        <strong>42</strong>
-        <span>guided sessions</span>
-      </article>
-      <article>
-        <strong>7</strong>
-        <span>career-ready weeks</span>
-      </article>
-      <article>
-        <strong>40+</strong>
-        <span>quizzes and labs</span>
-      </article>
-      <article>
-        <strong>1</strong>
-        <span>portfolio capstone</span>
-      </article>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="page hero-layout">
+      <div class="hero-copy">
+        <span class="hero-eyebrow">Free - visual - job-ready</span>
+        <h1 id="hero-title">Learn GenAI like a modern AI builder.</h1>
+        <p class="lede">
+          A guided course for understanding prompts, RAG, agents, evaluation,
+          safety, deployment, and portfolio-ready GenAI products without making
+          the learner feel lost in jargon.
+        </p>
+        <div class="hero-badges" aria-label="Course highlights">
+          <span>Plain-language first</span>
+          <span>Prompt labs</span>
+          <span>RAG + agents</span>
+          <span>Portfolio capstone</span>
+        </div>
+        <div class="action-row">
+          <a class="btn-primary" href="weeks/week-01-foundations/session-1.1-what-genai-actually-is-and-isnt.md">Start Session 1.1</a>
+          <a class="btn-secondary" href="#sessions">Browse sessions</a>
+        </div>
+      </div>
+
+      <aside class="visual-card" aria-label="GenAI learning flow">
+        <span class="mini-kicker">Learning flow</span>
+        <h2>From idea to production habit</h2>
+        <div class="flow-diagram" aria-hidden="true">
+          <span>Problem</span>
+          <span>Prompt</span>
+          <span>Model</span>
+          <span>Evaluate</span>
+          <span>Product</span>
+        </div>
+        <p>
+          Every week turns one abstract AI concept into a practical builder
+          skill: explain it, test it, improve it, and ship a small artifact.
+        </p>
+      </aside>
+
+      <div class="hero-stats" aria-label="Course statistics">
+        <div><strong>42</strong><span>guided sessions</span></div>
+        <div><strong>7</strong><span>learning weeks</span></div>
+        <div><strong>6</strong><span>build labs</span></div>
+        <div><strong>0</strong><span>signup required</span></div>
+      </div>
+    </div>
+  </section>
+
+  <main class="page">
+    <section class="why-section" aria-labelledby="why-title">
+      <h2 id="why-title">Why This Course Is Different</h2>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <span class="card-label">Mentor style</span>
+          <h3>Simple outside, deep inside</h3>
+          <p>Each topic starts with the real problem, then moves into mental models, examples, trade-offs, and production awareness.</p>
+        </article>
+        <article class="feature-card">
+          <span class="card-label">Builder style</span>
+          <h3>Every session has a learning artifact</h3>
+          <p>Learners open lessons, quizzes, exercises, slides, exams, and interview prep from the same session card.</p>
+        </article>
+        <article class="feature-card">
+          <span class="card-label">Career style</span>
+          <h3>Designed for explanation power</h3>
+          <p>The goal is not only to use GenAI. The learner should be able to explain architecture, risks, evaluation, and business value.</p>
+        </article>
+      </div>
     </section>
 
-    <section class="roadmap-band" aria-labelledby="roadmap-title">
-      <div class="section-heading">
+    <section class="roadmap-strip" aria-labelledby="roadmap-title">
+      <div class="section-heading-row">
         <div>
-          <p class="eyebrow">Roadmap spine</p>
-          <h2 id="roadmap-title">From first mental model to deployable GenAI portfolio.</h2>
+          <span class="section-kicker">Complete learning path</span>
+          <h2 id="roadmap-title">Roadmap Spine</h2>
         </div>
-        <p>Each week builds a new professional muscle. The learner sees where they are, what skill they are forming, and which artifact proves it.</p>
+        <a class="section-link" href="docs/curriculum/CURRICULUM_MAP.md">Open full roadmap</a>
       </div>
-      <div class="roadmap-rail" aria-label="Seven week roadmap">
+      <div class="week-rail" aria-label="Seven week roadmap">
         <article><span>01</span><strong>Foundations</strong><small>AI mental models</small></article>
-        <article><span>02</span><strong>Prompting</strong><small>Prompt systems</small></article>
-        <article><span>03</span><strong>RAG</strong><small>External knowledge</small></article>
+        <article><span>02</span><strong>Prompting</strong><small>Reusable prompt systems</small></article>
+        <article><span>03</span><strong>RAG</strong><small>Knowledge-grounded apps</small></article>
         <article><span>04</span><strong>Agents</strong><small>Tools and workflows</small></article>
         <article><span>05</span><strong>Evaluation</strong><small>Safety and trust</small></article>
-        <article><span>06</span><strong>Deployment</strong><small>Cost and scale</small></article>
-        <article><span>07</span><strong>Capstone</strong><small>Career proof</small></article>
+        <article><span>06</span><strong>Deployment</strong><small>Cost, scale, monitoring</small></article>
+        <article><span>07</span><strong>Capstone</strong><small>Portfolio readiness</small></article>
       </div>
     </section>
 
-    <section class="experience-band" aria-labelledby="experience-title">
-      <div class="section-heading">
-        <p class="eyebrow">Learning design</p>
-        <h2 id="experience-title">Simple outside. Production-grade inside.</h2>
-        <p>This course is designed for beginners and working engineers in the same room: clear explanations first, then deeper engineering paths, labs, evaluation, and career prep.</p>
-      </div>
-      <div class="experience-grid">
-        <article>
-          <span class="card-kicker">Core path</span>
-          <h3>Learn the mental model</h3>
-          <p>Every topic starts with the problem, the analogy, the concept, and the practical reason it matters.</p>
-        </article>
-        <article>
-          <span class="card-kicker">Pro path</span>
-          <h3>Build like a practitioner</h3>
-          <p>Labs push learners into real trade-offs: cost, latency, safety, retrieval quality, evals, and deployment.</p>
-        </article>
-        <article>
-          <span class="card-kicker">Review path</span>
-          <h3>Prepare for interviews</h3>
-          <p>Weekly exams and interview sets help learners explain what they built with confidence and precision.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="ritual-band" aria-labelledby="ritual-title">
-      <div>
-        <p class="eyebrow">Daily ritual</p>
-        <h2 id="ritual-title">A rhythm learners can actually follow.</h2>
-      </div>
-      <div class="ritual-flow">
-        <article><span>Read</span><p>Start with the mentor-style lesson.</p></article>
-        <article><span>Build</span><p>Open the exercise and create something real.</p></article>
-        <article><span>Check</span><p>Take the quiz and exam-style review.</p></article>
-        <article><span>Explain</span><p>Use interview prep to say the idea clearly.</p></article>
-      </div>
-    </section>
-
-    <section id="sessions" class="course-board" aria-labelledby="sessions-title">
-      <div class="section-heading board-heading">
+    <section id="sessions" class="course-map" aria-labelledby="sessions-title">
+      <div class="section-heading-row board-heading">
         <div>
-          <p class="eyebrow">Course dashboard</p>
-          <h2 id="sessions-title">Choose your week, then open the learning flow.</h2>
+          <span class="section-kicker">Course dashboard</span>
+          <h2 id="sessions-title">All Sessions</h2>
         </div>
         <div class="board-tools" role="toolbar" aria-label="Course filters">
-          <input id="session-search" type="search" placeholder="Search sessions, topics, artifacts" aria-label="Search sessions">
+          <input id="session-search" type="search" placeholder="Search prompts, RAG, agents, evals, deployment..." aria-label="Search sessions">
           <div id="week-tabs" class="week-tabs" role="tablist" aria-label="Week filter"></div>
         </div>
       </div>
+
+      <p class="section-intro">
+        Pick a week, open a session, and follow the same rhythm every time:
+        lesson, slides, exercise, quiz, written exam, and interview practice.
+      </p>
 
       <div class="board-layout">
         <div id="session-grid" class="session-grid" aria-live="polite"></div>
@@ -147,17 +133,17 @@
       </div>
     </section>
 
-    <section class="capstone-band" aria-labelledby="capstone-title">
+    <section class="capstone-panel" aria-labelledby="capstone-title">
       <div>
-        <p class="eyebrow">Final outcome</p>
-        <h2 id="capstone-title">A portfolio-ready GenAI project, not only course completion.</h2>
-        <p>By Week 7, learners should be able to scope, build, evaluate, deploy, explain, and defend a GenAI system in a real interview or stakeholder review.</p>
+        <span class="section-kicker">Final outcome</span>
+        <h2 id="capstone-title">Build a GenAI portfolio project, not just course notes.</h2>
+        <p>By the final week, learners should be ready to scope, build, evaluate, deploy, demo, and defend a GenAI system in a real product conversation.</p>
       </div>
-      <a class="primary-action" href="weeks/week-07-capstone-career-prep/session-7.1-capstone-kickoff.md">Open capstone kickoff</a>
+      <a class="btn-primary" href="weeks/week-07-capstone-career-prep/session-7.1-capstone-kickoff.md">Open capstone kickoff</a>
     </section>
   </main>
 
-  <footer class="site-footer">
+  <footer class="site-footer page">
     <span>TechNaom GenAI for Everyone</span>
     <a href="README.md">Repository README</a>
   </footer>

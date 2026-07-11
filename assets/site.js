@@ -101,11 +101,9 @@ const weeks = [
 
 const tabs = document.querySelector("#week-tabs");
 const grid = document.querySelector("#session-grid");
-const spotlight = document.querySelector("#spotlight");
 const search = document.querySelector("#session-search");
 
 let activeWeek = "all";
-let activeSessionKey = "1.1";
 
 const resourceOverrides = {
   "4.3": { exerciseSlug: "4.3-v2", quizSlug: "4.3-quiz-v2", slideSlug: "4.3-v2", slideExt: "pptx" },
@@ -148,68 +146,81 @@ function allSessions() {
   return weeks.flatMap((week) => week.sessions.map((session) => ({ week, session })));
 }
 
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[char]));
+}
+
 function renderTabs() {
   const items = [{ id: "all", label: "All" }, ...weeks.map((week) => ({ id: week.id, label: week.id.replace("week-", "W") }))];
   tabs.innerHTML = items.map((item) => `<button class="week-tab" type="button" role="tab" aria-selected="${item.id === activeWeek}" data-week="${item.id}">${item.label}</button>`).join("");
 }
 
+function moduleClass(index) {
+  return `module-${index + 1}`;
+}
+
+function renderSessionCard(week, session, accentClass) {
+  const links = sessionLinks(week, session);
+  return `
+    <article class="chapter-card ${accentClass}">
+      <div class="chapter-card-top">
+        <span class="chapter-number-orb">${escapeHtml(session[0])}</span>
+        <span class="chapter-card-status">Live</span>
+      </div>
+      <span class="chapter-card-num">Session ${escapeHtml(session[0])}</span>
+      <h3>${escapeHtml(session[1])}</h3>
+      <p>${escapeHtml(session[2])}</p>
+      <div class="tag-row">
+        <span class="tag">${escapeHtml(week.title)}</span>
+        <span class="tag">Artifact-led</span>
+      </div>
+      <div class="resource-row">
+        <a href="${links.lesson}">Lesson</a>
+        <a href="${links.quiz}">Quiz</a>
+        <a href="${links.exercise}">Exercise</a>
+      </div>
+    </article>
+  `;
+}
+
 function renderCards() {
   const term = search.value.trim().toLowerCase();
-  const visible = allSessions().filter(({ week, session }) => {
-    const haystack = `${week.title} ${week.theme} ${session.join(" ")}`.toLowerCase();
-    return (activeWeek === "all" || week.id === activeWeek) && (!term || haystack.includes(term));
-  });
-
-  grid.innerHTML = visible.map(({ week, session }) => {
-    const links = sessionLinks(week, session);
-    const isActive = session[0] === activeSessionKey;
+  const rendered = weeks.map((week, index) => {
+    if (activeWeek !== "all" && week.id !== activeWeek) return "";
+    const visibleSessions = week.sessions.filter((session) => {
+      const haystack = `${week.title} ${week.theme} ${session.join(" ")}`.toLowerCase();
+      return !term || haystack.includes(term);
+    });
+    if (!visibleSessions.length) return "";
+    const accentClass = moduleClass(index);
     return `
-      <article class="session-card ${isActive ? "is-active" : ""}" data-session="${session[0]}">
-        <div class="session-meta">
-          <span class="session-number">Session ${session[0]}</span>
-          <span>${week.id.replace("week-", "Week ")}</span>
+      <section class="module-section ${accentClass}">
+        <div class="module-section-header">
+          <div>
+            <span class="module-kicker"><span class="module-dot"></span>${escapeHtml(week.id.replace("week-", "Week "))}</span>
+            <h3>${escapeHtml(week.title)}</h3>
+            <p>${escapeHtml(week.theme)}</p>
+          </div>
+          <span class="module-status">${visibleSessions.length}/${week.sessions.length} live</span>
         </div>
-        <h3>${session[1]}</h3>
-        <p>${session[2]}</p>
-        <div class="tag-row">
-          <span class="tag">${week.title}</span>
-          <span class="tag">Artifact-led</span>
+        <div class="chapter-grid">
+          ${visibleSessions.map((session) => renderSessionCard(week, session, accentClass)).join("")}
         </div>
-        <div class="resource-row">
-          <a href="${links.lesson}">Lesson</a>
-          <a href="${links.quiz}">Quiz</a>
-          <a href="${links.exercise}">Exercise</a>
-        </div>
-      </article>
+      </section>
     `;
-  }).join("") || `
+  }).join("");
+
+  grid.innerHTML = rendered || `
     <div class="empty-state">
       <strong>No matching sessions yet.</strong>
       <p>Try searching for prompting, RAG, agents, evaluation, deployment, safety, or capstone.</p>
     </div>
-  `;
-
-  const active = visible.find(({ session }) => session[0] === activeSessionKey) || visible[0] || allSessions()[0];
-  activeSessionKey = active.session[0];
-  renderSpotlight(active.week, active.session);
-}
-
-function renderSpotlight(week, session) {
-  const links = sessionLinks(week, session);
-  spotlight.innerHTML = `
-    <div class="spotlight-index">${session[0]}</div>
-    <p class="eyebrow">${week.title}</p>
-    <h3>${session[1]}</h3>
-    <p>${session[2]}</p>
-    <div class="spotlight-list">
-      <a href="${links.lesson}">Open lesson doc</a>
-      <a href="${links.slides}">${links.slideLabel}</a>
-      <a href="${links.exercise}">Open hands-on exercise</a>
-      <a href="${links.quiz}">Take session quiz</a>
-      <a href="${links.exam}">Week written exam</a>
-      <a href="${links.interview}">Week interview prep</a>
-    </div>
-    <p><strong>Learning rhythm:</strong> read, build, quiz, explain, then capture one portfolio note.</p>
   `;
 }
 
@@ -221,15 +232,65 @@ tabs.addEventListener("click", (event) => {
   renderCards();
 });
 
-grid.addEventListener("click", (event) => {
-  const card = event.target.closest(".session-card");
-  if (!card) return;
-  if (event.target.closest("a")) return;
-  activeSessionKey = card.dataset.session;
-  renderCards();
-});
-
 search.addEventListener("input", renderCards);
 
+function buildSidebarHtml(root) {
+  let html = `<a href="${root}index.html" class="sidebar-brand">GenAI for Everyone</a>`;
+  html += `<span class="sidebar-subtitle">Prompting, RAG, agents, evals, deployment, and career-ready GenAI learning</span>`;
+
+  weeks.forEach((week, index) => {
+    const isOpen = index === 0 ? "open" : "";
+    html += `<details class="sidebar-module" ${isOpen}><summary><span>${escapeHtml(week.title)}</span><em>${week.sessions.length}/${week.sessions.length}</em></summary>`;
+    html += `<ul class="sidebar-chapter-list">`;
+    week.sessions.forEach((session) => {
+      const links = sessionLinks(week, session);
+      html += `<li class="live"><a href="${root}${links.lesson}"><span>${escapeHtml(session[0])}.</span> <span>${escapeHtml(session[1])}</span><em>Live</em></a>`;
+      html += `<ul class="sidebar-subtopic-list">`;
+      html += `<li><a href="${root}${links.quiz}">Quiz</a></li>`;
+      html += `<li><a href="${root}${links.exercise}">Exercise</a></li>`;
+      html += `<li><a href="${root}${links.interview}">Interview prep</a></li>`;
+      html += `</ul></li>`;
+    });
+    html += `</ul>`;
+    html += `<a class="sidebar-exam-link" href="${root}assessments/written-exams/${week.id}-exam.md">Week written exam</a>`;
+    html += `</details>`;
+  });
+
+  return html;
+}
+
+function wireSidebarToggle() {
+  const sidebar = document.getElementById("chapter-sidebar");
+  const toggle = document.getElementById("sidebar-toggle");
+  const scrim = document.getElementById("sidebar-scrim");
+  if (!sidebar || !toggle || !scrim) return;
+
+  function open() {
+    sidebar.classList.add("open");
+    scrim.classList.add("show");
+    toggle.setAttribute("aria-expanded", "true");
+  }
+
+  function close() {
+    sidebar.classList.remove("open");
+    scrim.classList.remove("show");
+    toggle.setAttribute("aria-expanded", "false");
+  }
+
+  toggle.addEventListener("click", () => {
+    sidebar.classList.contains("open") ? close() : open();
+  });
+  scrim.addEventListener("click", close);
+}
+
+function renderSidebar() {
+  const sidebar = document.getElementById("chapter-sidebar");
+  if (!sidebar) return;
+  const root = sidebar.getAttribute("data-root") || "";
+  sidebar.innerHTML = buildSidebarHtml(root);
+  wireSidebarToggle();
+}
+
+renderSidebar();
 renderTabs();
 renderCards();

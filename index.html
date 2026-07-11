@@ -8,9 +8,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/site.css?v=course-shell-20260711">
+  <link rel="stylesheet" href="assets/site.css?v=course-sidebar-shell-20260711">
 </head>
 <body>
+  <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">Sessions</button>
+  <aside id="chapter-sidebar" class="sidebar" data-root="" aria-label="Session navigation"></aside>
+  <div class="sidebar-scrim" id="sidebar-scrim"></div>
+
   <header class="top-bar">
     <div class="page nav-page">
       <a class="brand" href="index.html">GenAI for Everyone</a>
@@ -108,10 +112,7 @@
         lesson, slides, exercise, quiz, written exam, and interview practice.
       </p>
 
-      <div class="board-layout">
-        <div id="session-grid" class="session-grid" aria-live="polite"></div>
-        <aside id="spotlight" class="spotlight" aria-label="Selected session details"></aside>
-      </div>
+      <div id="session-grid" class="module-list" aria-live="polite"></div>
     </section>
 
     <section class="capstone-panel" aria-labelledby="capstone-title">

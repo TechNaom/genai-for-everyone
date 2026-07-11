@@ -32,10 +32,24 @@ Every session ships with a **lesson doc**, **slide deck**, **hands-on Python exe
 
 Full session-by-session breakdown: [`docs/curriculum/CURRICULUM_MAP.md`](docs/curriculum/CURRICULUM_MAP.md)
 
+## Website UI
+
+The course now includes a static learning dashboard at [`index.html`](index.html). It turns the text-first curriculum into a visual course portal with:
+
+- Week filters and search
+- Session cards for all 42 sessions
+- Direct links to lessons, quizzes, exercises, slides/notes, exams, and interview prep
+- A spotlight panel for the selected session
+
+When GitHub Pages is enabled, the expected live URL is:
+
+`https://technaom.github.io/genai-for-everyone/`
+
 ## Repo structure
 
 ```
 genai-for-everyone/
+├── index.html              → visual learning dashboard / website shell
 ├── docs/
 │   ├── curriculum/        → master curriculum map, learning outcomes
 │   └── program/            → how to run a cohort, program overview

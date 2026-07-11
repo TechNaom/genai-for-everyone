@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GenAI for Everyone</title>
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <header class="site-shell">
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a class="brand" href="index.html" aria-label="GenAI for Everyone home">
+        <span class="brand-mark">G</span>
+        <span>
+          <strong>GenAI for Everyone</strong>
+          <small>TechNaom learning experience</small>
+        </span>
+      </a>
+      <div class="nav-actions">
+        <a href="docs/curriculum/CURRICULUM_MAP.md">Curriculum</a>
+        <a href="assessments/interview-questions/week-01-interview-qs.md">Interview Prep</a>
+        <a class="nav-cta" href="#sessions">Start learning</a>
+      </div>
+    </nav>
+
+    <section class="hero-grid" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">7 weeks. 42 sessions. Build real GenAI instincts.</p>
+        <h1 id="hero-title">A learning cockpit for becoming production-ready with GenAI.</h1>
+        <p class="hero-text">Move from mental models to prompts, RAG, agents, evaluation, safety, deployment, and a portfolio capstone. The content is already here. This interface turns it into a guided, visual, review-friendly learning journey.</p>
+        <div class="hero-actions">
+          <a class="primary-action" href="#sessions">Explore sessions</a>
+          <a class="secondary-action" href="weeks/week-01-foundations/session-1.1-what-genai-actually-is-and-isnt.md">Open first lesson</a>
+        </div>
+      </div>
+
+      <aside class="mission-panel" aria-label="Program snapshot">
+        <div class="pulse-strip">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <h2>Current learning loop</h2>
+        <div class="loop-map">
+          <span>Lesson</span>
+          <span>Slides</span>
+          <span>Code</span>
+          <span>Quiz</span>
+          <span>Interview</span>
+          <span>Project</span>
+        </div>
+        <p>Every session should leave the learner with an artifact, not just notes.</p>
+      </aside>
+    </section>
+  </header>
+
+  <main>
+    <section class="metric-band" aria-label="Program metrics">
+      <article>
+        <strong>42</strong>
+        <span>guided sessions</span>
+      </article>
+      <article>
+        <strong>7</strong>
+        <span>career-ready weeks</span>
+      </article>
+      <article>
+        <strong>40+</strong>
+        <span>quizzes and labs</span>
+      </article>
+      <article>
+        <strong>1</strong>
+        <span>portfolio capstone</span>
+      </article>
+    </section>
+
+    <section class="experience-band" aria-labelledby="experience-title">
+      <div class="section-heading">
+        <p class="eyebrow">Learning design</p>
+        <h2 id="experience-title">Simple outside. Production-grade inside.</h2>
+        <p>This course is designed for beginners and working engineers in the same room: clear explanations first, then deeper engineering paths, labs, evaluation, and career prep.</p>
+      </div>
+      <div class="experience-grid">
+        <article>
+          <span class="card-kicker">Core path</span>
+          <h3>Learn the mental model</h3>
+          <p>Every topic starts with the problem, the analogy, the concept, and the practical reason it matters.</p>
+        </article>
+        <article>
+          <span class="card-kicker">Pro path</span>
+          <h3>Build like a practitioner</h3>
+          <p>Labs push learners into real trade-offs: cost, latency, safety, retrieval quality, evals, and deployment.</p>
+        </article>
+        <article>
+          <span class="card-kicker">Review path</span>
+          <h3>Prepare for interviews</h3>
+          <p>Weekly exams and interview sets help learners explain what they built with confidence and precision.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="sessions" class="course-board" aria-labelledby="sessions-title">
+      <div class="section-heading board-heading">
+        <div>
+          <p class="eyebrow">Course dashboard</p>
+          <h2 id="sessions-title">Choose your week, then open the learning flow.</h2>
+        </div>
+        <div class="board-tools" role="toolbar" aria-label="Course filters">
+          <input id="session-search" type="search" placeholder="Search sessions, topics, artifacts" aria-label="Search sessions">
+          <div id="week-tabs" class="week-tabs" role="tablist" aria-label="Week filter"></div>
+        </div>
+      </div>
+
+      <div class="board-layout">
+        <div id="session-grid" class="session-grid" aria-live="polite"></div>
+        <aside id="spotlight" class="spotlight" aria-label="Selected session details"></aside>
+      </div>
+    </section>
+
+    <section class="capstone-band" aria-labelledby="capstone-title">
+      <div>
+        <p class="eyebrow">Final outcome</p>
+        <h2 id="capstone-title">A portfolio-ready GenAI project, not only course completion.</h2>
+        <p>By Week 7, learners should be able to scope, build, evaluate, deploy, explain, and defend a GenAI system in a real interview or stakeholder review.</p>
+      </div>
+      <a class="primary-action" href="weeks/week-07-capstone-career-prep/session-7.1-capstone-kickoff.md">Open capstone kickoff</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>TechNaom GenAI for Everyone</span>
+    <a href="README.md">Repository README</a>
+  </footer>
+
+  <script src="assets/site.js"></script>
+</body>
+</html>

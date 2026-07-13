@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.5 Limitations, Hallucination &amp; Bias — GenAI for Everyone</title>
+<meta name="description" content="What GenAI gets wrong and why — hallucination as a structural property, the four points where bias enters a pipeline, other real limitations, and how to respond professionally to an AI failure.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.5 · Week 1</span>
+    <span class="badge-difficulty">Foundations</span>
+    <span class="reading-time">25–30 min read</span>
+  </div>
+  <h1>Limitations, Hallucination &amp; Bias</h1>
+  <p><em>The same mechanism that makes these models so capable also makes them capable of being confidently, fluently, convincingly wrong. This session is about respecting what GenAI actually is — so you build for its real failure modes instead of getting blindsided by them after launch.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#hallucination">1. Hallucination — confident, fluent, and wrong</a>
+    <a href="#bias">2. Where bias enters the pipeline</a>
+    <a href="#limitations">3. Other real limitations to know cold</a>
+    <a href="#scenario">4. A realistic scenario, worked through</a>
+  </nav>
+
+  <div class="hook">
+    You've now built a real, working GenAI application. It runs. It responds.
+    It feels like magic. This session exists to make sure that feeling doesn't
+    turn into misplaced trust. Every serious GenAI practitioner — and every
+    serious interview for a GenAI role — assumes you understand this material
+    cold. This isn't a session about being afraid of GenAI; it's about knowing
+    exactly where and why it fails, so you can design around it.
+  </div>
+
+  <div class="subtopic" id="hallucination">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Hallucination — confident, fluent, and wrong</h2>
+    <p>
+      <strong>Hallucination</strong>, in the GenAI sense, means the model
+      generates content that is factually incorrect, fabricated, or unsupported
+      — while presenting it with the same fluent confidence as accurate content.
+      The output isn't hedged, isn't uncertain-sounding, isn't flagged in any way
+      as potentially wrong. It just is wrong, delivered with total conversational
+      ease.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... hallucination?</span>
+      The one distinction that matters: <strong>fluency and accuracy are two
+      separate properties of the output.</strong> The word is a little dramatic
+      (the model isn't "seeing things"), but it captures something real — nothing
+      about how the model works guarantees that a confident-sounding answer is a
+      correct one.
+    </div>
+
+    <p>
+      We've actually already built the explanation for this over the last few
+      sessions. Assembling it makes hallucination stop being mysterious:
+    </p>
+
+    <ul>
+      <li><strong>From Session 1.1:</strong> an LLM generates the most
+      statistically plausible next token, given everything before it — it does
+      not retrieve verified facts from a database unless explicitly given a tool
+      to do so.</li>
+      <li><strong>From Session 1.2:</strong> the model's "knowledge" lives in the
+      patterns learned across its training data, compressed into relationships
+      between tokens and embeddings — not as a lookup table of discrete,
+      verifiable facts with sources attached.</li>
+    </ul>
+
+    <p>
+      Put these together: when you ask a model something where the most
+      statistically plausible continuation happens to be false, <strong>the model
+      has no internal mechanism that flags this and says "wait, I'm not
+      sure."</strong> It produces the plausible-sounding pattern, because that is
+      all it was ever built to do.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... the classic fabricated-citation pattern?</span>
+      Ask a model for the page number of a quote from an obscure book, or a
+      citation for a very specific statistic, and it will often produce something
+      that <em>looks</em> exactly like a real citation — a plausible author, a
+      plausible journal, a specific page — entirely fabricated. "A citation-shaped
+      piece of text" is precisely the most statistically plausible continuation,
+      even when no such source exists. This is one of the most consequential,
+      well-documented hallucination patterns in real deployments, especially in
+      legal and academic work.
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why the next model version won't simply "fix" this</summary>
+      <p>
+        Later, larger models do generally hallucinate less often on many tasks —
+        but hallucination is <strong>not a temporary engineering bug awaiting a
+        patch.</strong> It's a structural consequence of how these models generate
+        text at all. Newer models reduce the <em>frequency</em>, not the
+        fundamental <em>possibility</em>. Any system design that assumes "the next
+        model release will solve this" is building on a false premise. The real
+        mitigations — grounding outputs in retrieved, verifiable documents
+        (Week 3), rigorous evaluation (Week 5), and guardrails (also Week 5) — are
+        about managing this reality, not eliminating it.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Hallucination is fabricated content delivered with the same fluent confidence as accurate content.</li>
+        <li>It happens because the model predicts plausible next tokens, with no internal "am I sure?" check.</li>
+        <li>Fluency and accuracy are separate properties — confidence tells you nothing about correctness.</li>
+        <li>It's a structural property, not a bug the next model release will patch away.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="bias">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Where bias enters the pipeline</h2>
+    <p>
+      A common misconception is that "AI bias" means one thing: biased training
+      data, full stop. The reality is more important to understand —
+      <strong>bias can enter a GenAI system at multiple distinct points</strong>,
+      and fixing only one while ignoring the others leaves real problems unsolved.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a "bias entry point"?</span>
+      A stage in the GenAI pipeline where skew can be introduced into the final
+      output. The key insight is that there are at least four of them, not one —
+      so "is our AI biased?" is a question you ask at every stage, not just about
+      where the model came from.
+    </div>
+
+    <ul>
+      <li><strong>Training data bias.</strong> If the text a model learned from
+      over- or under-represents certain perspectives, demographics, languages, or
+      viewpoints, its outputs tend to reflect those same imbalances. This is the
+      source most people have heard of — but it's far from the only one.</li>
+      <li><strong>Prompt-level bias.</strong> The way a question is phrased can
+      shift the output in a biased direction, even with identical underlying facts.
+      "Why do many people distrust [group]" presupposes something different than
+      "what are perspectives on [group]," and the answer reflects the framing baked
+      into the question.</li>
+      <li><strong>Few-shot example bias.</strong> When you give a model example
+      input/output pairs to guide its behavior (a Week 2 technique), the specific
+      examples you choose can introduce skew. If every "successful entrepreneur"
+      example shares certain characteristics, the model may implicitly learn to
+      associate success with those characteristics, regardless of your intent.</li>
+      <li><strong>Evaluation bias.</strong> Even checking whether output is "good"
+      can encode bias — if the criteria or the human reviewers share a narrow set
+      of assumptions, outputs that diverge may get unfairly penalized. Evaluation
+      isn't a neutral, bias-free step just because it happens after generation
+      (much more in Week 5).</li>
+    </ul>
+
+    <p>
+      If your organization's response to "is our AI biased?" is solely "we checked
+      the training data," you've addressed exactly one of at least four entry
+      points. A careful practitioner asks at every stage: how was this prompted,
+      what examples shaped its behavior, and how is "good output" being judged.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Bias is not a single point of failure — it enters at multiple distinct stages.</li>
+        <li>The four entry points: training data, prompt phrasing, few-shot example selection, and evaluation.</li>
+        <li>"We checked the training data" addresses only one of at least four.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="limitations">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Other real limitations to know cold</h2>
+    <p>
+      Beyond hallucination and bias, a few other limitations come up constantly in
+      real GenAI work and in interviews. Knowing these separates someone who has
+      genuinely used these systems from someone who has only read about them.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a knowledge cutoff?</span>
+      Every model has a point in time after which it has no training data at all —
+      it has never seen anything that happened after that date. Ask about something
+      genuinely recent, and the model either says so honestly, or — more concerning
+      — hallucinates a plausible-sounding but fabricated answer rather than admitting
+      uncertainty. This is exactly the problem Week 3's Retrieval-Augmented
+      Generation exists to solve.
+    </div>
+
+    <ul>
+      <li><strong>Inconsistency across runs.</strong> Ask the exact same question
+      twice and you may get meaningfully different answers, especially for
+      open-ended tasks. This isn't necessarily a flaw — some randomness is often
+      intentional and adjustable (a setting called "temperature") — but it does
+      mean you can't always assume perfect reproducibility, which matters for
+      testing and evaluation.</li>
+      <li><strong>Struggles with precise counting and certain logic.</strong>
+      Letter-counting and similar tasks are awkward for token-based models because
+      the units they process don't map cleanly onto the units the task needs.
+      Models can also struggle with deeply nested logic or long chains of precise
+      arithmetic — even while excelling at tasks that "feel" much harder, like
+      nuanced prose. Capability isn't evenly distributed the way human intuition
+      expects.</li>
+      <li><strong>Sensitivity to phrasing.</strong> The same underlying question,
+      asked two slightly different ways, can produce meaningfully different quality
+      of response. This isn't something to be embarrassed about as a user — it's a
+      real property of how these systems work, and it's the entire reason prompt
+      engineering (all of Week 2) exists as a discipline.</li>
+    </ul>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A knowledge cutoff means no training data after a fixed date — RAG (Week 3) is the structural fix.</li>
+        <li>Run-to-run inconsistency is often intentional randomness ("temperature"), not always a bug.</li>
+        <li>Token-based models are awkward at precise counting and long chains of exact logic.</li>
+        <li>Sensitivity to phrasing is why prompt engineering exists as a discipline.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="scenario">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. A realistic scenario, worked through</h2>
+    <p>
+      <strong>The setup:</strong> your company just launched an AI feature that
+      answers customer questions about your product. Three days in, a customer
+      posts on social media that the bot confidently told them your product
+      supports a feature it does not actually have. Your product manager is
+      panicking and asks you to explain what happened and what you're going to do.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... the calm, accurate explanation?</span>
+      The model wasn't being deceptive. It generated the most statistically
+      plausible-sounding answer about your product's features — likely drawing on
+      general knowledge of what similar products typically offer — rather than a
+      verified fact about <em>your specific</em> product. Without being connected to
+      your actual, current documentation, it has no way to distinguish "what's
+      generally true of products like this" from "what's specifically true of this
+      exact product." This is hallucination, exactly as in Sub-topic 1 — expected
+      behavior of an ungrounded model, not a one-off glitch.
+    </div>
+
+    <p>
+      When your PM asks you to write the internal explanation, this is a genuine
+      "direct an AI assistant" moment — the kind of drafting task you'll do
+      constantly. Here's how an experienced practitioner would approach it before
+      typing a single word to the model.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> The explanation
+      has to do three things at once — stay non-technical, be honest that no
+      current LLM eliminates this risk, and point to concrete mitigations rather
+      than vague reassurance. The trap to avoid is promising it will "never happen
+      again," because that promise can't be honestly made about any current GenAI
+      system. So the prompt must explicitly forbid that promise and name the real
+      fix (grounding in documentation) instead of hand-waving at "a smarter model."</p>
+
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to draft this:</p>
+        <textarea class="genai-user-attempt" rows="3"
+          placeholder="e.g. Write a short, non-technical explanation for a product manager about why our AI gave a wrong answer..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, or whatever assistant you use,
+          and compare what it drafts against this session's worked explanation —
+          does it stay honest and avoid the "never again" trap? That comparison is
+          the real test, not a score.
+        </div>
+      </div>
+
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a 2–3 sentence internal explanation for a non-technical product
+manager. Context: our new AI support feature confidently told a customer
+our product has a feature it doesn't. Explain in plain language that the
+model generated a statistically plausible answer from general patterns
+rather than a verified fact about our specific product (this is called
+"hallucination"), because it isn't connected to our actual product docs.
+Be honest that no current LLM eliminates this risk. Do NOT promise it
+will "never happen again." End by naming the real, structural fix:
+grounding answers in our real documentation (retrieval-augmented
+generation), plus evaluation and guardrails before high-stakes claims.</pre></div>
+      </details>
+    </div>
+
+    <p>
+      <strong>The honest framing for your PM:</strong> no current LLM eliminates
+      this risk entirely. What reduces it dramatically is <em>grounding</em> the
+      model's answers in your actual product documentation — having it retrieve and
+      cite real, current information rather than generating from general patterns.
+      That's RAG, the entire subject of Week 3, and it's the direct, structural fix
+      for exactly this failure — not a vague promise that "the next model update
+      will be smarter."
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Explain the mechanism calmly: an ungrounded model produced a plausible pattern, not a verified fact.</li>
+        <li>Be honest — no current LLM eliminates this risk entirely.</li>
+        <li>Never promise it will "never happen again"; commit to specific mitigations instead.</li>
+        <li>The structural fix is grounding (RAG), plus evaluation and guardrails.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Lawyers have been sanctioned for filing briefs containing AI-fabricated case citations that looked completely real — the exact citation-shaped-text hallucination pattern, with career consequences.</li>
+      <li>"Is our AI biased? We checked the training data" is a real, incomplete answer given in real product reviews — the multi-entry-point view is what turns a checkbox into genuine diligence.</li>
+      <li>Retrieval-Augmented Generation (Week 3), evaluation (Week 5), and guardrails (Week 5) are not academic add-ons — they are the direct, structural mitigations teams actually ship to manage the limitations in this session.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Hallucination is confident, fluent, fabricated content</strong> — a structural consequence of predicting plausible continuations, not a temporary bug awaiting a patch.</li>
+      <li><strong>Bias can enter at multiple points:</strong> training data, prompt phrasing, few-shot example selection, and evaluation itself — fixing one leaves the others unexamined.</li>
+      <li><strong>Knowledge cutoffs, run-to-run inconsistency, awkward counting/logic, and phrasing sensitivity</strong> are all real, well-documented limitations, separate from hallucination and bias.</li>
+      <li><strong>The professional response to an AI failure</strong> is calm, mechanism-based explanation plus concrete mitigation — never a promise that it will "never happen again."</li>
+      <li><strong>Grounding (RAG, Week 3), evaluation (Week 5), and guardrails (Week 5)</strong> are the real, structural mitigations — not "wait for a smarter model."</li>
+    </ul>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../session-1-4-your-first-genai-application/lesson.html">&larr; Session 1.4</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/genai-grader.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

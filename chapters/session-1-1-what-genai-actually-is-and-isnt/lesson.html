@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.1 What GenAI Actually Is (and Isn't) — GenAI for Everyone</title>
+<meta name="description" content="Build a correct mental model of generative AI: predictive vs. generative, how LLMs actually work, three costly myths, and a real-world scoping scenario.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.1</span>
+    <span class="badge-difficulty">Beginner</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>What GenAI Actually Is (and Isn't)</h1>
+  <p><em>Your first real chapter &mdash; take your time with it. No prompts, no API, no code yet: just the mental model everything else rests on.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#the-big-split">1. The Big Split: Predictive vs. Generative</a>
+    <a href="#how-llms-work">2. How LLMs Actually Work</a>
+    <a href="#three-myths">3. Three Myths That Cause Real Problems</a>
+    <a href="#worked-scenario">4. A Real-World Scenario, Worked Through</a>
+  </nav>
+
+  <div class="hook">
+    Before you write a single prompt, before you touch an API, before you build
+    anything &mdash; you need a model in your head that's actually <strong>correct</strong>.
+    Not "AI is smart computers." Not "AI is going to replace everyone." Almost every
+    bad GenAI project &mdash; the ones that get cancelled, embarrass companies, or
+    waste six months of engineering time &mdash; traces back to someone having the
+    <em>wrong mental model</em> of what these systems do. They expected a database;
+    they got an improviser. They expected a calculator; they got a poet who's
+    sometimes right about math. This chapter has one job: give you a mental model so
+    solid that three weeks from now you'll catch yourself thinking "wait, that's not
+    how this actually works" when someone else gets it wrong.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="the-big-split">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. The Big Split: Predictive AI vs. Generative AI</h2>
+
+    <p>
+      If you asked ten people on the street "what is AI?", you'd get ten unhelpful
+      answers &mdash; "a robot," "a computer that thinks," "the thing that takes
+      everyone's jobs." Here's the distinction that saves more confusion than
+      anything else in this program: <strong>there are really only two fundamentally
+      different jobs an AI system can be built to do.</strong>
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... Predictive AI?</span>
+      Predictive AI looks at something &mdash; a transaction, an email, a photo, a
+      customer's history &mdash; and answers a question that has a <em>fixed, finite
+      set of possible answers</em>. It isn't creating anything new; it's sorting,
+      scoring, or labeling. Think of it as an incredibly fast, well-trained sorting
+      clerk: you hand it something, and it drops it into one of a small number of
+      bins, or gives it a number on a scale.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">predictive-ai.txt</span>
+      </div>
+      <pre><code>Spam filter        email text/metadata   ->  "Spam" or "Not spam"     (binary category)
+Fraud detection    transaction details   ->  risk score 0-100         (continuous score)
+Netflix recs       your + others' history->  ranked list of EXISTING titles
+Loan approval      income, credit, debt  ->  "Approve"/"Deny"/"Review" (fixed set)
+Medical imaging    a chest X-ray         ->  "Pneumonia likely?"      (binary + confidence)</code></pre>
+    </div>
+
+    <p>
+      Notice the pattern in every row: <strong>the output already existed as a
+      possibility before the model ever ran.</strong> A spam filter can't invent a
+      third category nobody thought of; a recommender can only re-rank movies that
+      already exist in its catalog. Predictive AI's whole job is <em>selection and
+      scoring from a known set of options.</em> It's also the oldest, most mature,
+      most reliably boring form of AI &mdash; quietly running banking, e-commerce,
+      logistics, and healthcare for over a decade, the way electricity stopped being
+      exciting once it was just always there.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... Generative AI?</span>
+      Generative AI produces <em>new content that did not exist in any fixed list
+      beforehand</em> &mdash; text, images, audio, code. The output is assembled
+      fresh, token by token (or pixel by pixel), based on patterns the model learned
+      during training. This is the AI that triggered the public explosion starting
+      around 2022&ndash;2023 (ChatGPT, Midjourney, and everything after), and it's
+      the primary focus of this whole program.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">generative-ai.txt</span>
+      </div>
+      <pre><code>Draft an email   "polite follow-up to a silent client"  ->  a full, freshly composed email
+Code generation  "Python function to validate emails"    ->  working code, assembled new
+Image creation   "lighthouse at sunset, watercolor"      ->  a newly rendered image
+Summarization    a 40-message support thread             ->  a 3-bullet summary, newly phrased
+Translation      a paragraph in English                  ->  the same meaning, generated in Japanese</code></pre>
+    </div>
+
+    <div class="real-world">
+      <span class="label">The single sentence that separates them</span>
+      <ul>
+        <li><strong>Predictive AI chooses from what already exists. Generative AI creates what didn't exist a moment ago.</strong></li>
+        <li>When a manager says "let's add AI to X," your first move &mdash; before any code &mdash; is figuring out which of these two jobs they actually mean.</li>
+        <li>Often <em>they</em> don't know. Half of being good at this job is asking the clarifying question that surfaces that ambiguity before it becomes a wasted sprint.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Predictive AI = selection/scoring from a <strong>fixed, finite</strong> set of existing options (spam filters, fraud scores, recommendations).</li>
+        <li>Generative AI = creating <strong>new</strong> content that didn't exist beforehand (drafted emails, generated code, new images).</li>
+        <li>The tell: could the output have been listed in advance? If yes, it's predictive. If it's composed fresh, it's generative.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="how-llms-work">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. How Generative AI (Specifically LLMs) Actually Works</h2>
+
+    <p>
+      You don't need the underlying math to use these tools well &mdash; we're
+      deliberately not going near calculus in Week 1. But you do need an accurate,
+      intuitive picture of the <em>mechanism</em>, because that mechanism explains
+      almost every quirk, strength, and failure you'll meet for the rest of this
+      program.
+    </p>
+
+    <div class="what-is">
+      <span class="label">The analogy: autocomplete, extraordinarily scaled up</span>
+      You've used predictive text on your phone. Type <em>"I'll see you at the"</em>
+      and it suggests "store," "park," or "office." That is a tiny, weak version of
+      exactly the mechanism powering ChatGPT, Claude, and every other large language
+      model (LLM) &mdash; same underlying idea, just radically scaled up.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">autocomplete-vs-llm.txt</span>
+      </div>
+      <pre><code>                 Phone autocomplete              Large language model
+Context it sees  last 2-3 words                  the ENTIRE conversation (tens of thousands of words)
+Vocabulary       a few thousand common words     ~100,000+ "tokens" (words and word-pieces)
+Trained on       small set of common phrases     a vast slice of human text: books, code, sites
+Can produce      one or two next words           paragraphs, working code, multi-step explanations
+How it decides   simple pattern matching         the SAME idea -- predict the next token -- learned more deeply</code></pre>
+    </div>
+
+    <p>
+      The mechanism underneath everything is: <strong>given everything that came
+      before, predict what comes next &mdash; one small piece at a time.</strong> The
+      model does this once, appends the result to what it has so far, and does it
+      again. And again. Thousands of times per response, each step conditioned on
+      everything generated so far. That iterative loop is <em>why</em> a response
+      stays coherent across paragraphs: it isn't planning the whole essay in advance;
+      it's building it one token at a time.
+    </p>
+
+    <p>
+      Here's the same idea as something you can actually run. This isn't a real LLM
+      &mdash; it's a toy "next-word" picker over a fixed pattern table &mdash; but it
+      shows the mechanic: look at the last word, pick the most likely next one,
+      append, repeat.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">tiny_autocomplete.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="16"># A toy of the LLM mechanism: predict the next word, append, repeat.
+# (A real LLM has ~100,000 tokens and vast training -- this has 5 rules.)
+next_word = {
+    "the": "cafe",
+    "cafe": "serves",
+    "serves": "great",
+    "great": "coffee",
+    "coffee": ".",
+}
+
+word = "the"
+sentence = [word]
+for _ in range(5):                 # generate one token at a time
+    word = next_word.get(word, ".")
+    sentence.append(word)
+
+print(" ".join(sentence))
+print("Notice: it never 'looked up' a fact -- it just continued a pattern.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then change a rule in the table and watch the whole "sentence" change.</div>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Why this one fact explains almost everything else</span>
+      Once the mechanism clicks, many "weird" LLM behaviors become predictable:
+      <strong>hallucination</strong> (no fact retrieval happens, so fluent-but-false
+      and fluent-but-true feel identical to the model), <strong>why more context
+      helps</strong> (more signal for predicting what comes next), and <strong>why
+      phrasing matters so much</strong> (the way you phrase a request shifts which
+      learned patterns get activated &mdash; the entire premise of prompt engineering
+      in Week 2).
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: does "predict the next token" count as real understanding?</summary>
+      <p>
+        Whether this mechanism constitutes real understanding, reasoning, or anything
+        resembling human cognition is a genuinely open question &mdash; among AI
+        researchers, philosophers, and the people who build these systems. We're not
+        resolving that in Week 1 (or possibly ever). What we <em>can</em> say with
+        confidence, and what matters for using these tools well, is purely behavioral:
+        <strong>the model's confidence in its own output is not a reliable signal of
+        that output's correctness.</strong> That's true regardless of how the
+        philosophical debate settles, and it's the operating principle to carry
+        through this entire program.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>An LLM predicts the <strong>most statistically plausible next token</strong>, one at a time, conditioned on everything before it.</li>
+        <li>Same core idea as phone autocomplete &mdash; just vastly scaled in context length, vocabulary, and training data.</li>
+        <li>Behavioral rule to keep: confident tone tells you nothing reliable about correctness.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="three-myths">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Three Myths That Cause Real Problems</h2>
+
+    <p>
+      These aren't abstract misunderstandings &mdash; each one has caused actual,
+      costly mistakes in real companies. Let's take them one at a time.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Myth #1: "It looked that fact up."</span>
+      Unless the model has been explicitly given a tool to search the web or a
+      database (which we build ourselves in Week 4), it is <em>not</em> looking
+      anything up when you ask. It's generating the most statistically plausible
+      continuation of text. Sometimes that continuation happens to be correct
+      (especially for well-known facts that appeared often in training); sometimes it
+      isn't &mdash; and there's no internal alarm bell, because a false-but-fluent
+      sentence and a true-but-fluent sentence feel identical to the model. This is the
+      entire root cause of <strong>hallucination</strong>: no retrieval happened, so
+      there was never a fact-check step to begin with (full session on this in 1.5).
+    </div>
+
+    <div class="what-is">
+      <span class="label">Myth #2: "It's reasoning, just like a human would."</span>
+      When a model writes "First I'll consider X, then given Y it follows that Z," it
+      is producing text that <em>resembles</em> reasoning &mdash; because
+      step-by-step reasoning patterns appeared abundantly in its training data (math
+      textbooks, tutoring transcripts, technical explanations). Whether real reasoning
+      happens "underneath" is genuinely unresolved. The practical takeaway matters far
+      more than the philosophy: <strong>the tone of confidence in an explanation tells
+      you nothing reliable about whether the conclusion is correct.</strong> A model
+      can produce a beautifully structured, perfectly confident, entirely wrong chain
+      of reasoning. Don't let polish substitute for verification (a major theme again
+      in Week 5).
+    </div>
+
+    <div class="what-is">
+      <span class="label">Myth #3: "AI is one single thing."</span>
+      "AI" is an umbrella term stretched across wildly different systems: predictive
+      classifiers, recommendation engines, generative text/image/audio models,
+      computer vision, robotics control, and more &mdash; different architectures,
+      training methods, and failure modes, suited to entirely different problems. So
+      when someone says "let's use AI for this," that sentence is, by itself, almost
+      meaningless: it could mean four or five completely different engineering
+      projects. The highest-value habit in this whole career is pausing on that
+      sentence and asking: <em>which specific kind of AI problem is this, actually?</em>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Myth 1 &mdash; LLMs don't "look things up" without a tool; they continue a pattern, which is why hallucination happens.</li>
+        <li>Myth 2 &mdash; text that <em>looks</em> like reasoning isn't proof of correct reasoning; verify, don't trust the tone.</li>
+        <li>Myth 3 &mdash; "AI" is an umbrella term; always identify the specific kind of AI problem before building.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="worked-scenario">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. A Real-World Scenario, Worked Through</h2>
+
+    <p>
+      <strong>The setup:</strong> You work at a mid-size retail company. Customer
+      support is drowning &mdash; too many tickets, not enough agents. In an all-hands,
+      the VP of Customer Experience says: <em>"We need to put AI on this. Can your team
+      look into it?"</em> That single sentence hides at least four genuinely different
+      projects:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">four-hidden-projects.txt</span>
+      </div>
+      <pre><code>1. Draft reply suggestions for agents to review      -> GENERATIVE (produces new text)
+2. Auto-route tickets to the right team               -> PREDICTIVE (fixed categories)
+3. Predict which tickets will escalate / churn        -> PREDICTIVE (a risk score)
+4. Summarize long multi-message threads for agents    -> GENERATIVE (new condensed text)</code></pre>
+    </div>
+
+    <p>
+      Each is a different build: different data requirements, different evaluation
+      approach (measuring whether a "draft reply" is good is a completely different
+      problem from measuring whether a "ticket router" is accurate &mdash; the whole
+      subject of Week 5), and different rollout risk (a wrong routing is annoying; a
+      missed escalation could mean a furious customer slips through unnoticed).
+    </p>
+
+    <p>
+      Now, back to that Capability Map instinct &mdash; the one skill this whole
+      chapter is really training. Here's the tiny data structure your exercise builds
+      on: each scenario tagged <code>predictive</code> or <code>generative</code>,
+      with its input&rarr;output described. Run it to see the classification habit in
+      code form:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">capability_map.py</span>
+      </div>
+      <pre><code>scenarios = [
+    {"scenario": "Auto-route a support ticket to the right team",
+     "category": "predictive",
+     "io": "Input: ticket text. Output: one of a fixed set of team labels."},
+    {"scenario": "Draft a reply to an angry support email",
+     "category": "generative",
+     "io": "Input: the email + context. Output: newly generated reply text."},
+]
+
+for item in scenarios:
+    print(f"{item['scenario']}")
+    print(f"  -> {item['category'].upper()}: {item['io']}\n")</code></pre>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill here isn't writing the loop &mdash; it's the classification judgment inside each dictionary. Before asking an AI assistant to build a capability map, an experienced practitioner decides the <em>schema</em> first (scenario, category, input&rarr;output, a real example tool) so that every row forces the predictive-vs-generative decision explicitly, rather than letting the model hand-wave "it's AI." The tell you're looking for in each row: could the output have been listed in advance (predictive) or is it composed fresh (generative)?</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python script with a list of scenario dictionaries, each classified predictive or generative..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's example &mdash; does it force an explicit predictive-vs-generative call for every row? That comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a small Python script that defines a list of dictionaries called SCENARIOS. Each dictionary has four keys: "scenario" (a real-world task, e.g. fraud flagging or drafting an email), "category" (either "predictive" or "generative"), "io_description" (one sentence describing input -> output), and "example_tool" (a real product that does it). Include a function that prints a formatted table and warns if any category is not exactly "predictive" or "generative". Do not use any external libraries or API calls -- it's a pure classification-and-reasoning script.</pre></div>
+      </details>
+    </div>
+
+    <p>
+      <strong>The single highest-leverage move in this entire scenario</strong> is not
+      writing any code. It's going back to the VP and asking: <em>"When you say 'put AI
+      on this' &mdash; are we talking about helping agents respond faster, routing
+      tickets more accurately, catching angry customers before they escalate, or
+      something else? These are different projects with different timelines."</em> That
+      question, asked at the right moment, is worth more than a week of engineering
+      done on the wrong target.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>One vague "add AI" request can hide several different projects &mdash; some predictive, some generative.</li>
+        <li>Classifying each candidate (input&rarr;output, predictive vs. generative) is the exact habit the Capability Map exercise trains.</li>
+        <li>The highest-leverage move is often the clarifying question, not the code.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Predictive AI has quietly run banking fraud detection, e-commerce recommendations, and logistics for over a decade &mdash; it became invisible infrastructure the moment the novelty wore off.</li>
+      <li>The costliest GenAI project failures usually trace back to a wrong mental model: someone expected a database (fact retrieval) and got an improviser (pattern continuation).</li>
+      <li>In real meetings, "let's use AI for this" is the sentence to slow down on &mdash; the practitioner who asks "which specific kind of AI problem is this?" saves teams from building the wrong thing.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>AI splits into two fundamentally different jobs:</strong> predictive AI selects/scores from a fixed set of existing options; generative AI creates new content that didn't exist a moment before.</li>
+      <li><strong>LLMs predict the next most statistically plausible token</strong>, one piece at a time, conditioned on everything before it &mdash; the same core mechanism as phone autocomplete, radically scaled up.</li>
+      <li><strong>Fluency is not accuracy.</strong> A model's confident tone tells you nothing reliable about whether the output is correct &mdash; the seed of hallucination (1.5), evaluation (Week 5), and safety (Week 5).</li>
+      <li><strong>"AI" is an umbrella term, not one technology.</strong> Before building anything, identify precisely which kind of AI problem you're solving.</li>
+      <li><strong>The most valuable habit this week:</strong> when someone says "let's use AI," pause and ask which specific job &mdash; predictive or generative, doing exactly what &mdash; they actually mean.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a Check
+    button, so you'll know instantly if you've got it. Then the Capability Map
+    exercise puts the predictive-vs-generative instinct into practice.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

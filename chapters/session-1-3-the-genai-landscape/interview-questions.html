@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.3 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 1.3: The GenAI Landscape — open vs closed models, trade-off dimensions, and model-selection reasoning.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-chapter-id="session-1-3-interview" data-active-chapter="session-1-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="../../docs/curriculum/index.html">Roadmap</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.3 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: The GenAI Landscape</h1>
+  <p><em>Interviewers listen for trade-off reasoning and concrete examples, not memorized definitions. These map to how early-career GenAI interviews actually open.</em></p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> How would you choose between an open-weight model and a closed/proprietary API for a new project?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Frame it as a structured trade-off. Closed models (e.g., Claude, GPT, Gemini) typically offer stronger out-of-the-box capability and zero infrastructure burden. Open-weight models (e.g., Llama, Mistral, DeepSeek) offer cost control at scale, data privacy, and self-hosting flexibility, but require GPU infrastructure and more operational work. The "right" answer depends on which constraint dominates &mdash; cost, privacy/compliance, or raw capability.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Declaring one universally "better," or assuming "open" always means free and unrestricted &mdash; it's a claim about downloadable weights and self-hosting, not necessarily open training data or a permissive license.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"When would self-hosting an open-weight model actually be <em>cheaper</em>?" (Answer: at high, predictable volume, where fixed GPU cost beats ongoing per-token API fees.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> A startup wants to use the most powerful model available for every single feature, regardless of cost. What would you push back on, and why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Many features &mdash; a short confirmation message, a simple classification &mdash; work fine on a smaller, faster, cheaper tier. Frontier capability is wasted there, while the cost (often 10x+ on output tokens) and added latency are real. The disciplined move is to build with a strong model first, then test explicitly whether a cheaper tier is good enough per feature, rather than defaulting to the biggest model everywhere.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Agreeing that "more powerful is always safer," or claiming to know the answer without proposing to actually <em>test</em> the cheaper tier on the real task.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you decide which features can drop to a cheaper tier?" (Answer: run the real task on both tiers and compare quality against the cost/speed gap &mdash; measure, don't assume.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> What's the difference between a model's capability and its speed, and when does speed matter more?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Capability is how well the model handles complex reasoning, writing, or coding &mdash; roughly what benchmarks measure. Speed (latency) is how fast it responds and how soon the first token appears. Speed matters more for real-time, user-facing apps &mdash; a live chat widget a person is waiting on &mdash; where a small quality gain isn't worth users staring at a spinner. Capability matters more for unattended batch work where latency is invisible.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating capability and speed as the same axis, or not being able to name a concrete case where speed wins.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Why do most providers ship a tiered lineup?" (Answer: smaller models are faster and cheaper; a small/mid/frontier lineup lets you match the tier to each task.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> How would you evaluate model options for a healthcare application handling patient data?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Compliance and data handling come first, full stop. Start by filtering to providers that offer a signed compliance agreement for sensitive health data and acceptable data-residency guarantees &mdash; possibly a self-hosted open-weight model so data never leaves your infrastructure. Only <em>then</em> compare capability and cost among the options that already clear that bar. Verify commitments directly with the provider's enterprise team, since documentation lags reality.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Leading with "whichever model is most capable," or trusting a marketing/docs page for a compliance claim instead of confirming it directly.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Could a less capable model be the correct choice here?" (Answer: yes &mdash; if it's the only one that satisfies compliance, capability is secondary.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Why might a single company reasonably use three different models across three features, instead of standardizing on one?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Because different features have different dominant constraints. A customer-facing chat widget prioritizes speed and cost (a small fast tier). An overnight contract-summarizer prioritizes capability and context length (a frontier, large-context model). A feature touching protected data prioritizes compliance (a filtered or self-hosted option). There's no "house model" requirement &mdash; matching the model to each task's constraints is the actual skill.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Insisting standardization is always better for simplicity, without acknowledging the constraints that make one model a poor fit for another feature.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What's the downside of using many models?" (Answer: added operational and evaluation overhead &mdash; so re-evaluate on a cadence, not constantly.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">6</span> A founder says "we should always use whichever model is #1 on the latest benchmark." What's the flaw?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>"Best" is an incomplete question &mdash; the real question is "best for what task, under which constraints?" A benchmark measures capability, which is the most volatile and most overweighted dimension, and ignores speed, cost, context length, and compliance that often decide real applications. A model 2% better on a benchmark is rarely worth a large cost or latency penalty, and benchmarks shuffle monthly, so chasing #1 means constant churn.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Accepting benchmarks as a complete decision tool, or not connecting the flaw to the specific dimensions a benchmark leaves out.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How often should you actually re-evaluate model choice?" (Answer: on a cadence &mdash; quarterly is common &mdash; not every launch.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Models whose weights you can download and run yourself are called <code>____</code> models.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="open-weight,open weight,openweight,open" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Analyzing an entire codebase in one request depends most on a model's <code>____</code> length.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="context" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> For regulated industries, <code>____</code> can be the deciding factor above capability and cost.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="compliance,data handling,data-handling" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> A common cadence for re-evaluating your model choice in industry is <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="quarterly,quarter" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score &mdash; you're ready to talk about the GenAI landscape in an interview.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Exercises</a>
+    <a href="project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.4 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on Working CLI Chatbot exercise for Session 1.4, including a Debug the Code task on the /reset command.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="../../../docs/curriculum/index.html">Roadmap</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.4 Exercises</span>
+    <span class="reading-time">25 min, hands-on</span>
+  </div>
+  <h1>Exercises: Working CLI Chatbot</h1>
+  <p>Build a real, working command-line chatbot that correctly maintains conversation history &mdash; so a follow-up like "make that shorter" actually works instead of confusing the model. These exercises use exactly what Session 1.4 covered: the three roles, statelessness, and the request-response cycle.</p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    Install the dependencies with <code>pip install anthropic python-dotenv</code>,
+    then run <code>python starter.py</code>.
+  </div>
+
+  <div class="what-is">
+    <span class="label">Setup &mdash; API key</span>
+    This exercise genuinely needs <em>some</em> LLM API to call &mdash; there's
+    no way to build a real chatbot without one. Copy the repo's
+    <code>.env.example</code> to <code>.env</code> and add
+    <code>ANTHROPIC_API_KEY=your-key-here</code>. The script loads it with
+    <code>python-dotenv</code>; if no key is found it prints a friendly message
+    and exits rather than crashing. Every major provider offers a free tier or
+    trial credits that easily cover the handful of test messages here. No key
+    at all? Read <code>solution.py</code> and trace the history-handling logic
+    by hand.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Append the user's message</h3>
+    <p>Find <code>&#35; TODO 1</code>. Append the user's input to <code>conversation_history</code> as a dict with <code>"role"</code> and <code>"content"</code> keys, e.g. <code>{"role": "user", "content": user_input}</code>.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Send the whole history</h3>
+    <p>Find <code>&#35; TODO 2</code>. Call <code>client.messages.create(...)</code> passing <code>model</code>, <code>max_tokens=500</code>, <code>system=SYSTEM_PROMPT</code>, and <code>messages=conversation_history</code> &mdash; the <strong>entire</strong> history, not just this turn.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Extract and show the reply</h3>
+    <p>Find <code>&#35; TODO 3</code> and <code>&#35; TODO 4</code>. Pull the generated text from <code>response.content[0].text</code> and print it.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Append the assistant's reply (the step everyone forgets)</h3>
+    <p>Find <code>&#35; TODO 5</code>. Append <code>{"role": "assistant", "content": assistant_reply}</code> to <code>conversation_history</code>. Skip this and the model can't see its own previous answers next turn &mdash; the #1 cause of a "forgetful" chatbot.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Debug the Code &mdash; the <code>/reset</code> command</h3>
+    <p>The <code>/reset</code> branch is supposed to clear the conversation history without exiting the program, but as written it only prints a message and changes nothing. Fix it so history is actually wiped &mdash; think about exactly what "clearing history" means in terms of the list, and what it should look like right after a reset.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">starter.py (the /reset branch)</span>
+      </div>
+      <pre><code>if user_input == "/reset":
+    &#35; TODO: clear the conversation history here.
+    &#35; What should the list look like right after reset?
+    print("(history cleared)\n")
+    continue</code></pre>
+    </div>
+    <p><em>Hint:</em> "clearing history" means rebinding the list to a fresh, empty one &mdash; <code>conversation_history = []</code> &mdash; before the <code>print</code>. The list <em>is</em> the conversation's entire memory, so emptying it makes the model start over.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">What "done" looks like</span>
+    Ask something, then ask a follow-up that only makes sense in light of the
+    previous answer (e.g. "summarize the solar system" then "now do that in one
+    sentence"). If the bot responds correctly &mdash; not confused, not asking
+    "summarize what?" &mdash; your history-handling is correct. Compare against
+    <code>solution.py</code>, a fully working reference version.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

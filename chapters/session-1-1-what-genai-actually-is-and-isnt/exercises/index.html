@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.1 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercises for Session 1.1: What GenAI Actually Is (and Isn't) — build the AI Capability Map by classifying real requests as predictive or generative, plus a Debug the Code task.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-1" data-chapter-id="session-1-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.1 Exercises</span>
+    <span class="reading-time">15 min, hands-on</span>
+  </div>
+  <h1>Exercises: The AI Capability Map</h1>
+  <p>
+    Build the habit of classifying any "let's use AI" request <em>before</em>
+    writing a single line of code &mdash; the single most valuable instinct from
+    this session. This is a pure classification-and-reasoning exercise: no API
+    calls, no paid keys, just plain Python that runs anywhere.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python --version</code>).
+    Download <code>starter.py</code> below, then run it from a terminal with
+    <code>python starter.py</code>. It prints a formatted table and flags any
+    scenario you haven't filled in yet.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. For each of the 12 scenarios in the
+    <code>SCENARIOS</code> list, fill in three fields. The tell for each row:
+    <strong>could the output have been listed in advance (predictive), or is it
+    composed fresh (generative)?</strong>
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Classify the category</h3>
+    <p>For every scenario, set <code>category</code> to either <code>"predictive"</code> or <code>"generative"</code>. Ask yourself whether the output is selected from a fixed set of options, or generated new each time.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Describe the input &rarr; output</h3>
+    <p>Set <code>io_description</code> to a single sentence describing what goes in and what comes out. This is the framing that justifies your category choice, so make it concrete.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Name a real tool</h3>
+    <p>Set <code>example_tool</code> to a real product or service that actually does this today (for example, Stripe Radar for fraud flagging, or Midjourney for image generation). Re-run the script after each edit &mdash; it counts how many scenarios remain <code>None</code>.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Code</h3>
+    <p>A teammate classified this scenario but the script prints <code>WARNING: ... has an invalid category</code> instead of adding the row to the table. Only two values are valid. Find the bug and fix the <code>category</code> so the scenario classifies cleanly.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_scenario.py</span>
+      </div>
+      <pre><code>{
+    "scenario": "Sorting incoming emails into 'urgent', 'normal', 'spam'",
+    "category": "classification",   &#35; only "predictive" or "generative" are valid
+    "io_description": "Input: email content. Output: one of a fixed set of labels.",
+    "example_tool": "Gmail's spam/priority filters",
+}</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>SCENARIOS = [
+    {
+        "scenario": "Flagging a credit card transaction as fraudulent",
+        "category": None,          &#35; TODO: "predictive" or "generative"
+        "io_description": None,    &#35; TODO
+        "example_tool": None,      &#35; TODO
+    },
+    &#35; ... 11 more scenarios ...
+]
+
+
+def validate_and_print():
+    incomplete = []
+    for item in SCENARIOS:
+        if item["category"] is None:
+            incomplete.append(item["scenario"])
+            continue
+        category = item["category"].strip().lower()
+        if category not in ("predictive", "generative"):
+            print(f"WARNING: invalid category: {item['category']!r}")
+            continue
+        &#35; ... print the row ...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. A few scenarios are
+    genuinely debatable at the edges (recommendation systems, for instance,
+    sometimes blend predictive scoring with a generative explanation). The goal
+    isn't perfect agreement with <code>solution.py</code>; it's being able to
+    <strong>defend your classification with the input&rarr;output framing.</strong>
+    Compare your reasoning against <code>solution.py</code> (run it with
+    <code>python solution.py</code>) once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

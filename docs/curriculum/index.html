@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curriculum Roadmap — GenAI for Everyone</title>
+<meta name="description" content="The full roadmap for GenAI for Everyone — from what GenAI actually is, through prompting, RAG, agents, evaluation, safety, deployment, and a capstone.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <h1>Curriculum Roadmap</h1>
+  <p>
+    A 7-week, 42-session Generative AI curriculum, grouped by week. All 42
+    sessions already exist as real, complete content (lessons, quizzes,
+    exercises, slide decks) — this roadmap tracks which ones have been
+    converted into this template's interactive format (lesson.html, quiz.html,
+    interview-questions.html, in-browser exercises) versus which are still in
+    their original Markdown form pending conversion.
+  </p>
+
+  <h2>Week 1 — Foundations of GenAI &amp; LLMs</h2>
+  <ul class="roadmap-list">
+    <li class="built" data-chapter-link="session-1-1">
+      <span class="roadmap-status built">Live</span>
+      <div>
+        <a href="../../chapters/session-1-1-what-genai-actually-is-and-isnt/lesson.html"><strong>1.1 What GenAI Actually Is (and Isn't)</strong></a>
+        <div class="status">Generative vs. predictive AI &middot; what an LLM can/can't do</div>
+      </div>
+    </li>
+    <li class="built" data-chapter-link="session-1-2">
+      <span class="roadmap-status built">Live</span>
+      <div>
+        <a href="../../chapters/session-1-2-how-llms-work-without-the-math-fear/lesson.html"><strong>1.2 How LLMs Work, Without the Math Fear</strong></a>
+        <div class="status">Tokens &middot; next-token prediction &middot; context windows</div>
+      </div>
+    </li>
+    <li class="built" data-chapter-link="session-1-3">
+      <span class="roadmap-status built">Live</span>
+      <div>
+        <a href="../../chapters/session-1-3-the-genai-landscape/lesson.html"><strong>1.3 The GenAI Landscape</strong></a>
+        <div class="status">Model providers &middot; open vs. closed &middot; picking the right tool</div>
+      </div>
+    </li>
+    <li class="built" data-chapter-link="session-1-4">
+      <span class="roadmap-status built">Live</span>
+      <div>
+        <a href="../../chapters/session-1-4-your-first-genai-application/lesson.html"><strong>1.4 Your First GenAI Application</strong></a>
+        <div class="status">Project: your first working script against a model API</div>
+      </div>
+    </li>
+    <li class="built" data-chapter-link="session-1-5">
+      <span class="roadmap-status built">Live</span>
+      <div>
+        <a href="../../chapters/session-1-5-limitations-hallucination-bias/lesson.html"><strong>1.5 Limitations, Hallucination &amp; Bias</strong></a>
+        <div class="status">Why models make things up &middot; when not to trust the output</div>
+      </div>
+    </li>
+    <li class="built" data-chapter-link="session-1-6">
+      <span class="roadmap-status built">Live</span>
+      <div>
+        <a href="../../chapters/session-1-6-week-1-lab-mini-build-day/lesson.html"><strong>1.6 Week 1 Lab — Mini Build Day</strong></a>
+        <div class="status">Project: week 1's concepts combined into one small real build</div>
+      </div>
+    </li>
+    <li class="built"><span class="roadmap-status built">Live</span><div><a href="https://github.com/TechNaom/genai-for-everyone/blob/main/assessments/written-exams/week-01-exam.md"><em>Week 1 Written Exam</em></a></div></li>
+  </ul>
+
+  <h2>Week 2 — Prompt Engineering &amp; Application Design</h2>
+  <ul class="roadmap-list">
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>2.1 Anatomy of a Great Prompt</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>2.2 Prompting Techniques I — Few-Shot, Zero-Shot, Role</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>2.3 Prompting Techniques II — Chain-of-Thought, Step-Back, Self-Consistency</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>2.4 Structured Outputs</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>2.5 Prompt Systems, Not Just Prompts</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>2.6 Week 2 Lab — Mini Build Day</strong></div></li>
+  </ul>
+
+  <h2>Week 3 — Working with Data: Embeddings &amp; RAG</h2>
+  <ul class="roadmap-list">
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>3.1 Why LLMs Need External Knowledge</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>3.2 Embeddings Demystified</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>3.3 Vector Databases &amp; Retrieval</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>3.4 Building a RAG Pipeline</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>3.5 RAG Failure Modes &amp; Fixes</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>3.6 Week 3 Lab — Mini Build Day (Policy Q&amp;A Bot)</strong></div></li>
+  </ul>
+
+  <h2>Week 4 — Tool Use, Agents &amp; Automation</h2>
+  <ul class="roadmap-list">
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>4.1 What "AI Agents" Actually Means</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>4.2 Function / Tool Calling</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>4.3 Multi-Step Task Agents</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>4.4 Multi-Agent Patterns</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>4.5 Automation Workflows — No/Low-Code + Code</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>4.6 Week 4 Lab — Mini Build Day</strong></div></li>
+  </ul>
+
+  <h2>Week 5 — Evaluation, Safety &amp; Responsible AI</h2>
+  <ul class="roadmap-list">
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>5.1 Why "It Looks Good" Isn't Evaluation</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>5.2 Evaluation Methods</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>5.3 Safety Fundamentals</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>5.4 Responsible AI &amp; Bias in Practice</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>5.5 Guardrails &amp; Mitigations</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>5.6 Week 5 Lab — Mini Build Day</strong></div></li>
+  </ul>
+
+  <h2>Week 6 — Deployment, Cost, Scaling &amp; MLOps-for-GenAI</h2>
+  <ul class="roadmap-list">
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>6.1 From Notebook to Application</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>6.2 Cost &amp; Latency Engineering</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>6.3 Choosing &amp; Switching Models</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>6.4 Monitoring &amp; Observability</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>6.5 CI/CD &amp; Versioning for Prompts</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>6.6 Week 6 Lab — Mini Build Day</strong></div></li>
+  </ul>
+
+  <h2>Week 7 — Capstone, Real-World Case Studies &amp; Career Prep</h2>
+  <ul class="roadmap-list">
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>7.1 Capstone Kickoff</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>7.2 Real-World Case Study Day I</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>7.3 Capstone Build Day I</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>7.4 Real-World Case Study Day II + Capstone Build Day II</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>7.5 Mock Technical Interviews</strong></div></li>
+    <li class="planned"><span class="roadmap-status planned">Content exists, template pending</span><div><strong>7.6 Capstone Demo Day &amp; Program Wrap</strong></div></li>
+  </ul>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+  </div>
+</footer>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

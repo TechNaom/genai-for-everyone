@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.3 Project: The Model Selector — GenAI for Everyone</title>
+<meta name="description" content="Build a Model Selector: a small decision tool that turns Session 1.3's framework into code — filter on hard constraints, then rank on the dimension that matters.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="../../../docs/curriculum/index.html">Roadmap</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../interview-questions.html">&larr; Back to interview questions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.3 Project</span>
+    <span class="reading-time">25 min build</span>
+  </div>
+  <h1>The Model Selector</h1>
+  <p>In the exercise you compared models by hand on one task. This project turns that judgment into a small, reusable <strong>decision tool</strong>: feed it a short application brief and it recommends which <em>kind</em> of model to reach for &mdash; and explains why. It's the lesson's decision framework, written as code.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>=== Model Selector Report ===
+
+App: Live customer-facing chat widget
+  Priority dimension: speed
+  Recommendation: Fast tier (closed) [closed/proprietary]
+    speed score: 5/5
+
+App: Overnight legal-contract summarizer (batch)
+  Priority dimension: capability
+  Recommendation: Frontier tier (closed) [closed/proprietary]
+    capability score: 5/5
+
+App: Clinical documentation assistant (patient data)
+  Priority dimension: capability  (+ compliance required)
+  Recommendation: Self-hosted open-weight [open-weight]
+    capability score: 4/5</code></pre>
+  </div>
+
+  <p>Notice the third app: the frontier tier is the strongest reasoner, but the compliance constraint eliminates the closed tiers <em>before</em> capability is even compared &mdash; so the strongest <strong>eligible</strong> model wins instead. That filter-then-rank order is the whole point.</p>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Download <code>starter.py</code> below, fill in the <code>&#35; TODO</code> sections, then run <code>python starter.py</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What you'll build</h2>
+  <p>A script holding a tiny catalog of generic model <em>tiers</em> (a fast closed tier, a frontier closed tier, and a self-hosted open-weight tier) and a set of application briefs. For each brief, <code>recommend()</code> filters on hard constraints first, then ranks the survivors on the one dimension that drives the choice.</p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Filter on the hard constraint</h3>
+    <p>Find <code>&#35; TODO 1</code>. If the brief has <code>requires_compliance</code> set, keep only the tiers whose <code>compliant</code> value is <code>True</code>; otherwise all tiers are candidates. Return <code>None</code> if nothing survives the filter.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Rank the survivors</h3>
+    <p>Find <code>&#35; TODO 2</code>. From the candidates, return the tier scoring highest on <code>app["priority"]</code> (e.g. <code>"speed"</code> or <code>"capability"</code>). A <code>max(..., key=...)</code> is all you need.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Print the recommendation</h3>
+    <p>Find <code>&#35; TODO 3</code>. For each app, print the chosen tier's name, its kind, and its score on the priority dimension &mdash; so the report reads like the example above.</p>
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Add a fourth brief whose priority is <code>value</code> (cheapest per token) and see which tier wins.</li>
+    <li>Add a <code>min_context_k</code> field to a brief and filter out any tier whose <code>context_k</code> is too small &mdash; a second hard constraint alongside compliance.</li>
+    <li>Print a one-line justification per recommendation that names the runner-up and why it lost.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>This is the session's actual skill, made mechanical: <strong>filter on the hard constraints that can eliminate options entirely (compliance, residency), then rank whatever survives on the dimension the task really needs.</strong> Real teams run exactly this reasoning when they pick a different model for autocomplete than for their hardest reasoning feature &mdash; no "house model," just per-task fit.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../interview-questions.html">&larr; Interview Questions</a>
+    <a href="../../session-1-4-your-first-genai-application/lesson.html">Session 1.4 &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

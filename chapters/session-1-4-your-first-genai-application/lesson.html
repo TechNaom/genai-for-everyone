@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.4 Your First GenAI Application — GenAI for Everyone</title>
+<meta name="description" content="Build a real working chatbot that calls an LLM API: the system/user/assistant roles, statelessness, the request-response cycle, and the #1 beginner memory bug.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="../../docs/curriculum/index.html">Roadmap</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.4</span>
+    <span class="badge-difficulty">Beginner</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>Your First GenAI Application</h1>
+  <p><em>Everything so far has been building a mental model. Today you build something that actually runs &mdash; a real Python program that sends a message to an LLM API and gets a genuine response back.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#roles">1. The three roles</a>
+    <a href="#statelessness">2. Statelessness</a>
+    <a href="#cycle">3. The request-response cycle</a>
+    <a href="#mistake">4. A realistic mistake</a>
+  </nav>
+
+  <div class="hook">
+    Not a demo, not a simulation &mdash; an actual working chatbot. This is
+    also where a handful of conceptual gaps tend to surface for the first
+    time: things that were invisible while we were just <em>talking</em>
+    about LLMs, but become unavoidable the moment you write code that calls
+    one. The biggest, which surprises almost everyone: <strong>the model has
+    no memory of your previous messages unless you explicitly send them
+    again, every single time.</strong> That one fact reshapes how you'll
+    think about every chatbot and every API call for the rest of this
+    program.
+  </div>
+
+  <div class="subtopic" id="roles">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. The three roles &mdash; system, user, assistant</h2>
+    <p>
+      Every message you send to a modern LLM API isn't just "text in, text
+      out." It's a sequence of labeled turns, each tagged with a
+      <strong>role</strong>. Understanding these three roles is the single
+      most important piece of mechanical knowledge in this session.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... the system role?</span>
+      Instructions from <em>you, the developer</em> &mdash; set once, defining
+      how the model should behave for the whole conversation. The end user
+      never sees or writes it. Think of it as the briefing you give a new
+      employee on day one ("You're a support agent; be concise; if you don't
+      know, say so") &mdash; operating context they carry into every
+      conversation, not something the customer said.
+    </div>
+
+    <p>
+      The <strong>user</strong> role is the live input from the actual person
+      using your app &mdash; the question they typed. This is the part that
+      changes every single turn.
+    </p>
+    <p>
+      The <strong>assistant</strong> role is the model's own previous
+      responses. This matters more than it first seems, because of Part 2:
+      in a multi-turn conversation you don't send just the system prompt and
+      the latest user message &mdash; you send the <em>entire history</em>,
+      including everything the assistant said earlier, every single time.
+    </p>
+
+    <p>
+      Put together, a real request (simplified) looks conceptually like this
+      &mdash; all four entries get sent together, even though only the last
+      line is "new":
+    </p>
+
+    <div class="output-block">
+      <span class="output-label">One request, four role-tagged entries</span>
+      <pre><code>system:    "You are a helpful coding assistant specializing in Python..."
+user:      "How do I read a CSV file in Python?"
+assistant: "You can use the built-in csv module, or pandas for more..."
+user:      "Show me the pandas version."</code></pre>
+    </div>
+
+    <p>
+      In code, that history is usually a plain Python list of dictionaries,
+      each with a <code>role</code> and <code>content</code> key. Here's the
+      exact shape you'll build today &mdash; no API call, just the data
+      structure:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">roles.py</span>
+        <button class="playground-run-btn" data-playground-run>▶ Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="9">conversation_history = [
+    {"role": "user", "content": "How do I read a CSV file in Python?"},
+    {"role": "assistant", "content": "Use the built-in csv module, or pandas."},
+    {"role": "user", "content": "Show me the pandas version."},
+]
+for turn in conversation_history:
+    print(turn["role"].upper().ljust(10), turn["content"])
+print("Turns stored:", len(conversation_history))</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" — the system prompt is sent separately, so it isn't in this list.</div>
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why is the system prompt separate from the list?</summary>
+      <p>
+        Most APIs (including Anthropic's) take the system prompt as its own
+        top-level <code>system=</code> argument, distinct from the
+        <code>messages</code> list of alternating user/assistant turns. That's
+        a deliberate design choice: the system prompt is stable
+        developer-owned configuration, while <code>messages</code> is the
+        growing, user-driven conversation. Keeping them apart makes it obvious
+        which text you control versus which text your user drives.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>system</strong> &mdash; developer instructions, set once, invisible to the user.</li>
+        <li><strong>user</strong> &mdash; the live human input, new every turn.</li>
+        <li><strong>assistant</strong> &mdash; the model's own previous replies, re-sent every turn.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="statelessness">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. The most important mechanical fact &mdash; statelessness</h2>
+    <p>
+      Here it is, as plainly as possible: <strong>the model does not remember
+      your previous messages on its own.</strong> Each API call is
+      independent. If you want the model to "remember" something said three
+      messages ago, <em>you</em> &mdash; the developer &mdash; have to include
+      that entire earlier conversation in every new request.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... statelessness?</span>
+      A stateless system keeps no memory of past requests between calls. The
+      LLM receives one block of role-tagged text, predicts what comes next,
+      and then retains nothing. The next call starts from a blank slate unless
+      you re-send the history yourself.
+    </div>
+
+    <p>
+      When you use Claude.ai or ChatGPT it <em>feels</em> like a continuous
+      conversation with persistent memory. That feeling is an illusion
+      maintained by the <strong>application layer</strong>, not a property of
+      the model. Behind the scenes, every time you send a new message, the app
+      silently re-sends the <em>entire conversation history</em> &mdash; every
+      previous user message and assistant reply &mdash; bundled with your new
+      message as one fresh request.
+    </p>
+    <p>
+      So when you build your own chatbot today, <em>you</em> are responsible
+      for what the chat app does invisibly: keep a running list of the
+      conversation, and send that whole list with every request. Forget it,
+      and your bot has no memory of anything said before &mdash; it feels
+      broken, even though the model works exactly as designed.
+    </p>
+
+    <div class="what-is">
+      <span class="label">The analogy: a brilliant consultant with no memory between meetings</span>
+      Imagine hiring a genuinely excellent consultant who has zero memory
+      between meetings. Every time you meet, you must hand them a full
+      transcript of every previous meeting before they can pick up where you
+      left off. Forget the transcript and they'll greet you like a stranger,
+      even if you last spoke five minutes ago. That's not a flaw in their
+      intelligence &mdash; it's just how their memory works, and it's on you to
+      bring the transcript every time. That is <em>exactly</em> how working
+      with an LLM API feels.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Every API call is independent &mdash; the model remembers nothing on its own.</li>
+        <li>The "continuous conversation" feeling is created by the app re-sending full history each time.</li>
+        <li>In your own code, maintaining and re-sending that history is your job.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="cycle">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. The request-response cycle, end to end</h2>
+    <p>
+      Let's demystify what otherwise looks like a black box. Here's exactly
+      what happens when your code "talks" to an LLM:
+    </p>
+
+    <div class="output-block">
+      <span class="output-label">The five-step cycle</span>
+      <pre><code>1  Your code builds a request
+   (system prompt + role-tagged messages, newest user turn last)
+      |
+2  The provider's servers run the model on everything in that request
+   (the tokenize -> embed -> predict loop from Session 1.2)
+      |
+3  A structured JSON response comes back
+   (generated text PLUS metadata: model, tokens used, stop reason)
+      |
+4  Your code extracts the text and does something with it
+   (print it, show it in a web page, speak it aloud)
+      |
+5  If the conversation continues, append BOTH the user message
+   AND the assistant reply to your running history -> back to step 1</code></pre>
+    </div>
+
+    <p>
+      Two details from that diagram catch people off guard. First, the
+      response in step 3 is <strong>structured data, not raw text</strong>
+      &mdash; you have to reach into it to pull out the generated string.
+      Second, step 5 is the loop-closer that makes multi-turn memory work, and
+      it's the one beginners skip.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... in the response, beyond the text?</span>
+      The reply comes back as JSON containing the generated text plus metadata:
+      which model ran, how many input and output tokens were consumed (that's
+      what you're billed on), and why generation stopped (a natural end, or
+      hitting your <code>max_tokens</code> limit). Your code reads the text out
+      of that structure &mdash; in Anthropic's SDK, it lives at
+      <code>response.content[0].text</code>.
+    </div>
+
+    <p>
+      This cycle, repeated, is the entirety of how every chatbot you've ever
+      used actually works under the hood. There's no hidden magic beyond what
+      you'll build yourself in today's exercise.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Build request &rarr; send &rarr; receive structured JSON &rarr; extract text &rarr; append both turns to history.</li>
+        <li>The response is a data structure with metadata, not a bare string.</li>
+        <li>Step 5 &mdash; appending the reply too &mdash; is what keeps the next turn coherent.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="mistake">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. A realistic mistake, worked through</h2>
+    <p>
+      Here's a mistake almost every beginner makes once. Recognizing it now
+      saves real debugging time later.
+    </p>
+    <p>
+      <strong>The setup:</strong> your chatbot's first exchange works great.
+      The user asks a follow-up that depends on the previous answer &mdash;
+      "can you make that shorter?" &mdash; and the model responds as if it has
+      no idea what "that" is, sometimes asking "shorter version of what?"
+    </p>
+    <p>
+      <strong>What went wrong:</strong> almost certainly, the code only sends
+      the latest message each turn, not the full history. The model isn't
+      being forgetful &mdash; it genuinely never received the earlier exchange.
+      Here's the buggy shape: a brand-new one-message list, rebuilt every turn.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">forgetful.py (buggy)</span>
+      </div>
+      <pre><code>while True:
+    user_input = input("You: ").strip()
+
+    &#35; BUG: a fresh one-message list every turn — nothing earlier is sent.
+    messages = [{"role": "user", "content": user_input}]
+
+    response = client.messages.create(
+        model=MODEL_NAME, max_tokens=500,
+        system=SYSTEM_PROMPT, messages=messages,
+    )
+    print("Bot:", response.content[0].text)</code></pre>
+    </div>
+
+    <p>
+      <strong>The fix:</strong> keep one running list, created once outside the
+      loop. Every turn, append the user's message, send the <em>entire</em>
+      list, then append the assistant's reply too. That last append is the
+      step beginners skip &mdash; and skipping it is the #1 cause of a
+      "forgetful" bot. Here's the corrected chatbot in full, exactly what
+      you'll build in today's exercise:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">chatbot.py (fixed)</span>
+      </div>
+      <pre><code>import os, sys
+from dotenv import load_dotenv
+from anthropic import Anthropic
+
+load_dotenv()
+SYSTEM_PROMPT = "You are a friendly, concise assistant."
+MODEL_NAME = "claude-haiku-4-5-20251001"
+
+client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+&#35; ONE running list, created once — this list IS the conversation's memory.
+conversation_history = []
+
+while True:
+    user_input = input("You: ").strip()
+    if user_input.lower() == "quit":
+        break
+
+    &#35; 1. append the user's new message
+    conversation_history.append({"role": "user", "content": user_input})
+
+    &#35; 2. send the ENTIRE history, not just this turn
+    response = client.messages.create(
+        model=MODEL_NAME,
+        max_tokens=500,
+        system=SYSTEM_PROMPT,
+        messages=conversation_history,
+    )
+
+    &#35; 3. extract the text from the structured response
+    assistant_reply = response.content[0].text
+    print(f"Bot: {assistant_reply}\n")
+
+    &#35; 4. append the assistant's reply too — the step everyone forgets
+    conversation_history.append({"role": "assistant", "content": assistant_reply})</code></pre>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> Before writing
+      a chatbot, an experienced dev decides <em>where the memory lives</em>:
+      one list created once, outside the loop, so it survives across turns. The
+      easy-to-miss subtlety is that <em>both</em> sides of each exchange must be
+      appended &mdash; the user message before the call and the assistant reply
+      after &mdash; or the model can't see its own prior answers. They'd also
+      guard the missing-API-key case up front so the script fails with a clear
+      message instead of a stack trace.</p>
+
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3"
+          placeholder="e.g. Write a Python CLI chatbot that calls the Anthropic API and remembers..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever
+          assistant you use, and compare what it builds against this
+          session's example &mdash; does it actually maintain conversation
+          history correctly on both sides of each turn? That comparison is
+          the real test, not a score.
+        </div>
+      </div>
+
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a command-line chatbot in Python using the official anthropic SDK
+and python-dotenv. Load ANTHROPIC_API_KEY from a .env file; if it's
+missing, print a friendly message and exit cleanly instead of crashing.
+Use model "claude-haiku-4-5-20251001", max_tokens=500, and a system
+prompt that says to be friendly and concise. Keep a single
+conversation_history list of {"role","content"} dicts, created once
+before the loop. Each turn: read input, append the user message, send
+the ENTIRE history via client.messages.create(..., messages=
+conversation_history), read the reply from response.content[0].text,
+print it, then append the assistant reply to history too. Support 'quit'
+to exit and '/reset' to clear the history without exiting.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The "forgetful" bug is sending only the latest message, not the full history.</li>
+        <li>Fix: one list, created once; append the user turn, send it all, append the reply.</li>
+        <li>Forgetting to append the assistant's reply is the single most common cause.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Every production chat product &mdash; support bots, coding assistants, customer-facing widgets &mdash; is doing exactly what you built here: storing a running message list and re-sending it each turn. The "memory" users feel is application code, not the model.</li>
+      <li>Because history is re-sent every turn, long conversations cost more and eventually hit the context window &mdash; real teams trim or summarize old turns to stay within limits and control token spend, a direct consequence of statelessness.</li>
+      <li>"Our chatbot forgets what the user just said" is a genuinely common bug ticket, and the root cause is almost always a missing history append &mdash; the exact mistake worked through in Part 4.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Every request to an LLM API is structured with roles:</strong> system (developer instructions, set once), user (live human input), and assistant (the model's own previous responses).</li>
+      <li><strong>The model has no memory between API calls on its own.</strong> Any sense of "continuous conversation" is created by your code re-sending the entire history with every new request.</li>
+      <li><strong>The illusion of persistent memory in chat apps is maintained by the application layer</strong>, not the model &mdash; every new message silently includes everything said before it.</li>
+      <li><strong>The request-response cycle is:</strong> build a role-tagged request &rarr; send it &rarr; receive structured JSON &rarr; extract the text &rarr; append both the new user message and the new assistant reply to your running history.</li>
+      <li><strong>The most common beginner bug</strong> is forgetting to maintain and resend conversation history, which makes a chatbot seem "forgetful" even though the model is behaving exactly as designed.</li>
+    </ul>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../session-1-3-the-genai-landscape/lesson.html">&larr; Session 1.3</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/genai-grader.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

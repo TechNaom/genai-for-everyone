@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.2 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Sessions 1.1–1.2: predictive vs generative AI, tokens, embeddings, context windows, and why fluent answers can still be wrong.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-chapter-id="session-1-2-interview" data-active-chapter="session-1-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Section A Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Core Concepts (Sessions 1.1&ndash;1.2)</h1>
+  <p><em>These mirror how real entry-level GenAI interviews actually open in 2026 &mdash; fundamentals first, but probing for genuine understanding rather than memorized definitions. Interviewers listen for trade-off reasoning and concrete examples, not textbook recall.</em></p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Explain the difference between predictive and generative AI, using an example from everyday life.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Predictive AI <em>selects</em> from existing options or scores them &mdash; e.g. your email deciding whether an incoming message is spam or not. Generative AI <em>creates</em> new content that didn't exist before &mdash; e.g. ChatGPT drafting the reply to that email. A strong answer gives one concrete example of each and notes that real products often combine both (spam filter + smart-compose in the same inbox).</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating "AI" as one monolithic thing, or claiming generative AI is just "smarter" predictive AI &mdash; they answer fundamentally different kinds of questions (choose vs. create).</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Which one would you reach for to flag fraudulent transactions?" (Answer: predictive &mdash; it's a classification/scoring problem, not a content-creation one.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> What is a token, and why does the same sentence sometimes cost more in one language than another?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A token is the sub-word unit an LLM actually processes &mdash; not a letter, and not reliably a whole word. Common English words are often a single token, while rare words and many non-English languages get split into more, smaller pieces. Because APIs bill <em>per token</em>, the same idea expressed in Hindi or Japanese can use more tokens than the English equivalent and therefore cost more.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Saying "a token is a word" with no caveat, or assuming cost is about sentence <em>length in characters</em> rather than token count.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Why does an LLM struggle to count the letters in 'strawberry'?" (Answer: it never sees individual letters &mdash; it sees tokens like <code>straw</code> and <code>berry</code>.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Explain embeddings to a non-technical stakeholder, without using any math.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>An embedding is a "map of meaning." Instead of plotting cities by location, you plot words by what they mean, so similar-meaning words land close together &mdash; "dog" and "puppy" are neighbors; "dog" and "astronomy" are far apart. The clincher is the king &minus; man + woman &asymp; queen example: that relationship was <em>learned</em> from how words get used, never explicitly programmed.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Reaching for vectors, cosine similarity, or dimensions when the whole point was a non-technical explanation &mdash; or implying a human hand-coded which words are "similar."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Where would you actually use embeddings in a product?" (Answer: retrieval / RAG &mdash; finding the document chunks closest in meaning to a question.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> What is a context window, and what practical problem can arise from a very long conversation?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The context window is the model's working memory &mdash; the maximum amount of text (measured in tokens) it can "see" at once. Anything outside it is simply invisible to the model. In a long conversation, the earliest messages eventually fall off the desk and get "forgotten," and even within the window, information buried in the middle can get less effective attention than text near the edges (the "lost in the middle" effect).</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Describing "forgetting" as a bug or human-style bad memory, or assuming a bigger context window automatically means better answers.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"A user says the bot forgot what they told it earlier &mdash; is that a bug?" (Answer: usually not &mdash; it's a context-window limit, not a defect.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Why can a large language model produce a confident, fluent, completely incorrect answer to a factual question?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Because the model predicts the most <em>plausible</em> next token given everything in its context &mdash; it isn't retrieving verified facts from a database. Fluency and accuracy are separate properties: the same mechanism that makes text sound natural will happily produce a smooth, confident sentence that happens to be false. That's the seed explanation for hallucination.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Calling it "a glitch" or "the model lying," or assuming more training data alone fully eliminates the risk.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"So how do teams reduce it in practice?" (Answer: grounding in retrieved documents, evaluation, and guardrails &mdash; covered in later weeks.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Predictive AI <code>____</code> from existing options; generative AI creates new content.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="selects,chooses,picks" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> The smallest chunk of text an LLM actually processes is a <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="token" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> In embedding space, words with similar meaning land <code>____</code> together.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="close,closer" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> The context window is best described as the model's working <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="memory" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A confidently wrong LLM answer is called a <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="hallucination" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score &mdash; you're ready to talk about Week 1 fundamentals in an interview.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Back to Project</a>
+    <a href="../../index.html">All Sessions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.6 Week 1 Lab — Mini Build Day — GenAI for Everyone</title>
+<meta name="description" content="Synthesis lab: build the 'Explain It To Me Simply' tool, pulling together everything from Week 1 — generative output, context shaping, model choice, request/response mechanics, and honest hallucination-risk handling.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Week 1 · Session 1.6</span>
+    <span class="badge-difficulty">Foundations</span>
+    <span class="reading-time">~15 min (mostly building)</span>
+  </div>
+  <h1>Week 1 Lab — Mini Build Day</h1>
+  <p><em>Five sessions of ideas, one small real build. Today is where you prove it all actually connects.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#the-build">1. The build: "Explain It To Me Simply"</a>
+    <a href="#why-this-tool">2. Why this tool touches all of Week 1</a>
+    <a href="#steps">3. The build, step by step</a>
+    <a href="#done-well">4. "Done well" vs. "done technically"</a>
+    <a href="#reflection">5. Reflection: what clicked, what's fuzzy</a>
+  </nav>
+
+  <div class="hook">
+    Five sessions in, you've built a genuinely solid mental model: the
+    predictive/generative split, tokens and embeddings and context windows, the
+    landscape of providers, the mechanics of a real API call, and the honest
+    limitations of hallucination and bias. Today, <strong>none of that is new
+    information</strong> &mdash; today is about proving to yourself that it all
+    actually connects, by building one complete, polished tool that touches almost
+    every idea from this week. There's a real difference between "I understood that
+    when I read it" and "I can build with it under my own steam." Today is where you
+    find out which one is true &mdash; and where any gaps quietly surface so you can
+    close them before Week 2 builds on top of this foundation.
+  </div>
+
+  <div class="subtopic" id="the-build">
+    <span class="subtopic-label">Sub-topic 1 of 5</span>
+    <h2>1. The build: "Explain It To Me Simply"</h2>
+    <p>
+      You're building a command-line tool that takes any topic and an audience
+      level, and produces an explanation calibrated to that audience &mdash; a
+      10-year-old gets a different explanation than a working professional, who
+      gets a different explanation than a domain expert wanting a quick refresher.
+    </p>
+    <p>
+      This sounds simple. It's <em>deliberately</em> simple &mdash; today isn't
+      about complexity, it's about correctly assembling pieces you already
+      understand into something that actually works end to end.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a synthesis build?</span>
+      A synthesis build is a small project whose whole purpose is to make you use
+      several separate ideas <em>together</em>, in one working artifact, rather
+      than one idea in isolation. The value isn't the tool itself &mdash; it's the
+      moment you discover which concepts you can actually wield versus which ones
+      only felt clear while reading.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The tool takes a <strong>topic</strong> and an <strong>audience level</strong> and returns a calibrated explanation.</li>
+        <li>It is intentionally simple &mdash; the goal is assembly, not complexity.</li>
+        <li>"Works end to end" is the bar for today.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="why-this-tool">
+    <span class="subtopic-label">Sub-topic 2 of 5</span>
+    <h2>2. Why this tool touches all of Week 1</h2>
+    <p>
+      This project was chosen specifically because building it well requires
+      touching almost everything from this week. Each earlier session shows up as
+      a concrete design decision:
+    </p>
+
+    <div class="code-breakdown">
+      <dl>
+        <dt>Session 1.1 &mdash; predictive vs. generative</dt>
+        <dd>You're building a <em>generative</em> tool &mdash; every output is
+        freshly composed for the specific topic and audience, not selected from a
+        fixed list.</dd>
+
+        <dt>Session 1.2 &mdash; how LLMs work</dt>
+        <dd>Audience-appropriate explanations are fundamentally a <em>context</em>
+        problem &mdash; you're shaping what the model considers when generating,
+        the same idea as a context window holding relevant information.</dd>
+
+        <dt>Session 1.3 &mdash; the landscape</dt>
+        <dd>You'll make a real, defensible choice about which model tier fits this
+        task. Hint: think hard about whether you need a frontier-tier model, or
+        whether a smaller, faster tier does just as well.</dd>
+
+        <dt>Session 1.4 &mdash; your first application</dt>
+        <dd>The literal foundation: system/user roles, constructing a request,
+        parsing a response.</dd>
+
+        <dt>Session 1.5 &mdash; hallucination &amp; bias</dt>
+        <dd>You'll add a small but meaningful safeguard: flagging when a topic is
+        the kind of thing where hallucination risk is especially high (very
+        specific dates, statistics, niche technical claims).</dd>
+      </dl>
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... a well-scoped task?</span>
+      A well-scoped task is one with clear, bounded requirements that a smaller,
+      cheaper model can handle reliably. "Explain this topic at this level" is
+      well-scoped; "reason through a novel multi-step proof" is not. Recognizing
+      the difference is exactly the Session 1.3 judgment that keeps GenAI systems
+      fast and affordable.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Generative (1.1), context shaping (1.2), model choice (1.3), request/response (1.4), honesty flag (1.5) &mdash; all five, in one tool.</li>
+        <li>The tool is a well-scoped explanation task, so a lighter model tier is the right call.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="steps">
+    <span class="subtopic-label">Sub-topic 3 of 5</span>
+    <h2>3. The build, step by step</h2>
+    <p>
+      Six steps take you from an empty file to a working tool. The heart of it is
+      the three system prompts &mdash; that's where Session 1.4's roles become
+      concrete, and where "done well" and "done technically" diverge.
+    </p>
+
+    <ol>
+      <li><strong>Design the audience levels.</strong> At least three distinct
+        levels (a reasonable default: "curious beginner / kid," "working
+        professional, no specialized background," "domain expert wanting a
+        refresher"). For each, write one sentence on what should change &mdash; not
+        just vocabulary, but depth, analogy use, and assumed background.</li>
+      <li><strong>Design the system prompt.</strong> Not just "explain simply"
+        (too vague) but something that specifies tone, length, and what kind of
+        analogies fit each level.</li>
+      <li><strong>Build the input handling.</strong> Accept a topic and a level,
+        validate the level against your defined options, and give a clear error if
+        something's missing or invalid.</li>
+      <li><strong>Make the API call.</strong> Apply Session 1.4 directly:
+        construct the request with the right roles, send it, parse the response,
+        and handle a failed call gracefully rather than crashing.</li>
+      <li><strong>Add the honesty flag.</strong> Before displaying, check whether
+        the topic or explanation contains specific numbers, dates, or claims worth
+        independently verifying &mdash; and if so, append a short, non-alarmist
+        note.</li>
+      <li><strong>Test across all three levels with the same topic.</strong> If
+        "explain quantum entanglement" produces meaningfully different output per
+        level, it works. If all three sound suspiciously similar, your system
+        prompt needs more specific per-level instructions.</li>
+    </ol>
+
+    <p>
+      Here is the skeleton the exercise scaffolds for you &mdash; the three system
+      prompts and the API call are the parts that integrate this week's ideas:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">explainer.py</span>
+      </div>
+      <pre><code>MODEL_NAME = "claude-haiku-4-5-20251001"  &#35; a fast, low-cost tier (Session 1.3 judgment)
+
+SYSTEM_PROMPTS = {
+    "beginner": (
+        "You explain things to a curious 10-year-old with no background "
+        "knowledge. Use ONE simple, everyday analogy. NEVER use jargon "
+        "without immediately explaining it. Keep it to 3-4 short sentences."
+    ),
+    "professional": (
+        "You explain things to an intelligent working professional with no "
+        "specialized background in this topic. Moderate vocabulary is fine; "
+        "avoid deep jargon unless you define it. Aim for 4-6 sentences."
+    ),
+    "expert": (
+        "You give a quick, dense refresher to someone with deep domain "
+        "expertise. Skip basic setup. Use precise terminology freely. "
+        "Focus on nuance rather than fundamentals. 2-4 sentences."
+    ),
+}
+
+def explain(client, topic, level):
+    response = client.messages.create(
+        model=MODEL_NAME,
+        max_tokens=400,
+        system=SYSTEM_PROMPTS[level],
+        messages=[{"role": "user", "content": f"Explain: {topic}"}],
+    )
+    return response.content[0].text</code></pre>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the entire quality
+      of this tool lives in the three system prompts, not the code around them. So
+      the real "thought process" is prompt design: for each level, decide what
+      vocabulary is banned, what kind of analogy is required, what background you're
+      allowed to assume, and how long the answer should be. Vague instructions
+      ("explain simply") produce vague differentiation; concrete behavioral
+      instructions produce real differentiation. This is exactly the judgment Week 2
+      turns into a repeatable skill.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python CLI that explains a topic at three audience levels using three distinct system prompts..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this session's exercise &mdash; does it actually apply the five Week 1 ideas the way this lab intends? That comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python command-line tool called explainer.py that takes --topic and --level (beginner, professional, expert). Use the Anthropic SDK with a fast, low-cost model tier. Define three DISTINCT system prompts, one per level: the beginner prompt must forbid jargon and require one everyday analogy in 3-4 sentences; the professional prompt allows moderate vocabulary in 4-6 sentences; the expert prompt skips basics, uses precise terminology, and stays to 2-4 sentences. Validate the level, handle a missing API key and a failed API call gracefully, and after printing the explanation, run a simple keyword check for verification-worthy content (numbers, dates, "study", "percent") and append a short, non-alarmist note when it triggers.</pre></div>
+      </details>
+    </div>
+
+    <p>
+      Step 5's honesty flag is a small, self-contained heuristic &mdash; a plain
+      Python function, no API needed. Try it right here:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">honesty_flag.py</span>
+        <button class="playground-run-btn" data-playground-run>▶ Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="9">FLAG_KEYWORDS = ["study", "statistic", "percent", "%", "according to", "exactly"]
+
+def needs_verification_flag(text):
+    lowered = text.lower()
+    return any(keyword in lowered for keyword in FLAG_KEYWORDS)
+
+print(needs_verification_flag("A 2020 study found 63 percent of cells react."))
+print(needs_verification_flag("Gravity pulls things toward the ground."))</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" to see the output here &mdash; runs a real Python interpreter right in this page.</div>
+    </div>
+    <p class="playground-note">First click loads a real Python engine in your browser (a few seconds) &mdash; after that, running is instant. Notice the honesty flag is intentionally a simple heuristic, not a robust fact-checker.</p>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why the honesty flag is deliberately crude</summary>
+      <p>
+        A keyword scan will flag some safe text and miss some risky text &mdash;
+        it's not a real fact-checker. That's on purpose. The point of Step 5 isn't
+        to solve hallucination (no current tool does that fully &mdash; see Session
+        1.5), it's to build the <em>habit</em> of pairing every generated output
+        with an honest signal about where it might be wrong. Later weeks replace
+        this crude heuristic with grounding, retrieval, and evaluation &mdash; but
+        the instinct to flag uncertainty starts here.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Six steps: levels &rarr; system prompts &rarr; input handling &rarr; API call &rarr; honesty flag &rarr; test all three levels.</li>
+        <li>The system prompts are the heart of the build.</li>
+        <li>The honesty flag is a simple heuristic that builds a habit, not a fact-checker.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="done-well">
+    <span class="subtopic-label">Sub-topic 4 of 5</span>
+    <h2>4. "Done well" vs. "done technically"</h2>
+    <p>
+      It's possible to build something that runs without errors and still misses
+      the point of the exercise. Here's the difference, concretely.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Done technically (passes, but misses the point)</span>
+      The tool accepts a topic and a level, sends a generic prompt like "explain
+      {topic} for a {level}," and prints whatever comes back. It runs. It doesn't
+      crash. But the outputs across levels often sound nearly identical, just
+      slightly shorter or longer &mdash; because the system prompt never actually
+      specified <em>what should differ</em> beyond length.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Done well (the actual goal)</span>
+      The system prompt for each level specifies concrete behavioral instructions
+      &mdash; for the "curious kid" level, explicitly requiring a relatable everyday
+      analogy and forbidding jargon entirely; for the "domain expert" level,
+      explicitly allowing field-specific terminology and skipping basic setup the
+      expert would find condescending. The difference isn't more code &mdash; it's
+      a more thoughtful system prompt.
+    </div>
+
+    <p>
+      That distinction &mdash; recognizing that near-identical output is a
+      <em>system-prompt</em> problem, not a code problem &mdash; is itself a Week 1
+      skill, and exactly the kind of judgment Week 2 (Prompt Engineering) will
+      formalize into a repeatable practice.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>"Runs without errors" and "demonstrates understanding" are different bars.</li>
+        <li>Near-identical output across levels is a system-prompt problem, not a code problem.</li>
+        <li>Quality lives in the prompt's specificity: banned jargon, required analogy types, assumed background.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="reflection">
+    <span class="subtopic-label">Sub-topic 5 of 5</span>
+    <h2>5. Reflection: what clicked, what's fuzzy</h2>
+    <p>
+      Before moving into Week 2, take five honest minutes (genuinely worth doing,
+      not a platitude) to answer these for yourself:
+    </p>
+    <ul>
+      <li>Could you explain, without looking back, why an LLM might confidently give
+        a wrong answer to a very specific factual question? If shaky, revisit
+        Session 1.5.</li>
+      <li>Could you sketch, from memory, what happens between typing a message and
+        seeing a response, including the role of conversation history? If not,
+        Session 1.4 is worth a second pass.</li>
+      <li>Did building today's tool surprise you anywhere &mdash; a place where you
+        thought you understood something until you had to implement it? That
+        surprise is valuable information.</li>
+    </ul>
+    <p>
+      This isn't busywork. The single best predictor of struggling in Week 2 (and
+      beyond) is carrying forward an unexamined gap from Week 1, because everything
+      after this point assumes this foundation is solid.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Honest self-assessment now is cheaper than discovering a gap later.</li>
+        <li>Shaky on hallucination &rarr; Session 1.5. Shaky on request/response &rarr; Session 1.4.</li>
+        <li>The surprises during the build are the most useful signal you have.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Audience-adaptive explanation is how real products ship the same content to different tiers of user &mdash; a "explain like I'm five" toggle, an "expert mode," a plain-language summary of a legal or medical document.</li>
+      <li>The "done technically vs. done well" gap is the single most common reason a demoable GenAI feature never becomes a shippable one &mdash; it runs, but the differentiation is shallow.</li>
+      <li>Pairing every generated answer with an honesty signal (a source, a confidence note, a "verify this" flag) is now standard practice in production GenAI, from search summaries to customer-support copilots.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Today's build deliberately touches every major idea from Week 1</strong> &mdash; predictive/generative, context and tokens, model choice, request/response mechanics, and honest handling of hallucination risk.</li>
+      <li><strong>"Runs without errors" and "actually demonstrates understanding" are different bars.</strong> A tool that produces nearly identical output across audience levels has a system-prompt problem, not a code problem &mdash; and recognizing that distinction is itself a Week 1 skill.</li>
+      <li><strong>The quality of an adaptive tool lives almost entirely in the system prompt's specificity.</strong> Vague instructions produce vague differentiation; concrete behavioral instructions (banned jargon, required analogy types, assumed background) produce real differentiation.</li>
+      <li><strong>Honest self-assessment now is cheaper than discovering a gap later.</strong> Week 2 builds directly on this week's foundation; an unexamined gap here compounds.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; it's lighter than
+    usual, since today is mostly building.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../session-1-5-limitations-hallucination-bias/lesson.html">&larr; Session 1.5</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

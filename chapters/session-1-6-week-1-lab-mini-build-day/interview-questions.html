@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.6 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Scenario-based interview prep synthesizing all of Week 1: scoping an AI request end to end, and knowing when NOT to reach for generative AI.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.6 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Synthesizing Week 1</h1>
+  <p>
+    These are scenario-based questions that pull together everything from Week 1
+    &mdash; the kind an interviewer uses to check whether you can actually
+    <em>scope</em> an AI problem rather than just define terms. Interviewers
+    consistently say they're listening for trade-off reasoning and concrete
+    examples, not textbook recall. Each question includes what a strong answer
+    sounds like, common red flags, and a natural follow-up. Click any question to
+    expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Your manager says: "Let's add AI to our checkout flow to stop fraud." Walk me through how you'd scope this.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>First, recognize that this is most likely a <strong>predictive</strong> AI problem &mdash; classification or scoring of transactions &mdash; not a generative one, so an LLM may not be the right tool at all. Then show the discipline of asking clarifying questions <em>before</em> writing any code: what does "stop fraud" mean operationally (block, flag, or review?), what labelled data is available, and what's the relative cost of a false positive (blocking a legitimate customer) versus a false negative (letting fraud through)? The scoping conversation matters more than the model choice.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumping straight to "we'll use an LLM" without questioning whether the problem is even generative, or starting to design a solution without asking a single clarifying question about data, definitions, or error costs.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Which is worse for this business &mdash; a false positive or a false negative &mdash; and how would that change where you set the decision threshold?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Give an example of a business request that sounds like it needs generative AI but is actually better solved with a simpler, non-AI approach.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A concrete example works best: e.g., an "auto-reply to common support emails" request where the replies are actually a handful of fixed responses keyed to a category &mdash; a templated, rules-based auto-responder does the job reliably, cheaply, and predictably, with no LLM at all. The reasoning is that added complexity (API cost, latency, hallucination risk, evaluation burden) isn't justified when a simpler tool does the job just as well. Reaching for an LLM by default is a common and expensive mistake.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Being unable to produce a concrete example, treating "AI" as automatically better, or ignoring the real costs an LLM adds (latency, unpredictability, the need to guard against hallucination).</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What would have to change about the requirements before an LLM genuinely became the right tool for that same task?"</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check across the whole week &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Predictive AI selects from existing options; generative AI <code>____</code> new content.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="creates,generates,composes,produces" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> The model has no memory between API calls, so the full <code>____</code> history must be sent with each request.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="conversation,chat,message" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A well-scoped task can often run on a smaller, cheaper model <code>____</code> instead of a frontier one.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="tier,model,size" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Fluency and <code>____</code> are separate properties &mdash; an LLM can sound confident and still be wrong.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="accuracy,correctness,truth" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Before writing any code for a vague AI request, a strong engineer first asks <code>____</code> questions.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="clarifying,scoping" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you can talk about Week 1 as a connected whole, not five separate facts.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>For scenario questions, think out loud: naming your assumptions and asking clarifying questions <em>is</em> the answer interviewers want &mdash; scoping discipline is the skill being tested, not a memorized definition.</li>
+    <li>When asked "would you use AI here?", the strong move is often to argue for the <em>simplest</em> tool that works. Showing you won't over-engineer with an LLM is itself a senior signal.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

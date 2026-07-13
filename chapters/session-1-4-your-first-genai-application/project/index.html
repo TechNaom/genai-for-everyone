@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.4 Project: Debug the Forgetful Chatbot — GenAI for Everyone</title>
+<meta name="description" content="Pro-path project for Session 1.4: diagnose the forgetful-chatbot bug from the code alone, fix it, and add a /reset command.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="../../../docs/curriculum/index.html">Roadmap</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../interview-questions.html">&larr; Back to interview questions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.4 Project</span>
+    <span class="badge-difficulty">Pro path</span>
+    <span class="reading-time">30 min build</span>
+  </div>
+  <h1>Debug the Forgetful Chatbot</h1>
+  <p>A pro-path extended challenge. You're given a broken chatbot script with the exact "forgetful" bug from the lesson (Part 4). You'll <strong>diagnose the bug from the code alone</strong> (not just from watching it run), fix it, then add a feature: a <code>/reset</code> command that clears conversation history without exiting the program.</p>
+
+  <h2>What you'll build</h2>
+  <p>Starting from a chatbot that works for the first exchange but loses all context on any follow-up, you'll:</p>
+  <ul>
+    <li><strong>Diagnose</strong> &mdash; read the loop in <code>starter.py</code> and identify <em>why</em> it forgets. It builds a brand-new one-message list every turn, so the stateless model never receives anything said earlier.</li>
+    <li><strong>Fix</strong> &mdash; keep a single running <code>conversation_history</code> list across turns: append the user's message, send the whole history, then append the assistant's reply too.</li>
+    <li><strong>Extend</strong> &mdash; add a <code>/reset</code> command that rebinds the history to a fresh empty list without exiting. This tests whether you understand exactly <em>what</em> the history list represents and <em>when</em> it's safe to clear it.</li>
+  </ul>
+
+  <h2>Example run (after your fix)</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>Chatbot ready. Type 'quit' to exit, '/reset' to clear history.
+
+You: summarize the solar system
+Bot: The solar system is the Sun and everything bound to it by gravity —
+     eight planets, their moons, plus dwarf planets, asteroids, and comets.
+
+You: now do that in one sentence
+Bot: The solar system is the Sun and all the planets, moons, and smaller
+     bodies orbiting it.
+
+You: /reset
+(history cleared — starting fresh)
+
+You: do that in one sentence
+Bot: Sure — do what in one sentence? I don't have anything to shorten yet.</code></pre>
+  </div>
+  <p>That last exchange is the point: after <code>/reset</code>, the bot genuinely has no memory of the earlier answer, exactly as designed.</p>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Install dependencies with <code>pip install anthropic python-dotenv</code>,
+    then run <code>python starter.py</code>. Copy the repo's
+    <code>.env.example</code> to <code>.env</code> and add
+    <code>ANTHROPIC_API_KEY</code> &mdash; every major provider's free tier
+    covers the few test messages here. No key handy? Read <code>solution.py</code>
+    and trace the logic by hand.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>Ideas to make it your own (optional stretch goals)</h2>
+  <ul>
+    <li>Add a <code>/history</code> command that prints how many turns are currently stored.</li>
+    <li>Cap the history length so very long conversations don't grow unbounded.</li>
+    <li>Give the bot a different persona by editing <code>SYSTEM_PROMPT</code>.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>Maintaining and correctly clearing conversation state is the single most common source of real chatbot bugs. The list-is-the-memory mental model you practice here carries directly into every multi-turn GenAI app you'll build later in this course.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../interview-questions.html">&larr; Interview Questions</a>
+    <a href="../../session-1-5-limitations-hallucination-bias/lesson.html">Session 1.5 &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

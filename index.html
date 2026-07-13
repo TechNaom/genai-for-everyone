@@ -1,135 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GenAI for Everyone - Free, Visual GenAI Course</title>
-  <meta name="description" content="A free, visual, production-aware GenAI course with prompts, RAG, agents, evals, safety, deployment, and portfolio projects.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/site.css?v=course-sidebar-shell-20260711">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenAI for Everyone — Free, Interactive GenAI Course</title>
+<meta name="description" content="A free, interactive 7-week Generative AI course for everyone — prompt engineering, RAG, agents, evaluation, safety, and deployment. Self-checking quizzes, real projects, interview prep.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">Sessions</button>
-  <aside id="chapter-sidebar" class="sidebar" data-root="" aria-label="Session navigation"></aside>
-  <div class="sidebar-scrim" id="sidebar-scrim"></div>
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
 
-  <header class="top-bar">
-    <div class="page nav-page">
-      <a class="brand" href="index.html">GenAI for Everyone</a>
-      <nav aria-label="Primary navigation">
-        <a href="#sessions">All Sessions</a>
-        <a href="docs/curriculum/CURRICULUM_MAP.md">Roadmap</a>
-        <a href="assessments/interview-questions/week-01-interview-qs.md">Interview Prep</a>
-      </nav>
+<header class="top-bar">
+  <div class="page">
+    <a href="index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="docs/curriculum/index.html">Roadmap</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="page">
+    <span class="hero-eyebrow">✨ 100% Free &middot; No Sign-Up</span>
+    <h1>A 7-week, cohort-tested course that turns "I've used ChatGPT" into "I can ship a GenAI product."</h1>
+    <p class="lede">
+      Every session is built the same tested way: a plain-language hook, a
+      real concept broken into digestible pieces, a hands-on artifact you
+      actually build, a self-checking quiz, and interview-ready recall
+      practice. You'll go from what an LLM actually is, through prompting,
+      RAG, agents, evaluation and safety, to deploying and monitoring a real
+      GenAI application — then prove it with a capstone.
+    </p>
+    <div class="hero-badges">
+      <span>🧠 Plain-language first</span>
+      <span>✅ Self-checking quizzes</span>
+      <span>🛠️ Real hands-on builds</span>
+      <span>💼 Interview-ready</span>
+      <span>🏆 Capstone project</span>
     </div>
-  </header>
+    <a href="chapters/session-1-1-what-genai-actually-is-and-isnt/lesson.html" class="btn-primary">Start Session 1.1 →</a>
+    <a href="docs/curriculum/index.html" class="btn-secondary">View the roadmap</a>
 
-  <section class="hero" aria-labelledby="hero-title">
-    <div class="page">
-      <span class="hero-eyebrow">Free - visual - production-aware</span>
-      <h1 id="hero-title">Learn GenAI like a modern AI builder.</h1>
-      <p class="lede">
-        Build intuition through prompts, model behavior, RAG, agents, evals,
-        safety, deployment, and portfolio work. The course stays friendly on
-        the surface and engineering-grade underneath.
-      </p>
-      <div class="hero-badges" aria-label="Course highlights">
-        <span>Plain-language first</span>
-        <span>Prompt-testing labs</span>
-        <span>RAG and agent workflows</span>
-        <span>Portfolio capstone</span>
-      </div>
-      <div class="action-row">
-        <a class="btn-primary" href="weeks/week-01-foundations/session-1.1-what-genai-actually-is-and-isnt.md">Start Session 1.1</a>
-        <a class="btn-secondary" href="#sessions">Browse sessions</a>
-      </div>
-      <div class="hero-stats" aria-label="Course statistics">
-        <div><strong>42</strong><span>guided sessions</span></div>
-        <div><strong>7</strong><span>learning weeks</span></div>
-        <div><strong>6</strong><span>build labs</span></div>
-        <div><strong>0</strong><span>signup required</span></div>
-      </div>
+    <div class="hero-stats">
+      <div><strong>42</strong><span>guided sessions</span></div>
+      <div><strong>7</strong><span>weeks, project-driven</span></div>
+      <div><strong>1</strong><span>capstone, portfolio-ready</span></div>
+      <div><strong>$0</strong><span>cost, ever</span></div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <main class="page">
-    <section class="why-section" aria-labelledby="why-title">
-      <h2 id="why-title">Why This Course Is Different</h2>
-      <div class="feature-grid">
-        <article class="feature-card">
-          <span class="card-label">Mentor style</span>
-          <h3>Simple outside, deep inside</h3>
-          <p>Each topic starts with the real problem, then moves into mental models, examples, trade-offs, and production awareness.</p>
-        </article>
-        <article class="feature-card">
-          <span class="card-label">Builder style</span>
-          <h3>Every session has a learning artifact</h3>
-          <p>Learners open lessons, quizzes, exercises, slides, exams, and interview prep from the same course card.</p>
-        </article>
-        <article class="feature-card">
-          <span class="card-label">Career style</span>
-          <h3>Designed for explanation power</h3>
-          <p>The goal is not only to use GenAI. The learner should be able to explain architecture, risks, evaluation, and business value.</p>
-        </article>
-      </div>
-    </section>
+<main class="page">
 
-    <section class="roadmap-strip" aria-labelledby="roadmap-title">
-      <div class="section-heading-row">
-        <div>
-          <span class="section-kicker">Complete learning path</span>
-          <h2 id="roadmap-title">Roadmap Spine</h2>
-        </div>
-        <a class="section-link" href="docs/curriculum/CURRICULUM_MAP.md">Open full roadmap</a>
-      </div>
-      <div class="week-rail" aria-label="Seven week roadmap">
-        <article><span>01</span><strong>Foundations</strong><small>AI mental models</small></article>
-        <article><span>02</span><strong>Prompting</strong><small>Reusable prompt systems</small></article>
-        <article><span>03</span><strong>RAG</strong><small>Knowledge-grounded apps</small></article>
-        <article><span>04</span><strong>Agents</strong><small>Tools and workflows</small></article>
-        <article><span>05</span><strong>Evaluation</strong><small>Safety and trust</small></article>
-        <article><span>06</span><strong>Deployment</strong><small>Cost, scale, monitoring</small></article>
-        <article><span>07</span><strong>Capstone</strong><small>Portfolio readiness</small></article>
-      </div>
-    </section>
+  <h2>Why this course is different</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="icon">📘</span>
+      <h3>Every term explained</h3>
+      <p>"What is...?" boxes define new words the moment they appear — no silent jargon about tokens, embeddings, or context windows.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">✅</span>
+      <h3>Instant-check quizzes</h3>
+      <p>Fill in the blank, hit Check, and know immediately — no waiting, no backend, nothing tracked.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🔬</span>
+      <h3>Core path and Pro path</h3>
+      <p>Every session has a straightforward core build and a stretch Pro-path variant for readers who want more depth.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🛠️</span>
+      <h3>Real, working builds</h3>
+      <p>Every week ends with a Mini Build Day — something genuinely worth showing someone, not a throwaway toy example.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🕸️</span>
+      <h3>Spiral, not linear</h3>
+      <p>Concepts like grounding, evaluation, and safety come back repeatedly at increasing depth — because that's how you actually get good at them.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🕵️</span>
+      <h3>Failure modes taught on purpose</h3>
+      <p>Hallucination, RAG failure modes, agent loops that never terminate — every one gets a session, because production GenAI breaks in specific, learnable ways.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">💼</span>
+      <h3>Interview prep built in</h3>
+      <p>Strong-answer / red-flag / follow-up breakdowns for every session's core concepts.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🌍</span>
+      <h3>Open source, forever</h3>
+      <p>MIT licensed. Clone it, fork it, use it for your own classroom or study group.</p>
+    </div>
+  </div>
 
-    <section id="sessions" class="course-map" aria-labelledby="sessions-title">
-      <div class="section-heading-row board-heading">
-        <div>
-          <span class="section-kicker">Course dashboard</span>
-          <h2 id="sessions-title">All Sessions</h2>
-        </div>
-        <div class="board-tools" role="toolbar" aria-label="Course filters">
-          <input id="session-search" type="search" placeholder="Search prompts, RAG, agents, evals, deployment..." aria-label="Search sessions">
-          <div id="week-tabs" class="week-tabs" role="tablist" aria-label="Week filter"></div>
-        </div>
-      </div>
+  <div class="hook">
+    A course that only teaches "here's a prompt template" leaves you unable to debug why your RAG pipeline retrieves the wrong document, or why your agent loops forever. This course is built artifact-first: every session produces something you run, break, and fix — a prompt, an embedding search, a tool-calling agent, an eval harness, a deployed endpoint — so the concept sticks because you built it, not because you read about it.
+  </div>
 
-      <p class="section-intro">
-        Pick a week, open a session, and follow the same rhythm every time:
-        lesson, slides, exercise, quiz, written exam, and interview practice.
-      </p>
+  <h2>Sessions</h2>
+  <div class="chapter-grid">
+    <a class="chapter-card module-1" data-chapter-link="session-1-1" href="chapters/session-1-1-what-genai-actually-is-and-isnt/lesson.html">
+      <span class="chapter-card-icon">🤖</span>
+      <span class="chapter-card-num">Session 1.1</span>
+      <h3>What GenAI Actually Is (and Isn't)</h3>
+      <p>generative vs. predictive AI &middot; what an LLM can/can't do &middot; myths worth retiring</p>
+      <span class="chapter-card-cta">Start learning <span aria-hidden="true">→</span></span>
+    </a>
+    <a class="chapter-card module-1" data-chapter-link="session-1-2" href="chapters/session-1-2-how-llms-work-without-the-math-fear/lesson.html">
+      <span class="chapter-card-icon">🧮</span>
+      <span class="chapter-card-num">Session 1.2</span>
+      <h3>How LLMs Work, Without the Math Fear</h3>
+      <p>tokens &middot; next-token prediction &middot; context windows &middot; why LLMs hallucinate</p>
+      <span class="chapter-card-cta">Start learning <span aria-hidden="true">→</span></span>
+    </a>
+    <a class="chapter-card module-1" data-chapter-link="session-1-3" href="chapters/session-1-3-the-genai-landscape/lesson.html">
+      <span class="chapter-card-icon">🗺️</span>
+      <span class="chapter-card-num">Session 1.3</span>
+      <h3>The GenAI Landscape</h3>
+      <p>model providers &middot; open vs. closed &middot; APIs vs. chat apps &middot; picking the right tool</p>
+      <span class="chapter-card-cta">Start learning <span aria-hidden="true">→</span></span>
+    </a>
+    <a class="chapter-card module-1" data-chapter-link="session-1-4" href="chapters/session-1-4-your-first-genai-application/lesson.html">
+      <span class="chapter-card-icon">👋</span>
+      <span class="chapter-card-num">Session 1.4</span>
+      <h3>Your First GenAI Application</h3>
+      <p>calling a model API &middot; system vs. user prompts &middot; your first working script</p>
+      <span class="chapter-card-cta">Start learning <span aria-hidden="true">→</span></span>
+    </a>
+    <a class="chapter-card module-1" data-chapter-link="session-1-5" href="chapters/session-1-5-limitations-hallucination-bias/lesson.html">
+      <span class="chapter-card-icon">⚠️</span>
+      <span class="chapter-card-num">Session 1.5</span>
+      <h3>Limitations, Hallucination & Bias</h3>
+      <p>why models make things up &middot; training-data bias &middot; when not to trust the output</p>
+      <span class="chapter-card-cta">Start learning <span aria-hidden="true">→</span></span>
+    </a>
+    <a class="chapter-card module-1" data-chapter-link="session-1-6" href="chapters/session-1-6-week-1-lab-mini-build-day/lesson.html">
+      <span class="chapter-card-icon">🛠️</span>
+      <span class="chapter-card-num">Session 1.6</span>
+      <h3>Week 1 Lab — Mini Build Day</h3>
+      <p>put week 1 together into one small, real, working GenAI script</p>
+      <span class="chapter-card-cta">Start learning <span aria-hidden="true">→</span></span>
+    </a>
 
-      <div id="session-grid" class="module-list" aria-live="polite"></div>
-    </section>
+    <!-- Weeks 2-7: content exists (see weeks/, codebase/, assessments/) but not yet converted to this template -->
+    <div class="chapter-card chapter-card-more"><span class="chapter-card-num">Week 2</span><h3>Prompt Engineering &amp; Application Design</h3><p>Anatomy of a prompt &middot; few/zero-shot &middot; chain-of-thought &middot; structured outputs &middot; prompt systems</p><span class="badge-coming-soon">Coming soon to this template</span></div>
+    <div class="chapter-card chapter-card-more"><span class="chapter-card-num">Week 3</span><h3>Embeddings &amp; RAG</h3><p>Why LLMs need external knowledge &middot; embeddings &middot; vector databases &middot; building a RAG pipeline &middot; failure modes</p><span class="badge-coming-soon">Coming soon to this template</span></div>
+    <div class="chapter-card chapter-card-more"><span class="chapter-card-num">Week 4</span><h3>Tool Use, Agents &amp; Automation</h3><p>What agents actually means &middot; function/tool calling &middot; multi-step agents &middot; multi-agent patterns &middot; automation</p><span class="badge-coming-soon">Coming soon to this template</span></div>
+    <div class="chapter-card chapter-card-more"><span class="chapter-card-num">Week 5</span><h3>Evaluation, Safety &amp; Responsible AI</h3><p>Why "looks good" isn't evaluation &middot; eval methods &middot; safety fundamentals &middot; bias in practice &middot; guardrails</p><span class="badge-coming-soon">Coming soon to this template</span></div>
+    <div class="chapter-card chapter-card-more"><span class="chapter-card-num">Week 6</span><h3>Deployment, Cost &amp; MLOps for GenAI</h3><p>Notebook to application &middot; cost &amp; latency &middot; choosing models &middot; monitoring &middot; CI/CD for prompts</p><span class="badge-coming-soon">Coming soon to this template</span></div>
+    <div class="chapter-card chapter-card-more"><span class="chapter-card-num">Week 7</span><h3>Capstone &amp; Career Prep</h3><p>Capstone kickoff &amp; build days &middot; real-world case studies &middot; mock interviews &middot; demo day</p><span class="badge-coming-soon">Coming soon to this template</span></div>
+  </div>
 
-    <section class="capstone-panel" aria-labelledby="capstone-title">
-      <div>
-        <span class="section-kicker">Final outcome</span>
-        <h2 id="capstone-title">Build a GenAI portfolio project, not just course notes.</h2>
-        <p>By the final week, learners should be ready to scope, build, evaluate, deploy, demo, and defend a GenAI system in a real product conversation.</p>
-      </div>
-      <a class="btn-primary" href="weeks/week-07-capstone-career-prep/session-7.1-capstone-kickoff.md">Open capstone kickoff</a>
-    </section>
-  </main>
+  <h2>How to use this course</h2>
+  <ul>
+    <li>Read the lesson, take the quiz, do the exercises, then build the week's hands-on artifact — in that order.</li>
+    <li>Every quiz question has its own <strong>Check</strong> button, so you get instant feedback without submitting anything or waiting for a grader.</li>
+    <li>Sessions with real Python (embeddings, RAG, tool calling) run right in this browser via an in-page Python playground — no local setup needed to follow along.</li>
+    <li>Running the exercise/solution files locally requires <a href="https://www.python.org/downloads/">Python 3</a> — see the README for setup.</li>
+    <li>Each week closes with a Mini Build Day — the one artifact worth putting in a portfolio or talking about in an interview.</li>
+  </ul>
 
-  <footer class="site-footer page">
-    <span>TechNaom GenAI for Everyone</span>
-    <a href="README.md">Repository README</a>
-  </footer>
+  <h2>Course roadmap</h2>
+  <p>
+    Week 1 (6 sessions) is live in this template. The full 7-week / 42-session
+    curriculum already exists as real content — see the full chapter-by-chapter
+    breakdown in <a href="docs/curriculum/index.html">the roadmap page</a>.
+  </p>
 
-  <script src="assets/site.js"></script>
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="assets/progress.js"></script>
+<script src="assets/chapters-data.js"></script>
+<script src="assets/sidebar.js"></script>
 </body>
 </html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.3 The GenAI Landscape — GenAI for Everyone</title>
+<meta name="description" content="A durable framework for choosing a GenAI model: closed vs open-weight providers, the trade-off dimensions that actually matter, and a practical decision process.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="../../docs/curriculum/index.html">Roadmap</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.3</span>
+    <span class="badge-difficulty">Beginner</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>The GenAI Landscape</h1>
+  <p><em>You know <strong>what</strong> generative AI is and roughly <strong>how</strong> it works. Now the practical question: when you actually have to build something, which model do you reach for &mdash; and why?</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#players">1. The major players</a>
+    <a href="#dimensions">2. Dimensions that matter</a>
+    <a href="#framework">3. A decision framework</a>
+    <a href="#worked">4. A worked comparison</a>
+  </nav>
+
+  <div class="hook">
+    The GenAI landscape changes constantly &mdash; new models launch what
+    feels like every few weeks, benchmarks shuffle, prices shift. A "best
+    model" ranking would be wrong within months. So this session teaches
+    something more durable: the <strong>categories</strong>, the
+    <strong>trade-off dimensions</strong>, and the <strong>decision
+    framework</strong> that stay useful long after today's specific model
+    names are replaced by their successors. A working professional doesn't
+    memorize a leaderboard &mdash; they know how to <em>evaluate</em> whatever's
+    on it.
+  </div>
+
+  <div class="subtopic" id="players">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. The major players &mdash; a map, not a leaderboard</h2>
+    <p>
+      Ranking models goes stale immediately. Understanding the <em>kinds</em>
+      of organizations building them does not &mdash; it tells you something
+      durable about their incentives and strengths. The landscape splits
+      into two camps.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a closed/proprietary API provider?</span>
+      A company that trains large, frontier-capability models and makes them
+      available <em>only</em> through an API or chatbot product &mdash; you
+      can never download the weights or run the model yourself. The names you
+      hear constantly: <strong>OpenAI</strong> (GPT, ChatGPT),
+      <strong>Anthropic</strong> (Claude), and <strong>Google</strong>
+      (Gemini).
+    </div>
+
+    <p>
+      What unites the closed providers: they pour enormous resources into
+      training the largest, most capable models, and monetize through API
+      usage fees and subscriptions. The trade you make with them:
+    </p>
+    <ul>
+      <li><strong>You get</strong> convenience &mdash; no infrastructure to manage, frontier capability, automatic improvements.</li>
+      <li><strong>You give up</strong> control over how the model runs, where your data goes during processing, and the ability to customize the model's internals.</li>
+    </ul>
+
+    <div class="what-is">
+      <span class="label">What is... an open-weight provider?</span>
+      An organization that releases the actual trained model &mdash; its
+      parameters, the literal "weights" &mdash; for anyone to download and run
+      on their own hardware. <strong>Meta</strong> (the Llama family) is the
+      most prominent, alongside <strong>Mistral</strong> and
+      <strong>DeepSeek</strong>.
+    </div>
+
+    <p>
+      "Open" here is a specific, technical claim. It doesn't always mean "open
+      source" in the traditional software sense &mdash; training data and
+      training code are often still private &mdash; but it does mean you can:
+    </p>
+    <ul>
+      <li>self-host the model on your own infrastructure,</li>
+      <li>fine-tune it on your own data,</li>
+      <li>and guarantee your data never leaves your infrastructure during inference.</li>
+    </ul>
+    <p>
+      The cost: you (or your company) now own all the infrastructure
+      complexity &mdash; GPUs, serving software, scaling, monitoring &mdash;
+      that the closed providers handle invisibly for you.
+    </p>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why this split isn't going away</summary>
+      <p>
+        This isn't a temporary market quirk &mdash; it reflects a genuine
+        tension. Building frontier models costs an enormous amount in compute
+        and research talent, which pushes providers toward charging for access
+        (closed). But many organizations &mdash; regulated industries like
+        healthcare and finance, or anyone with strict data-residency rules
+        &mdash; have a hard requirement that data never transits a third
+        party's servers, which only open, self-hostable models satisfy.
+        Expect both categories to keep existing, growing, and competing
+        indefinitely: they solve for genuinely different constraints, not the
+        same axis.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>Closed/proprietary</strong> (OpenAI, Anthropic, Google): frontier capability, zero infrastructure burden, but no control and no data-location guarantee.</li>
+        <li><strong>Open-weight</strong> (Meta, Mistral, DeepSeek): self-hostable, customizable, data stays put &mdash; but you own all the operational complexity.</li>
+        <li>The split is permanent because the two camps solve different constraints.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="dimensions">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. The dimensions that actually matter for choosing</h2>
+    <p>
+      Forget "which model is best" &mdash; that question is incomplete. The
+      real question is always: <strong>best <em>for what</em>, given
+      <em>which</em> constraints?</strong> Six dimensions should drive any
+      real decision.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... capability?</span>
+      How well the model handles complex reasoning, nuanced writing, coding,
+      or multi-step problems. This is what most public benchmarks measure
+      &mdash; it's genuinely important, but it's the dimension most likely to
+      change month to month and the one most overweighted by newcomers. A
+      model that's 2% better on a benchmark is rarely worth a 5x cost increase
+      for most real applications.
+    </div>
+
+    <p>
+      <strong>Speed (latency)</strong> &mdash; how quickly the model responds
+      (tokens per second) and how long before the <em>first</em> token
+      appears. This matters enormously for real-time, user-facing apps (a
+      chatbot someone is actively waiting on) and far less for batch or
+      asynchronous work (overnight reports, a document queue). Smaller,
+      lighter models are almost always faster &mdash; which is why most
+      providers offer a <em>tiered lineup</em>: a small/fast model, a mid-tier
+      model, and a large/frontier model.
+    </p>
+
+    <p>
+      <strong>Cost</strong> is priced per million tokens, split into input and
+      output cost &mdash; output is usually priced higher, since generating
+      text is more computationally expensive than reading it. Costs vary by an
+      order of magnitude or more between a provider's cheapest and most
+      capable tiers. Self-hosting an open-weight model trades per-token fees
+      for fixed infrastructure costs, which only becomes economical at high,
+      predictable volume.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... context length?</span>
+      How much text the model can consider in a single request. It has grown
+      dramatically &mdash; models now commonly handle context windows in the
+      hundreds of thousands to low millions of tokens. A huge window matters
+      enormously for analyzing an entire codebase or a large collection of
+      legal documents in one pass, and far less for short conversational
+      tasks.
+    </div>
+
+    <p>
+      <strong>Specialization</strong> &mdash; some models or variants are
+      tuned for specific tasks: strong coding, strong multilingual handling,
+      or dedicated "reasoning" modes that spend more computation deliberating
+      before answering. A generalist powerhouse isn't automatically best for a
+      narrow task, where a smaller, tuned model might do just as well for a
+      fraction of the cost.
+    </p>
+
+    <p>
+      <strong>Compliance and data handling</strong> &mdash; for regulated
+      industries (healthcare, finance, government) this can be the
+      <em>deciding</em> factor above all others, overriding capability
+      comparisons entirely. Questions like "does this provider offer a signed
+      compliance agreement for sensitive health data?" or "where geographically
+      is my data processed and stored?" can eliminate otherwise-excellent
+      options immediately. Always verify compliance commitments directly with a
+      provider's enterprise sales channel &mdash; documentation pages lag
+      reality.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>Capability</strong> &mdash; most talked about, most overweighted.</li>
+        <li><strong>Speed</strong> &mdash; critical for real-time apps, near-irrelevant for batch jobs.</li>
+        <li><strong>Cost</strong> &mdash; per-million-token input/output; varies 10x+ across tiers.</li>
+        <li><strong>Context length</strong> &mdash; matters for whole-codebase / whole-document tasks.</li>
+        <li><strong>Specialization</strong> &mdash; a tuned smaller model can beat a generalist for a narrow task.</li>
+        <li><strong>Compliance</strong> &mdash; can override everything else for regulated data.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="framework">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. A practical decision framework</h2>
+    <p>
+      Here's a process you can actually apply, regardless of which specific
+      models exist when you read this.
+    </p>
+
+    <div class="output-block">
+      <span class="output-label">The four steps</span>
+      <pre><code>Step 1  Start with a strong, well-known general-purpose model
+        (build the working version first; don't optimize prematurely)
+           |
+Step 2  Ask: do you need that much capability for production?
+        (test a smaller/faster/cheaper tier explicitly &mdash; don't assume)
+           |
+Step 3  Check for HARD constraints that override capability
+        (regulated data? self-hosting for residency? fixed high volume?)
+           |
+Step 4  Re-evaluate periodically, not constantly
+        (quarterly is common &mdash; re-architecting every launch is waste)</code></pre>
+    </div>
+
+    <p>
+      <strong>Step 1 &mdash; start strong and general.</strong> Don't optimize
+      prematurely. Build your first working version with whichever capable,
+      well-documented model is easiest to get started with. Get the actual
+      application logic right first.
+    </p>
+    <p>
+      <strong>Step 2 &mdash; question the capability you're paying for.</strong>
+      Many tasks that <em>feel</em> like they need the most powerful model
+      actually work fine on a smaller, faster, cheaper tier from the same
+      provider. Test this explicitly &mdash; don't assume.
+    </p>
+    <p>
+      <strong>Step 3 &mdash; check hard constraints.</strong> Does this involve
+      regulated data? Does the use case require self-hosting for data
+      residency? Is there a fixed, predictable high volume that would make
+      self-hosting an open-weight model cheaper than ongoing API fees? These
+      can eliminate "the best model" entirely in favor of "the only compliant
+      model."
+    </p>
+    <p>
+      <strong>Step 4 &mdash; re-evaluate on a cadence.</strong> The landscape
+      moves fast, but re-architecting every time a new model launches is its
+      own kind of waste. Pick a reasonable rhythm (quarterly is common) to
+      reassess whether a newer or cheaper option now fits better.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Build first with a strong general model; get the logic right before optimizing.</li>
+        <li>Then test whether a cheaper/faster tier is good enough &mdash; measure, don't assume.</li>
+        <li>Let hard constraints (compliance, residency, volume) override pure capability.</li>
+        <li>Reassess on a cadence, not on every launch.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subtopic" id="worked">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. A worked comparison</h2>
+    <p>
+      Let's make the trade-offs concrete. Imagine three applications. Notice
+      how the "right" model choice differs sharply for each, even though all
+      three are technically just "calling an LLM."
+    </p>
+    <ul>
+      <li><strong>App A &mdash; a customer-facing live chat widget</strong> on an e-commerce site. Priority: <em>speed</em> (users won't wait), moderate capability (most questions are simple), cost matters at high volume. &rarr; A fast, cheap, smaller-tier closed model. Frontier capability is wasted; latency is what users feel.</li>
+      <li><strong>App B &mdash; an overnight batch job summarizing lengthy legal contracts.</strong> Priority: <em>capability and context length</em> (contracts are long; a missed clause is costly), speed barely matters (runs unattended), cost matters less per call. &rarr; A frontier-capability, large-context model is worth it, even slower and pricier per call.</li>
+      <li><strong>App C &mdash; a healthcare clinical documentation assistant</strong> handling protected patient data. Priority: <em>compliance first, full stop</em> &mdash; capability and cost only get evaluated <em>among</em> the options that already satisfy compliance. &rarr; Filter to providers with confirmed compliance agreements, then compare within that set.</li>
+    </ul>
+    <p>
+      The pattern: <strong>none of these three would make the same model
+      choice</strong>, and none is simply "pick whichever model wins this
+      month's benchmark." That's the actual skill this session teaches.
+    </p>
+
+    <p>
+      In the exercise, you'll capture exactly this kind of comparison in code
+      &mdash; one dictionary per model, holding the dimensions you observed &mdash;
+      then let a small script format the table and prompt you for a
+      recommendation. Here's the shape of that data:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">model_comparison.py</span>
+      </div>
+      <pre><code>&#35; One dict per model you tested, on the SAME task
+RESULTS = [
+    {
+        "model_name": "Smaller/faster tier",
+        "provider": "Provider A",
+        "response_time_seconds": 1.2,   &#35; stopwatch is fine
+        "quality_rating": 4,            &#35; your own 1-5 judgment
+        "cost_per_million_input": 0.25,
+        "cost_per_million_output": 1.25,
+    },
+    {
+        "model_name": "Larger/frontier tier",
+        "provider": "Provider A",
+        "response_time_seconds": 3.8,   &#35; ~3x slower
+        "quality_rating": 5,            &#35; slightly richer answer
+        "cost_per_million_input": 3.00,
+        "cost_per_million_output": 15.00,   &#35; ~10x pricier output
+    },
+]</code></pre>
+    </div>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">try_comparison.py</span>
+        <button class="playground-run-btn" data-playground-run>▶ Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="9">RESULTS = [
+    {"model_name": "Fast tier",     "time": 1.2, "quality": 4, "out_cost": 1.25},
+    {"model_name": "Frontier tier", "time": 3.8, "quality": 5, "out_cost": 15.00},
+]
+for r in RESULTS:
+    print(r["model_name"], "->", r["time"], "s |", r["quality"], "/5 | $",
+          r["out_cost"], "per M out")
+print("Quality gap: 1 point. Speed gap: ~3x. Cost gap: ~12x.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" to see the output here.</div>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> Before writing
+      a comparison harness, an experienced dev decides what to actually
+      measure &mdash; not "which felt smarter," but the specific dimensions
+      that drive a real decision (speed, a subjective quality score, and
+      published per-token cost). Storing one dictionary per model keeps the
+      shape uniform so a single loop can format them, and leaving values as
+      <code>None</code> when a number is unknown avoids pretending to a
+      precision you don't have.</p>
+
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3"
+          placeholder="e.g. Write a Python script that stores model comparison results and prints..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever
+          assistant you use, and compare what it builds against this
+          session's example &mdash; does it actually match what this session
+          taught? That comparison is the real test, not a score.
+        </div>
+      </div>
+
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a small Python script (no external libraries, no API calls) that
+compares LLM models on the SAME task. Store the data as a list called
+RESULTS, one dict per model, with keys: model_name, provider,
+response_time_seconds, quality_rating (1-5), cost_per_million_input,
+cost_per_million_output, and notes. Any unknown numeric value should be
+None, not a guess. Add a print_comparison() function that prints a
+fixed-width table with aligned columns, displays None as "?" or "n/a",
+and after the table asks the reader which model they'd pick for a
+real-time chat widget vs. an overnight batch job, and why. Guard it with
+if __name__ == "__main__".</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The same three-word task ("call an LLM") can demand three totally different models.</li>
+        <li>Chat widget &rarr; speed. Batch summarizer &rarr; capability + context. Health data &rarr; compliance first.</li>
+        <li>Capturing observations as uniform per-model dicts makes the trade-off comparable and repeatable.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Teams routinely run <strong>different models across different features of the same product</strong> &mdash; a cheap fast tier for autocomplete and confirmation messages, a frontier tier for the hard reasoning feature &mdash; because there's no "house model" requirement, only per-task fit.</li>
+      <li>Regulated industries (healthcare, finance, government) often <strong>self-host open-weight models</strong> specifically so patient or financial data never transits a third party &mdash; compliance, not capability, drives that architecture.</li>
+      <li>Production teams reassess model choice on a <strong>quarterly cadence</strong>, not per launch &mdash; the same "measure, don't assume; re-evaluate, don't churn" discipline this session teaches, applied as a standing process.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li>The landscape splits into <strong>closed/proprietary</strong> (frontier capability, no infrastructure burden, but no control or data-location guarantee) and <strong>open-weight</strong> (self-hostable, customizable, data stays in your infrastructure, but you own the operational complexity).</li>
+      <li><strong>"Best model" is an incomplete question.</strong> Ask "best for what task, under which constraints (speed, cost, context length, compliance)?"</li>
+      <li><strong>Capability is the most talked-about and most overweighted dimension.</strong> Speed, cost, and compliance often matter more than a small benchmark edge.</li>
+      <li><strong>Compliance and data-handling requirements can override every other consideration</strong> for regulated industries &mdash; verify directly with a provider's enterprise team.</li>
+      <li><strong>Different applications in the same company can reasonably use entirely different models</strong> &mdash; matching the model to the task's constraints is the actual skill.</li>
+    </ul>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../session-1-2-how-llms-work/lesson.html">&larr; Session 1.2</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/genai-grader.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

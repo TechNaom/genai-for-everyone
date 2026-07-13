@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.5 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on hallucination-detection exercise for Session 1.5: classify 10 confidently-worded statements as accurate or fabricated using the right signals.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.5 Exercises</span>
+    <span class="reading-time">15 min, hands-on</span>
+  </div>
+  <h1>Exercises: Hallucination Detection</h1>
+  <p>Build the habit of spotting likely hallucinations by looking for the RIGHT signals &mdash; not confidence or fluency (both are useless here), but specificity that can't be verified and suspiciously convenient details.</p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    Download <code>starter.py</code> below, then run
+    <code>python starter.py</code>. No API key needed &mdash; this runs entirely offline.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Classify all 10 statements</h3>
+    <p>Open <code>starter.py</code>. For each statement in <code>STATEMENTS</code>, set <code>your_classification</code> to <code>"accurate"</code> or <code>"fabricated"</code>.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Write your reasoning</h3>
+    <p>For each one, fill in <code>your_reasoning</code> with ONE sentence naming the signal that led you there. Then run the script to see your calls laid out.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Compare against the ground truth</h3>
+    <p>Run <code>python solution.py</code>. Some accurate-sounding statements are fabricated, and some "suspiciously specific" ones are actually true &mdash; this exercise is humbling on purpose.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">What you'll notice</span>
+    Every statement is written in the same confident tone, true or false &mdash; so confidence and fluency tell you nothing. The real signal is whether a specific detail can be <em>independently verified</em>, or whether it just <em>sounds</em> like the kind of thing that could be.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

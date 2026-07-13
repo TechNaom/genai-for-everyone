@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.5 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 1.5: explaining hallucination to a panicking PM and reasoning about where bias enters a GenAI pipeline.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-chapter-id="session-1-5-interview" data-active-chapter="session-1-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.5 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Limitations, Hallucination &amp; Bias</h1>
+  <p>Every serious interview for a GenAI role assumes you understand this material cold. These two questions come up constantly &mdash; interviewers are listening for calm, mechanism-based reasoning and concrete mitigations, not memorized definitions.</p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">9</span> How would you explain "hallucination" to a product manager who is panicking after seeing a wrong answer from your company's new AI feature?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Stay calm and non-technical: the model wasn't being deceptive, it generated the most statistically plausible-sounding answer from general patterns rather than a verified fact about our specific product &mdash; because it isn't connected to our actual documentation. Be honest that <strong>no current LLM eliminates this risk entirely</strong>. Then point forward to real mitigations: grounding answers in retrieved, verifiable documents (RAG), plus evaluation and guardrails before high-stakes claims.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Promising it will "never happen again" &mdash; that promise can't be honestly made about any current GenAI system. Also weak: hand-waving that "the next model version will fix it," which misunderstands hallucination as a temporary bug rather than a structural property of how the model generates text.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"So is this just a bug that a better model will patch?" (Answer: no &mdash; newer models reduce the <em>frequency</em>, not the fundamental <em>possibility</em>; the structural fix is grounding the output in real data, not waiting for a smarter model.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">10</span> Where can bias enter a GenAI system, and is it only a "training data" problem?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>No &mdash; bias is not a single point of failure. It can enter at least four distinct points: <strong>training data</strong> (over/under-represented perspectives), <strong>prompt phrasing</strong> (how a question is framed shifts the output), <strong>few-shot example selection</strong> (the examples you choose to guide the model can encode skew), and <strong>evaluation</strong> (how "good output" is judged carries its own assumptions). Addressing it requires attention across the whole pipeline.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Answering only "biased training data, full stop." If your organization's response to "is our AI biased?" is solely "we checked the training data," you've addressed exactly one of at least four entry points.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me an example of prompt-level bias." (Answer: "Why do many people distrust [group]" presupposes something different than "what are perspectives on [group]" &mdash; the answer reflects the framing baked into the question, even with identical underlying facts.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> The one thing you must never promise a panicking PM is that a hallucination will <code>____</code> happen again.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="never" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> The structural fix for a wrong answer about your specific product is <code>____</code> the model in your real documentation (RAG).</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="grounding" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Bias enters at least <code>____</code> distinct points, not just the training data.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="four,4" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score &mdash; you're ready to talk about this session in an interview.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Exercises</a>
+    <a href="project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

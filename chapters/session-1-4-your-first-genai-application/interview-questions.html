@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.4 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 1.4: Your First GenAI Application — API request/response mechanics and the system/user/assistant roles.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-chapter-id="session-1-4-interview" data-active-chapter="session-1-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="../../docs/curriculum/index.html">Roadmap</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.4 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Your First GenAI Application</h1>
+  <p><em>These map to Section B of the Week 1 set (Sessions 1.3&ndash;1.4). Interviewers listen for a clear grasp of API mechanics and statelessness, not memorized definitions.</em></p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Walk me through what happens, end to end, when your code sends a message to an LLM API and gets a response back.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Your code builds a request &mdash; a system prompt plus a list of role-tagged messages (alternating user/assistant turns, ending with the newest user message) &mdash; and sends it to the provider, usually as JSON. The provider statelessly runs the model over the <em>entire</em> conversation you sent (it doesn't remember anything between calls on its own) and returns structured JSON: the generated text plus metadata like tokens used and the stop reason. Your code parses the text out of that structure, displays it, and &mdash; if the conversation continues &mdash; appends both the user message and the assistant reply to its own running history so the next request carries the full context.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Describing it as "text in, text out," or assuming the model retains the conversation server-side between calls.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Where does the actual reply text live in the response?" (Answer: inside the structured object &mdash; e.g. <code>response.content[0].text</code> in Anthropic's SDK &mdash; alongside metadata, not as a bare string.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> What's the difference between the system prompt, the user prompt, and the assistant's previous responses?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p><strong>System</strong> is the developer-set instructions, persona, and rules &mdash; set once, invisible to the end user. <strong>User</strong> is the live human input that changes every turn. <strong>Assistant</strong> is the model's own prior turns. The key insight is that all three together are what gets sent on <em>each</em> new request, because the model has no memory between API calls &mdash; the assistant's earlier replies only stay "in the conversation" because you re-send them.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Confusing the system prompt with the user message, or thinking the assistant's past replies are automatically remembered without being re-sent.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Why is the system prompt usually a separate argument, not just another item in the messages list?" (Answer: it's stable developer-owned configuration, kept apart from the growing user-driven conversation.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> A junior developer is confused why their chatbot "forgets" context after just one exchange. What's the likely bug, and how would you explain it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Almost certainly the code sends only the latest user message each turn instead of the full conversation history. The model isn't being forgetful &mdash; it literally never received the earlier exchange, so "make that shorter" arrives as a standalone, contextless message. The fix is to keep one running list of role-tagged messages, append the user's message and the assistant's reply every turn, and send the whole list with each request. I'd explain it with the "consultant with no memory between meetings" analogy: you have to hand over the full transcript every time.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Blaming the model's "intelligence" or context window, when the real cause is code that never sends the prior turns; or forgetting that the assistant's <em>own</em> replies must be appended too.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Which single missing line most often causes this?" (Answer: failing to append the assistant's reply back into the history after each response.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Why does a chat app like Claude.ai or ChatGPT feel like it has persistent memory, when the underlying model is stateless?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The memory lives in the application layer, not the model. Every time you send a new message, the app silently re-sends the entire prior conversation &mdash; all previous user messages and assistant replies &mdash; bundled with your new message as one fresh request. The model just receives a long block of role-tagged text and predicts what comes next; it has no notion that it's "the same conversation." The continuity you feel is the app faithfully rebuilding and resending context each time.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Claiming the model has built-in long-term memory or that past messages are stored inside its weights.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What's a practical consequence of re-sending everything each turn?" (Answer: long conversations cost more tokens and can eventually exceed the context window, so real apps trim or summarize old turns.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> The three message roles in a chat API are system, user, and <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="assistant" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Because the model keeps no memory between calls, it is described as <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="stateless,statelessness" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> An LLM API reply arrives as structured <code>____</code> containing the text plus metadata.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="JSON,json,data" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> To stay coherent across turns, you must re-send the entire conversation <code>____</code> with every request.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="history" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score &mdash; you're ready to talk about calling an LLM API in an interview.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Exercises</a>
+    <a href="project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

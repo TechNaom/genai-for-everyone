@@ -1,8 +1,12 @@
 # GenAI for Everyone
 
+[![CI Checks](https://github.com/TechNaom/genai-for-everyone/actions/workflows/ci.yml/badge.svg)](https://github.com/TechNaom/genai-for-everyone/actions/workflows/ci.yml)
+[![Live site](https://img.shields.io/badge/live%20site-technaom.github.io-7C4DDC)](https://technaom.github.io/genai-for-everyone/)
+[![No signup required](https://img.shields.io/badge/signup-not%20required-B8447E)](https://technaom.github.io/genai-for-everyone/)
+
 Free, job-ready GenAI program for everyone — beginners to working professionals. 7 weeks, 40 live sessions covering LLMs, prompting, RAG, agents, evaluation & safety, and deployment. Includes lesson docs, slide decks, hands-on code, quizzes, exams & interview prep.
 
-[![CI Checks](https://github.com/TechNaom/genai-for-everyone/actions/workflows/ci.yml/badge.svg)](https://github.com/TechNaom/genai-for-everyone/actions/workflows/ci.yml)
+🔗 **Live site:** <https://technaom.github.io/genai-for-everyone/>
 
 ---
 
@@ -41,9 +45,7 @@ The course now includes a static learning dashboard at [`index.html`](index.html
 - Direct links to lessons, quizzes, exercises, slides/notes, exams, and interview prep
 - A spotlight panel for the selected session
 
-When GitHub Pages is enabled, the expected live URL is:
-
-`https://technaom.github.io/genai-for-everyone/`
+Live at <https://technaom.github.io/genai-for-everyone/> (see the badge at the top of this README).
 
 ## Repo structure
 

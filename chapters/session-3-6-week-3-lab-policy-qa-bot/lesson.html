@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.6 Week 3 Lab — Campus Q&amp;A Bot — GenAI for Everyone</title>
+<meta name="description" content="Synthesis lab: build a Campus Student Services Q&A Bot over four cross-referencing policy PDFs, pulling together everything from Week 3 — embeddings, multi-document vector stores, citation-grounded RAG, and a real chunking bug you have to diagnose and fix yourself.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Week 3 &middot; Session 3.6</span>
+    <span class="badge-difficulty">Foundations</span>
+    <span class="reading-time">~30&ndash;40 min (mostly building)</span>
+  </div>
+  <h1>Week 3 Lab &mdash; Campus Student Services Q&amp;A Bot</h1>
+  <p><em>Five sessions of retrieval theory, one genuinely messy set of real documents. Today is where "it worked on the demo doc" meets four PDFs that don't agree on how to organize themselves.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#the-build">1. The build: a bot over four cross-referencing PDFs</a>
+    <a href="#why-this-tool">2. Why this build needs every technique from the week</a>
+    <a href="#the-bug">3. The bug you're going to find, and the fix</a>
+    <a href="#done-well">4. "Done well" vs. "done technically"</a>
+    <a href="#reflection">5. Reflection: what clicked, what's fuzzy</a>
+  </nav>
+
+  <div class="hook">
+    Picture a college sophomore, mid-semester, who just dropped a class and fell
+    below full-time enrollment. She lives in a dorm. Does that put her housing at
+    risk? Does it affect her financial aid for next semester? She doesn't know
+    which office to call, doesn't know which of four different PDFs scattered
+    across the university's website actually has the answer, and the help desk is
+    juggling forty other students with forty other questions. This is the scenario
+    behind today's lab &mdash; and it's also, not coincidentally, close to the
+    single most common real-world reason organizations build a RAG system in the
+    first place: a question with a real, document-backed answer, but one that's
+    buried across more than one document, written by more than one office, on more
+    than one schedule. Today you build the system that finds it &mdash; and you
+    find, and fix, a real retrieval bug along the way.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="the-build">
+    <span class="subtopic-label">Sub-topic 1 of 5</span>
+    <h2>1. The build: a bot over four cross-referencing PDFs</h2>
+
+    <p>
+      You're building a Q&amp;A bot that answers student questions by retrieving
+      from <strong>four separate campus documents</strong> instead of one tidy
+      handbook: a Registration Guide, a Financial Aid Handbook, an Academic
+      Standing Policy, and a Housing Handbook. Sessions 3.3 and 3.4 deliberately
+      used a single, self-contained document to teach chunking and RAG cleanly.
+      Today does something different on purpose.
+    </p>
+
+    <p>
+      These four documents were clearly written by different offices, at
+      different times, and they genuinely cross-reference each other the way
+      real institutional documents do. The Registration Guide mentions
+      financial aid holds. The Housing Handbook mentions full-time enrollment
+      status. The Academic Standing Policy mentions both financial aid
+      suspension and course load limits. None of that overlap is an accident
+      in the writing &mdash; the topics genuinely are connected in the real
+      world, even though they live in separate files.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... multi-document retrieval risk?</span>
+      With one document, every retrieved chunk is at least from "the right
+      place" by definition &mdash; the worst case is an imprecise match. With
+      four overlapping documents, retrieval can confidently hand back a chunk
+      from the <em>wrong document entirely</em>, and that chunk might even look
+      like a strong match, because it touches the right topic in passing
+      without actually containing the right answer. That's a failure mode a
+      single-document system structurally cannot have.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Today's corpus is four real, cross-referencing campus PDFs, not one clean handbook.</li>
+        <li>Cross-referencing content is realistic, not an artificial complication &mdash; and it's exactly what makes multi-document retrieval harder.</li>
+        <li>The new failure mode: a confidently wrong <em>document</em>, not just an imprecise chunk.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="why-this-tool">
+    <span class="subtopic-label">Sub-topic 2 of 5</span>
+    <h2>2. Why this build needs every technique from the week</h2>
+
+    <p>
+      This project was chosen specifically because building it well requires
+      touching almost everything from this week. Each earlier session shows up
+      as a concrete piece of the pipeline:
+    </p>
+
+    <div class="code-breakdown">
+      <dl>
+        <dt>Session 3.2 &mdash; embeddings demystified</dt>
+        <dd><code>tokenize()</code>, <code>vectorize()</code>, and
+        <code>cosine_sim()</code> return exactly as they were &mdash; text
+        becomes a bag-of-words vector, and similar meaning produces similar
+        vectors, across all four documents at once.</dd>
+
+        <dt>Session 3.3 &mdash; vector databases &amp; retrieval</dt>
+        <dd>Chunking a document and building a searchable store, extended into
+        a <code>CampusVectorStore</code> that holds entries from four sources
+        simultaneously and still returns a ranked top-k.</dd>
+
+        <dt>Session 3.4 &mdash; building a RAG pipeline</dt>
+        <dd><code>format_context()</code>, <code>build_rag_prompt()</code>, and
+        <code>extract_citations()</code> &mdash; handing retrieved chunks to a
+        model with strict citation instructions, so every claim traces back to
+        a specific numbered source you can verify.</dd>
+
+        <dt>Session 3.5 &mdash; RAG failure modes &amp; fixes</dt>
+        <dd>The named failure modes from that session &mdash; chunking errors,
+        retrieval misses, context stuffing &mdash; stop being abstract
+        categories today and become the exact diagnostic process you'll run
+        against a real, reproducible bug in Part 4.</dd>
+      </dl>
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... a source-document label?</span>
+      Every retrieved chunk in today's pipeline carries a source-document tag,
+      surfaced directly in the citation: <code>[1] (Source: Housing
+      Handbook)</code>, not just <code>[1]</code>. This makes a wrong-document
+      retrieval visible at a glance instead of something you'd only discover by
+      manually re-reading the chunk text behind every citation.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>3.2 (vectors), 3.3 (vector store), 3.4 (citation-grounded generation), 3.5 (diagnosis skill) &mdash; all four, combined over four documents.</li>
+        <li>Source-document labels on every citation make a wrong-document retrieval obvious without re-reading anything.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="the-bug">
+    <span class="subtopic-label">Sub-topic 3 of 5</span>
+    <h2>3. The bug you're going to find, and the fix</h2>
+
+    <p>
+      Here are the two questions that break things, and they break in the same
+      way for a connected reason:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">the-two-failing-questions.txt</span>
+      </div>
+      <pre><code>"What is the maximum course load for a student on probation?"
+  -> real answer (13 credit hours) lives in academic_standing_policy.pdf
+
+"What happens if I drop below full-time enrollment while living in a dorm?"
+  -> real answer lives in housing_handbook.pdf
+
+Both are clearly written, clearly labeled, easy for a human to find.
+With blank-line chunking, BOTH questions instead retrieve registration_guide.pdf.</code></pre>
+    </div>
+
+    <p>
+      Why? The same upstream mechanism you may already be alert to from
+      earlier weeks: PDF text extraction does not reliably preserve the blank
+      lines that visually separated sections on the page. The Registration
+      Guide has five sections &mdash; Add/Drop Deadlines, Course Load
+      Requirements, Waitlists, Registration Holds, Transfer Credit &mdash; and
+      when extracted as text, there's no blank line anywhere between them. A
+      blank-line-based chunker finds exactly one giant "paragraph" for the
+      entire document, and the whole ~240-word block becomes a single chunk.
+      Inside it, words like "course load," "full-time," "financial aid," and
+      "Academic Standing Policy" all appear together &mdash; not because that
+      section is actually about probation or housing, but because policy
+      writers naturally cross-reference related topics in passing. That
+      cross-referencing language is exactly what makes the merged chunk score
+      deceptively well against questions that are really about <em>other</em>
+      documents.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Why the earlier fix doesn't just transfer over</span>
+      If you've worked with a different RAG corpus before, you might already
+      know a fix for "blank lines don't survive PDF extraction": split on the
+      document's own section headers instead. That instinct is correct &mdash;
+      but notice it isn't a fact about <em>that specific fix</em>, it's a fact
+      about <em>needing a fix that matches your document's structure</em>. This
+      corpus's documents don't number their sections. They use headers written
+      in ALL CAPS on their own line &mdash; "COURSE LOAD REQUIREMENTS,"
+      "ACADEMIC PROBATION," "HOUSING ELIGIBILITY AND COURSE LOAD." A splitting
+      rule built for numbered headers would find nothing to split on here at
+      all.
+    </div>
+
+    <p>
+      Try the core mechanic of both chunkers here &mdash; a small, self-contained
+      version of the same regex logic <code>chunk_text()</code> and
+      <code>chunk_text_by_caps_header()</code> use, run against a tiny stand-in
+      for a merged, blank-line-free document:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">chunking_bug.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="20">import re
+
+# A stand-in for what pypdf's extract_text() actually returns:
+# no blank lines survive between sections, even though a human
+# reading the PDF sees clear section breaks.
+extracted_text = (
+    "ADD/DROP DEADLINES\n"
+    "Students may add or drop courses during the first two weeks.\n"
+    "COURSE LOAD REQUIREMENTS\n"
+    "Full-time students must carry 12 to 18 credit hours per term.\n"
+    "WAITLISTS\n"
+    "Waitlisted students are notified by email if a seat opens.\n"
+)
+
+# The OLD (broken) approach: split on blank lines.
+blank_line_chunks = [p for p in re.split(r"\n\s*\n", extracted_text) if p.strip()]
+print("Blank-line chunks found:", len(blank_line_chunks))
+
+# The FIX: split right before a line that is entirely uppercase.
+caps_header_chunks = [p.strip() for p in re.split(r"(?=\n[A-Z][A-Z /]+\n)", "\n" + extracted_text) if p.strip()]
+print("Caps-header chunks found:", len(caps_header_chunks))
+for c in caps_header_chunks:
+    print(" -", c.splitlines()[0])</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; notice the blank-line splitter finds exactly ONE chunk for a document with three obvious sections, while the caps-header splitter correctly finds three.</div>
+    </div>
+
+    <p class="playground-note">
+      This is the real bug, shrunk down to a runnable size. On the actual
+      corpus, that one merged chunk is what confidently outscores the correct
+      document on both failing questions.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the fix isn't
+      "know the one true chunking regex" &mdash; it's the diagnostic sequence
+      that gets you there. Print the chunks, notice there's suspiciously few of
+      them, try a few different <code>target_words</code> values and notice the
+      boundary never moves (proof the bug is upstream of chunk size), then
+      print <code>repr(text[:300])</code> and actually look at how the
+      real extracted text is structured before writing a single line of new
+      regex. That sequence transfers to any new document type; the specific
+      regex does not.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python function that chunks a document by splitting right before ALL-CAPS section header lines instead of blank lines..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant
+          you use, and compare what it builds against this session's exercise
+          &mdash; does it actually diagnose the root cause before proposing a
+          fix, or does it jump straight to a regex without checking whether it
+          matches how this specific corpus is structured? That comparison is
+          the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>I have a RAG pipeline where blank-line-based paragraph chunking is merging an entire multi-section PDF into a single chunk, because the PDF's text extraction doesn't preserve blank lines between sections. The sections in this specific corpus use ALL-CAPS headers on their own line (e.g. "COURSE LOAD REQUIREMENTS"), not numbered headers. Write a Python function chunk_text_by_caps_header(text) that uses re.split with a lookahead to split the text right before any line that is entirely uppercase (allowing spaces and slashes), without consuming that header line, then strips whitespace and drops empty chunks. Also write a short comment explaining why this specific regex would NOT work on a document that uses numbered headers instead, to make clear the fix is corpus-specific.</pre></div>
+      </details>
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: the transferable lesson isn't a regex</summary>
+      <p>
+        The lesson underneath today's lab, stated as plainly as possible:
+        <strong>there is no universal chunking fix, only a universal chunking
+        principle</strong> &mdash; look at how your real documents are
+        actually structured, and split on whatever pattern reliably survives
+        whatever transformation your text went through to reach you. For
+        numbered documents, that's the numbering. For documents like these,
+        written by people who format with capitalized headers instead, the fix
+        is to split on lines that are entirely uppercase. The code is
+        different. The principle &mdash; match your strategy to your actual
+        documents, verified by actually running it, not assumed from a
+        previous success &mdash; is identical.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Both failing questions retrieve <code>registration_guide.pdf</code> instead of the correct document, because blank-line chunking merges its five sections into one diluted chunk.</li>
+        <li>Changing <code>target_words</code> doesn't help &mdash; the bug is upstream of chunk size, in the paragraph split never finding more than one paragraph.</li>
+        <li>The fix splits on ALL-CAPS header lines, matching how <em>this</em> corpus is actually structured &mdash; a numbered-header fix would find nothing to split on here.</li>
+        <li>The transferable lesson is the diagnostic principle, not the specific regex.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="done-well">
+    <span class="subtopic-label">Sub-topic 4 of 5</span>
+    <h2>4. "Done well" vs. "done technically"</h2>
+
+    <p>
+      It's possible to build something that runs without errors and still
+      misses the point of the exercise. Here's the difference, concretely.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Done technically (passes, but misses the point)</span>
+      You see the Part 4 assertion fail, copy a caps-header regex from a search
+      result or an assistant without checking it against <code>repr(text[:300])</code>
+      of your own extracted documents, and it happens to pass the test. It
+      runs. It doesn't crash. But you can't explain <em>why</em> blank-line
+      chunking failed here, or why the same fix wouldn't work on a
+      differently-formatted corpus &mdash; which means the next time this bug
+      shows up in a new shape, you're back to guessing.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Done well (the actual goal)</span>
+      You print the Registration Guide's chunks first and notice there's
+      exactly one, suspiciously large. You try a few different
+      <code>target_words</code> values and confirm the boundary never moves
+      &mdash; ruling out chunk size as the cause. You print
+      <code>repr(text[:300])</code> and actually look at where the newlines
+      are. Only then do you write <code>chunk_text_by_caps_header()</code>,
+      because you've confirmed what pattern the real extracted text follows,
+      not because you assumed it.
+    </div>
+
+    <p>
+      That distinction &mdash; diagnosing before fixing, on this specific
+      corpus's actual extracted text, rather than pattern-matching to a fix
+      that worked somewhere else &mdash; is exactly the Session 3.5 skill this
+      lab is built to test under slightly harder, more realistic conditions.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>"Passes the assertion" and "you can explain why it failed and why the fix works" are different bars.</li>
+        <li>Ruling out chunk size first (via <code>target_words</code>) is what proves the bug is upstream, in the paragraph split itself.</li>
+        <li>A fix copied without inspecting your own corpus's real extracted text is a coin flip on the next document.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="reflection">
+    <span class="subtopic-label">Sub-topic 5 of 5</span>
+    <h2>5. Reflection: what clicked, what's fuzzy</h2>
+
+    <p>
+      Before moving into Week 4, take five honest minutes (genuinely worth
+      doing, not a platitude) to answer these for yourself:
+    </p>
+    <ul>
+      <li>Could you explain, without looking back, why retrieval over multiple
+        cross-referencing documents has a failure mode a single-document
+        system structurally can't have? If shaky, revisit the opening of this
+        session.</li>
+      <li>Could you sketch, from memory, the exact diagnostic sequence you'd
+        run on a new, unfamiliar chunking bug &mdash; before writing any fix?
+        If not, Session 3.5 is worth a second pass.</li>
+      <li>Did the caps-header bug surprise you anywhere &mdash; a place where
+        you assumed a fix that worked before would just transfer, until you
+        actually looked at this corpus's extracted text? That surprise is
+        valuable information.</li>
+    </ul>
+    <p>
+      This isn't busywork. The single best predictor of struggling with real
+      retrieval systems later is carrying forward the assumption that one
+      chunking fix generalizes to every document you'll ever meet &mdash;
+      because it doesn't, and every new document type is a fresh chance to
+      find that out the expensive way instead of the five-minute way.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Honest self-assessment now is cheaper than discovering a gap later.</li>
+        <li>Shaky on multi-document retrieval risk &rarr; the opening of this session. Shaky on the diagnosis sequence &rarr; Session 3.5.</li>
+        <li>The surprises during the build are the most useful signal you have.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Nearly every real institutional or enterprise RAG system &mdash; HR policy bots, internal wikis, campus help desks, compliance assistants &mdash; deals with exactly this problem: several documents from several authors that genuinely overlap in subject matter, written on different timelines with different formatting conventions.</li>
+      <li>"It worked on the document I tested with" is one of the most common false-confidence traps in shipped RAG systems &mdash; a chunking strategy validated against one document's structure silently breaks the moment a new document with a different formatting convention is added to the corpus.</li>
+      <li>Source-document labeling on citations, the way this lab requires it, is standard practice in production RAG systems specifically because it turns a wrong-document retrieval into something a reviewer can catch in one glance, instead of something that only surfaces after a user reports a confusing or wrong answer.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Multi-document RAG systems fail in a way single-document systems structurally can't:</strong> retrieval can confidently return the wrong document entirely, not just an imprecise chunk from the right one.</li>
+      <li><strong>Real institutional documents genuinely cross-reference each other</strong> &mdash; and that overlap is exactly what makes a merged, overly broad chunk look deceptively relevant to questions it can't actually answer.</li>
+      <li><strong>PDF text extraction unreliably preserves blank lines between sections</strong>, which can silently break blank-line-based chunking regardless of <code>target_words</code> &mdash; the failure is upstream of chunk size entirely.</li>
+      <li><strong>A chunking fix that worked for one document's structure doesn't automatically transfer</strong> to a different document's structure. The universal lesson is a principle &mdash; inspect your real documents, split on whatever survives extraction intact, verify by running it &mdash; not a specific regex.</li>
+      <li><strong>Source-document labels on every citation</strong> make a wrong-document retrieval visible at a glance, rather than something a reviewer has to manually dig for.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; it's lighter than
+    usual, since today was mostly building.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

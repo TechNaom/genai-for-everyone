@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.6 Quiz — GenAI for Everyone</title>
+<meta name="description" content="Interactive fill-in-the-blank quiz for Session 3.6: Week 3 Lab — Campus Student Services Q&A Bot. Lighter than usual, since this session is mostly building.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="lesson.html">&larr; Back to the lesson</a></p>
+
+  <span class="chapter-badge">Session 3.6 Quiz</span>
+  <h1>Week 3 Lab &mdash; Campus Student Services Q&amp;A Bot</h1>
+  <p>
+    A short quiz &mdash; lighter than usual, since today was mostly building.
+    Fill in each blank, then press its <strong>Check</strong> button (or press
+    Enter) to see instantly if you're right. There's no penalty for guessing
+    again &mdash; try until you get it.
+  </p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="q1"><span class="q-num">1</span> With multiple cross-referencing
+      documents, retrieval can confidently return a chunk from the
+      <code>____</code> document entirely, not just an imprecise chunk from the
+      right one.</label>
+      <div class="fib-row">
+        <input type="text" id="q1" class="fib-blank" data-answers="wrong,wrong document,incorrect" aria-label="Answer for question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q2"><span class="q-num">2</span> Blank-line chunking merges an
+      entire multi-section document into one diluted chunk because PDF text
+      extraction doesn't reliably preserve <code>____</code> between sections.</label>
+      <div class="fib-row">
+        <input type="text" id="q2" class="fib-blank" data-answers="blank lines,blank line,the blank lines" aria-label="Answer for question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q3"><span class="q-num">3</span> A splitting rule built for
+      numbered headers finds nothing to split on in a corpus whose section
+      headers are written entirely in <code>____</code> instead.</label>
+      <div class="fib-row">
+        <input type="text" id="q3" class="fib-blank" data-answers="caps,all caps,uppercase,capital letters,all-caps" aria-label="Answer for question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q4"><span class="q-num">4</span> Changing <code>target_words</code>
+      doesn't fix the Part 4 bug, because the failure is <code>____</code> of chunk
+      size entirely &mdash; it's the paragraph splitter never finding more than one
+      paragraph.</label>
+      <div class="fib-row">
+        <input type="text" id="q4" class="fib-blank" data-answers="upstream" aria-label="Answer for question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q5"><span class="q-num">5</span> The merged Registration Guide
+      chunk scores deceptively well against probation and housing questions
+      because real policy documents naturally <code>____</code> related topics,
+      even in passing.</label>
+      <div class="fib-row">
+        <input type="text" id="q5" class="fib-blank" data-answers="cross-reference,cross reference,mention,reference" aria-label="Answer for question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q6"><span class="q-num">6</span> The real, transferable lesson of
+      this lab is a <code>____</code>, not a specific regex: match your chunking
+      strategy to how your actual documents are structured.</label>
+      <div class="fib-row">
+        <input type="text" id="q6" class="fib-blank" data-answers="principle" aria-label="Answer for question 6">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q7"><span class="q-num">7</span> Tagging every retrieved chunk
+      with a <code>____</code> label makes a wrong-document retrieval visible at
+      a glance, instead of something a reviewer has to dig for.</label>
+      <div class="fib-row">
+        <input type="text" id="q7" class="fib-blank" data-answers="source document,source-document,source" aria-label="Answer for question 7">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q8"><span class="q-num">8</span> The actual fix in this lab
+      splits text right before a line that is entirely <code>____</code>,
+      allowing spaces and slashes.</label>
+      <div class="fib-row">
+        <input type="text" id="q8" class="fib-blank" data-answers="uppercase,caps,capitalized,all caps,all-caps" aria-label="Answer for question 8">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score! Week 3 is well and truly in the bag &mdash; on to the exercises.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="lesson.html">&larr; Back to Lesson</a>
+    <a href="exercises/index.html">Exercises &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

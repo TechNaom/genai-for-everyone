@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.2 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 3.2: embeddings and cosine similarity — strong-answer, red-flag, and follow-up breakdowns on vectors, semantic search, and why toy embeddings need engineered help, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.2 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Embeddings and Cosine Similarity</h1>
+  <p>
+    Embeddings sit underneath almost every "how does semantic search actually
+    work" question in a GenAI interview, and they're a favorite spot for
+    interviewers to test whether a candidate can explain a mechanism plainly
+    or just reaches for jargon. Nobody is impressed by someone reciting
+    "high-dimensional vector space" &mdash; they're listening for whether you
+    can make the idea land for a non-technical teammate, and whether you
+    understand what the math is actually doing underneath the words. Each
+    question below includes what a strong answer sounds like, common red
+    flags, and a natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Explain what an embedding is and why it's useful, with a concrete example of a real problem it solves.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>An embedding converts a piece of text into a vector &mdash; a list of numbers &mdash; that encodes meaning as a point in space, such that texts with similar meaning land near each other and texts with different meaning land far apart. A concrete example anchors this: embedding a user's search query and a set of documents, then finding which documents are nearest to the query in that space, to power semantic search that matches on meaning rather than exact keywords. The strongest answers also flag a real limitation &mdash; embeddings from different models generally aren't directly comparable, since each model learned its own private "meaning space."</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Embeddings are just random numbers," claiming they only apply to images, giving no concrete example, or confusing embeddings with model training itself.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Two very different concepts end up with suspiciously similar embeddings in your system. How would you start debugging that?" (e.g. check whether both texts share unusual surface-level features the model latched onto, inspect a few other pairs to see if it's isolated or systemic, and confirm you're not accidentally comparing vectors from two different embedding models.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Explain cosine similarity to someone with no math background, without using the word "angle."</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Something like: imagine every piece of text as an arrow pointing off in some direction in "meaning space." Cosine similarity checks how closely two arrows point in the same direction &mdash; not how long they are, just which way they're aiming. Two arrows aimed almost the same way score close to 1 (very similar meaning); two aimed at right angles to each other score close to 0 (unrelated); two pointing in opposite directions score close to -1 (rare in practice with real text, but the theoretical floor). The strongest answers connect this back to *why* direction rather than length: length can vary for reasons that have nothing to do with meaning (sentence length, word frequency quirks), so ignoring it makes the comparison more reliable.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Immediately reaching for the dot-product formula instead of building an intuition first, or being unable to explain the concept at all without the word "angle" or "vector math."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Why measure direction instead of just measuring straight-line distance between the two points?" (Straight-line distance is sensitive to vector length/magnitude, which can vary for reasons unrelated to meaning; direction alone captures semantic similarity more reliably for text.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Why can two sentences that share almost no words in common still produce a high embedding similarity score?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Because embedding models compare meaning, not vocabulary overlap &mdash; that's the entire point of the technology, and precisely the gap that keyword-based search can't close. "I got a new dog" and "I adopted a puppy" share almost no literal words, but a trained embedding model has learned, from enormous amounts of text, that these describe the same real-world idea, so their vectors land close together in meaning-space. This is exactly why embeddings are the foundation under modern semantic search: a company wiki titled "Expense Submission Procedures" can still be the top match for someone searching "how do I get reimbursed for travel," even though the two phrasings barely overlap in words.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Explaining this in terms of synonym lists or a hand-built thesaurus, rather than a model that learned semantic relationships from data; or being unable to give a concrete example.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Can two sentences that share a lot of the same words still get a LOW similarity score? Give an example." (Yes &mdash; e.g. "the bank raised interest rates" vs. "I sat on the river bank," which share the word 'bank' but mean very different things; a good embedding separates them by context, not surface overlap.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> What does reducing high-dimensional embeddings down to a 2D plot actually distort, and why is some distortion unavoidable?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Real embeddings live in hundreds or thousands of dimensions. Squashing that down to 2 dimensions for a scatter plot requires a dimensionality-reduction technique that tries to preserve relative distances as best it can &mdash; but some information necessarily gets lost in the flattening, the same way flattening a globe into a 2D map inevitably distorts relative sizes (Greenland looks enormous on a flat map despite being much smaller in reality). Concretely: two points that look close together on a 2D embedding plot might actually be somewhat farther apart in the true high-dimensional space, and the reverse can happen too. The practical takeaway is that a 2D plot is a useful approximation of similarity structure, not a perfectly faithful picture of it &mdash; real similarity decisions in a production system should be made using the full-dimensional vectors and cosine similarity, not by eyeballing a 2D chart.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating a 2D visualization as a perfectly accurate representation of similarity, or being unable to name the map-projection analogy or any equivalent intuition for why flattening loses information.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If a stakeholder points at your 2D plot and says two clusters look 'basically touching,' what would you tell them?" (Treat the plot as a rough visual sanity check, not ground truth &mdash; go verify with the actual cosine similarity scores in the original high-dimensional space before drawing conclusions.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Why doesn't a real production embedding model need hand-picked topic words, the way a small toy embedding built from only 20 sentences might?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Because clustering by meaning is something a real model learns automatically from the sheer scale of its training data &mdash; billions of words' worth of examples showing it, implicitly, which words and concepts relate to each other, with no human ever labeling "these five sentences are about pets." A toy exercise built from only 20 short sentences with deliberately varied vocabulary doesn't have nearly enough raw text for that structure to emerge from word statistics alone, so it needs engineered help (like hand-seeded "concept anchor" scores) to make the intended clusters visible at all. The key distinction: the underlying math &mdash; vectors, cosine similarity &mdash; is identical in both cases. What differs is the scale and diversity of data the vectors were derived from, not the formula used to compare them.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Assuming a bigger model uses fundamentally different math from a toy example, or being unable to articulate that it's training data scale &mdash; not a smarter algorithm &mdash; that produces automatic clustering.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If you rebuilt a toy embedding using only raw word counts, with no hand-seeded concept scores at all, what would you predict happens to the clustering?" (It should largely disappear, since these short sentences were deliberately written with little shared vocabulary even within the same topic &mdash; directly demonstrating that scale of data, not different math, is what makes real embeddings cluster automatically.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> An embedding converts text into a <code>____</code> &mdash; an ordered list of numbers that encodes meaning as a point in space.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="vector" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Embeddings compare <code>____</code> rather than literal word overlap, which is why two sentences with different vocabulary can still land close together.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="meaning" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Cosine similarity measures the <code>____</code> between two vectors, deliberately ignoring their length.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="angle,direction" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Flattening a high-dimensional embedding down to a 2D plot requires a <code>____</code> technique, which inevitably introduces some distortion.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="dimensionality reduction" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Real embedding models cluster by meaning automatically because of the <code>____</code> of their training data, not because they use different math than a toy example.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="scale" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about embeddings and cosine similarity in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>If asked to explain embeddings or cosine similarity to a non-technical audience, lead with the arrow-and-direction or map-of-meaning analogy before any formula &mdash; interviewers are testing whether you can make the idea land, not whether you can recite math.</li>
+    <li>Always be ready to name a real limitation (embeddings from different models aren't directly comparable; 2D plots distort distances) &mdash; showing you know where the abstraction leaks is what separates a strong answer from a memorized one.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-3-3-vector-databases-and-retrieval/lesson.html">Next Session: Vector Databases and Retrieval &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

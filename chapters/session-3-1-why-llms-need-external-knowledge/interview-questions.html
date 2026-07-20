@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.1 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 3.1: why LLMs need external knowledge — strong-answer, red-flag, and follow-up breakdowns on knowledge cutoffs, fact hallucination, and the RAG-or-not decision, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.1 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Why LLMs Need External Knowledge</h1>
+  <p>
+    RAG comes up in nearly every GenAI interview past the fundamentals stage
+    &mdash; but interviewers who actually know the space aren't looking for
+    "RAG stands for Retrieval-Augmented Generation." They're listening for
+    whether you understand <em>why</em> it exists and, more tellingly,
+    whether you can tell them when it's the wrong answer. Each question below
+    includes what a strong answer sounds like, common red flags, and a
+    natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Why can a language model state an outdated or incorrect fact with exactly the same confidence as a correct one?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The mechanism: a model generates text by predicting the most statistically plausible next token given everything before it, including the question. When training data on a topic is solid, that process tends to produce correct answers. When the signal is thin, ambiguous, or simply absent, there's no separate "certainty meter" that halts generation &mdash; the model still produces some continuation, and it can be entirely fabricated while reading exactly as fluently as a correct answer would. Confidence and accuracy are two different properties that happen to be expressed in the same calm, complete sentences.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Saying the model "lied" or "chose" to make something up, implying newer/larger models don't do this, or treating hallucination as a bug that will simply disappear with the next model release.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you design a system to reduce the damage from this, without assuming you can eliminate it entirely?" (e.g. ground answers in retrieved source text, require citations, and treat unverified claims as lower-trust by design.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> What's the actual difference between a "knowledge cutoff" problem and the deeper reason most real applications need retrieval?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The cutoff is a time-lag problem: the model's knowledge stops at a snapshot date, so anything time-dependent (current events, who currently holds a role, a policy that's since changed) is at risk. But the deeper reason is structural, not temporal: a huge amount of information &mdash; internal company documents, a specific customer's account history, a contract uploaded five minutes ago &mdash; was never going to be in a general-purpose model's training data at all, no matter how recently it was trained. Retraining more often narrows the first gap but does nothing for the second. That second gap is what actually motivates RAG as a category of engineering.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating "just retrain more frequently" as a full fix for needing retrieval, or conflating "old information" with "private information the model was never going to know."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me an example where the information is completely fresh (post-cutoff) but RAG still isn't the right fix." (e.g. a live calculator or unit conversion — the model doesn't need to retrieve text, it needs a tool call.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Describe the three conceptual steps of RAG without using the words "embedding" or "vector store."</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Retrieve: given the user's question, find the specific pieces of real, current, relevant text that might help answer it, wherever that information actually lives. Augment: insert that retrieved text into the prompt alongside the question, so the model has it directly in front of it. Generate: ask the model to answer using that provided text, ideally grounded explicitly in what was retrieved rather than in what it remembers from training. The candidate should be able to explain this at the "hand the consultant the real meeting minutes before asking them to summarize it" level, independent of the specific machinery used to do the retrieving.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Getting lost immediately in embedding math or vector database vendor names instead of the conceptual flow, or being unable to explain the idea without the vocabulary.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Which of those three steps is most likely to be the actual point of failure if a RAG answer comes back wrong?" (Retrieve — if the wrong or irrelevant text is pulled, no amount of good generation recovers from it.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Give an example of a task where adding RAG would be the wrong fix, and explain what the real fix should be instead.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A concrete example along the lines of: a user pastes in an email and asks the model to make it sound more professional. All the information the model needs is already sitting directly in the prompt — there's no training-data gap, nothing external to retrieve, and no time-sensitivity. This is a pure rewriting/transformation task; the model needs to think and rewrite, not look anything up. Bolting on retrieval here adds latency and complexity for zero accuracy benefit. The strongest answers also name the more common real-world trap: a chatbot giving wrong answers that actually stems from an under-specified prompt, where the fix is better prompting (Session 2.1), not new infrastructure.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Being unable to think of any case where RAG is the wrong tool, or defaulting to "more context never hurts" as a philosophy.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you convince a teammate who wants to 'just add RAG to fix it' that the real problem is somewhere else?" (Show, don't argue — test a tightened prompt against the failing cases first, before building retrieval infrastructure to fix a prompting bug.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> A stakeholder says: "Our support bot keeps giving wrong answers about our return policy. Let's add RAG." What would you want to verify before agreeing that's the right fix?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>First, confirm this is genuinely a knowledge problem and not a prompting problem — is the model actually missing access to the current policy text, or does it have it somewhere in context and is simply not being instructed clearly to prioritize it? Second, run the three-question framework: is the return policy information outside what a general model would reliably know (private and specific to this company — yes), does the answer need to be traceable back to the actual policy for trust/compliance reasons (yes), and does the policy change over time (if it's "occasionally updated," yes). If those check out, RAG is genuinely the right call here — but the strong answer is in doing that verification rather than agreeing reflexively, because "add RAG" is sometimes proposed as a fix for a bug that's actually somewhere else entirely.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Agreeing immediately without asking any clarifying questions, or being unable to articulate what specifically would make this a strong RAG candidate versus a coincidence.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Once you've confirmed RAG is right here, what's the very first thing you'd want to test before shipping it?" (e.g. that the retrieval step actually surfaces the correct, current policy passage for a range of real phrasings of the question — testing retrieval in isolation before trusting the generated answer.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A model's confidence is not a
+      measurement of its <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="accuracy,correctness" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Facts that are timeless and
+      well-established are unaffected by a model's knowledge <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="cutoff" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Private company documents were
+      never going to be in a general model's training data &mdash; no amount
+      of <code>____</code> fixes that.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="retraining" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> RAG's three steps, in order:
+      retrieve, <code>____</code>, generate.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="augment" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A pure rewriting or
+      transformation task, where all needed information is already in the
+      prompt, is a sign RAG is <code>____</code> needed.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="not" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about RAG judgment in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers who know RAG well are testing for judgment, not vocabulary &mdash; always be ready to name a case where RAG is the <em>wrong</em> tool, not just the right one.</li>
+    <li>Anchor every answer to the consultant analogy or a concrete scenario. "RAG grounds the model in real retrieved text instead of memory" lands better than a definition alone.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-3-2-embeddings-demystified/lesson.html">Next Session: Embeddings Demystified &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

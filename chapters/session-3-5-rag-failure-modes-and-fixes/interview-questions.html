@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.5 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 3.5: RAG failure modes and debugging — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.5 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: RAG Failure Modes and Debugging</h1>
+  <p>
+    RAG debugging questions show up constantly in GenAI/ML engineering
+    interviews in 2026, because they separate candidates who've actually run
+    a retrieval pipeline from candidates who can only describe one in the
+    abstract. Interviewers are listening for a structured debugging process
+    &mdash; isolate retrieval from generation, inspect real evidence, name the
+    specific failure &mdash; not a vague "just tune it until it works." Each
+    question below includes what a strong answer sounds like, common red
+    flags, and a natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> A RAG system gives a wrong answer. Walk me through exactly what you'd check first, second, and third.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>First: inspect the actual retrieved chunks and their similarity scores for that exact query &mdash; not the final answer's wording. Second: check whether the correct chunk is present at all in the top-k (a miss) or present but buried/diluted among many weak results (stuffing), or check whether it's split awkwardly across a chunk boundary (a chunking error). Third, and only after retrieval is confirmed clean, look at the generation step itself &mdash; is the model actually using the context it was given, or ignoring it? Testing retrieval in isolation (without the LLM in the loop) is what makes this a structured process instead of a guess.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumping straight to "the model is bad at following instructions" or "just retrain it" without ever looking at what was retrieved. No mention of isolating retrieval from generation.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The correct chunk WAS retrieved and WAS in the top-3. What do you check next?" (Now it's a generation-side problem &mdash; check the prompt template, whether instructions to cite only retrieved context are being followed, and whether the context was truncated or reordered before reaching the model.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Explain why "just increase k" can sometimes make a RAG system worse, not better.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Raising k retrieves more chunks unconditionally &mdash; it doesn't filter for whether those additional chunks are actually relevant. If similarity scores drop off sharply after the first few results (a common pattern), a higher k mostly adds low-relevance or near-zero-relevance chunks that dilute the genuinely useful ones, which is context stuffing. It only reliably helps when the failure was specifically a near-miss sitting just outside a narrow cutoff &mdash; and even then, a targeted fix like re-ranking usually beats blindly raising k for everyone.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating "more context" as universally safe or helpful. No mention of a relevance cliff or diminishing signal quality as k grows.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you decide the right k for a given corpus, concretely?" (e.g. plot similarity score vs. rank across a representative set of test queries and look for where the curve drops off sharply.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> How does re-ranking address both retrieval misses and context stuffing with a single mechanism?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Re-ranking is a two-pass design: a wide, cheap first pass (e.g. top-20 by cosine similarity) followed by a narrower, more expensive second pass that directly scores query-vs-candidate relevance for just those 20. It helps misses because a near-miss chunk that scored just below a narrow top-3 cutoff still survives into the wider top-20 pool and gets a second, more careful look. It helps stuffing because, even though the initial net is wide, only the re-ranked best few actually reach the generation step &mdash; you get the safety net of a wide search without paying the dilution cost of handing all 20 to the model.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Describing re-ranking as just "retrieving more" without the two-pass structure, or missing that the second pass uses a genuinely different, more relevance-aware comparison than plain cosine similarity.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Would re-ranking fix a miss caused by a query using 'telecommute' when the source only says 'remote work'?" (Not reliably on its own &mdash; that's closer to zero vocabulary overlap under a lexical embedding, not a near-miss; a re-ranker needs semantic, not just lexical, relevance scoring, or the underlying embedding model itself needs upgrading.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> What's the difference between a pipeline failure and a trust/evaluation failure in a RAG system, and why does the distinction matter?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A pipeline failure (chunking error, retrieval miss, context stuffing) has a discoverable, specific cause inside a specific stage, and fixing that stage fixes the symptom. A trust/evaluation failure can happen even when chunking, retrieval, and context assembly all technically worked correctly &mdash; the answer is still subtly wrong in a way no single component explains, and catching it requires systematic evaluation (e.g. a labeled test set, automated scoring, human review) rather than a config change. The distinction matters because misdiagnosing one as the other wastes effort: tuning chunk size won't fix a genuine evaluation gap, and building an eval harness won't fix a chunk boundary cutting through a key sentence.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating every wrong answer as the same undifferentiated "the AI was wrong" bucket, with no attempt to separate a fixable pipeline stage from a systemic trust problem.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give a concrete example of a RAG answer that's wrong even though retrieval and chunking are both fine." (e.g. the model retrieves the right two policy chunks but merges them incorrectly, stating a rule that's true of neither policy individually &mdash; a generation-level trust problem, not a pipeline problem.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> You deployed a RAG system and it's returning irrelevant documents while the LLM hallucinates facts not in the retrieved context. Walk me through how you'd debug and fix it.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>First isolate the two problems, because they're diagnosed differently: log the retrieved documents and scores to check whether retrieval itself is returning relevant material (is top-1 actually relevant to the query?), and separately test retrieval alone, without the LLM in the loop, to confirm whether the irrelevance is a retrieval problem or a chunking problem (losing context at boundaries). For the hallucination specifically &mdash; facts appearing that aren't even in the retrieved context &mdash; the fix is usually generation-side: tighten the prompt to explicitly instruct "only use facts from the provided context" and add citation grounding, requiring the model to cite which retrieved chunk supports each claim, which makes ungrounded claims visibly detectable.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just increase chunk size" with no structured debugging. Not isolating retrieval from generation. No mention of concrete metrics (e.g. top-1 relevance, or checking scores directly). Jumping to "retrain the model" without diagnosing which stage actually failed.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You re-ranked and it helped, but recall dropped. Why, and how do you balance precision vs. recall?" (Re-ranking trades some recall for precision by discarding lower-scored candidates from the wider pool; the balance depends on whether missing a relevant chunk or including an irrelevant one is more costly for the specific use case &mdash; often tuned by adjusting how many candidates survive the re-ranking cut.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> When a RAG answer is wrong, the first thing to check is what was actually <code>____</code>, not the answer's tone.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="retrieved" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Raising k without diagnosing first risks trading a retrieval miss for context <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="stuffing" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Re-ranking uses a wide first pass, then a more <code>____</code> second pass over just those candidates.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="expensive,careful,expensive/careful" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> A pipeline failure has a specific, discoverable cause; a <code>____</code> failure can happen even when the pipeline worked correctly.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="trust,evaluation,trust/evaluation" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Requiring a model to cite which retrieved chunk supports each claim is called citation <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="grounding" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk RAG debugging in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for a structured debugging process, not the "right" final word &mdash; narrate the order you'd check things in, the way this session's worked example did.</li>
+    <li>If you've actually run <code>broken_pipeline.py</code> from this session's exercise, reference it: being able to say "I've diagnosed exactly this kind of vocabulary-mismatch miss before, here's what the similarity scores looked like" is a far stronger signal than reciting the definition.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-3-6-week-3-lab-policy-qa-bot/lesson.html">Week 3 Lab &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

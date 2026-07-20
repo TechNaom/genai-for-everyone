@@ -1,8 +1,9 @@
 # GenAI for Everyone
 
 [![CI Checks](https://github.com/TechNaom/genai-for-everyone/actions/workflows/ci.yml/badge.svg)](https://github.com/TechNaom/genai-for-everyone/actions/workflows/ci.yml)
-[![Live site](https://img.shields.io/badge/live%20site-technaom.github.io-7C4DDC)](https://technaom.github.io/genai-for-everyone/)
-[![No signup required](https://img.shields.io/badge/signup-not%20required-B8447E)](https://technaom.github.io/genai-for-everyone/)
+[![Sessions on the site](https://img.shields.io/badge/site%20sessions-12%20%2F%2042-2E6BB8)](docs/curriculum/index.html)
+[![Live site](https://img.shields.io/badge/live%20site-technaom.github.io-0E7C86)](https://technaom.github.io/genai-for-everyone/)
+[![No signup required](https://img.shields.io/badge/signup-not%20required-FFC93C)](https://technaom.github.io/genai-for-everyone/)
 
 Free, job-ready GenAI program for everyone — beginners to working professionals. 7 weeks, 40 live sessions covering LLMs, prompting, RAG, agents, evaluation & safety, and deployment. Includes lesson docs, slide decks, hands-on code, quizzes, exams & interview prep.
 
@@ -38,20 +39,23 @@ Full session-by-session breakdown: [`docs/curriculum/CURRICULUM_MAP.md`](docs/cu
 
 ## Website UI
 
-The course now includes a static learning dashboard at [`index.html`](index.html). It turns the text-first curriculum into a visual course portal with:
+The course also ships as a static site at [`index.html`](index.html) — a visual, styled version of the curriculum, built session by session on top of the underlying Markdown content. Each converted session gets:
 
-- Week filters and search
-- Session cards for all 42 sessions
-- Direct links to lessons, quizzes, exercises, slides/notes, exams, and interview prep
-- A spotlight panel for the selected session
+- A full lesson page with a persistent sidebar, table of contents, and (where relevant) an in-browser Python playground
+- An interactive fill-in-the-blank quiz with instant feedback
+- An interview-prep page (strong-answer / red-flag / follow-up breakdowns + a rapid-fire review)
+- A guided exercise page and, where the session has an extended challenge, a project page
 
-Live at <https://technaom.github.io/genai-for-everyone/> (see the badge at the top of this README).
+**Weeks 1–2 (12 of 42 sessions) are live in this template.** The rest of the curriculum already exists as complete Markdown content (see `weeks/`, `codebase/`, `assessments/`) — see [`docs/curriculum/index.html`](docs/curriculum/index.html) for the live, session-by-session build status.
+
+Live at <https://technaom.github.io/genai-for-everyone/> (see the badges at the top of this README).
 
 ## Repo structure
 
 ```
 genai-for-everyone/
 ├── index.html              → visual learning dashboard / website shell
+├── chapters/                → built site pages (lesson/quiz/interview/exercise/project HTML), one folder per converted session
 ├── docs/
 │   ├── curriculum/        → master curriculum map, learning outcomes
 │   └── program/            → how to run a cohort, program overview

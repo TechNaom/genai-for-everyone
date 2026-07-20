@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.6 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Guided build of the Campus Student Services Q&A Bot for Session 3.6 — chunk and embed four cross-referencing campus PDFs, build citation-grounded retrieval, then diagnose and fix a real chunking bug.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.6 Exercises</span>
+    <span class="reading-time">60&ndash;75 min, hands-on</span>
+  </div>
+  <h1>Exercises: Build the Campus Student Services Q&amp;A Bot</h1>
+  <p>
+    Integrate everything from Week 3 into one working system that retrieves
+    across <strong>four separate, cross-referencing campus PDFs</strong> instead
+    of one clean handbook: a Registration Guide, a Financial Aid Handbook, an
+    Academic Standing Policy, and a Housing Handbook. The scaffold marks every
+    place that integrates this week's concepts with <code>&#35; TODO</code>
+    markers &mdash; and Part 4 hands you a real, reproducible retrieval bug to
+    diagnose and fix yourself, not just a function to fill in.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python3 --version</code>),
+    plus <code>pip install pypdf</code> to read the campus PDFs. Download
+    <code>starter.py</code> below and place it alongside the included
+    <code>campus_docs/</code> folder (four PDFs, already provided &mdash; don't
+    edit them). Run <code>python3 starter.py</code> to work through
+    <code>offline_test()</code>, which needs no API key for Parts 1&ndash;4. To
+    see live, citation-grounded model answers on genuinely unanswerable
+    questions too, set <code>ANTHROPIC_API_KEY</code> and try the full pipeline
+    end-to-end.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What each Week 3 session hands you here</h2>
+  <p>
+    This lab was chosen specifically because building it well touches almost
+    everything from the week. Each earlier session shows up as a concrete piece
+    of the pipeline:
+  </p>
+
+  <div class="code-breakdown">
+    <dl>
+      <dt>Session 3.2 &mdash; embeddings demystified</dt>
+      <dd><code>tokenize()</code>, <code>vectorize()</code>, and
+      <code>cosine_sim()</code> return exactly as they were &mdash; already
+      implemented for you in the scaffold, ready to reuse across all four
+      documents at once.</dd>
+
+      <dt>Session 3.3 &mdash; vector databases &amp; retrieval</dt>
+      <dd>Paragraph-aware chunking with overlap, extended into a
+      <code>CampusVectorStore</code> that holds entries from four sources
+      simultaneously and still returns a ranked top-k.</dd>
+
+      <dt>Session 3.4 &mdash; building a RAG pipeline</dt>
+      <dd><code>format_context()</code>, <code>build_rag_prompt()</code>, and
+      <code>extract_citations()</code> &mdash; handing retrieved chunks to a
+      model with strict citation instructions, tagged with a source-document
+      label on every entry.</dd>
+
+      <dt>Session 3.5 &mdash; RAG failure modes &amp; fixes</dt>
+      <dd>The diagnostic sequence from that session &mdash; print the chunks,
+      rule out chunk size, inspect the real extracted text &mdash; stops being
+      abstract and becomes exactly what Part 4 asks you to run against a real
+      bug.</dd>
+    </dl>
+  </div>
+
+  <h2>The tasks</h2>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Load and chunk the corpus</h3>
+    <p>Find <code>load_documents()</code> and its <code>&#35; TODO</code>. Load every <code>.pdf</code> in <code>campus_docs/</code> with <code>PdfReader</code>, extract each page's text joined with <code>"\n"</code>, and return <code>{filename: full_text}</code>. Then fill in <code>chunk_text()</code>: split on blank lines with <code>re.split(r"\n\s*\n", text)</code>, accumulate paragraphs into a buffer until <code>target_words</code> is reached, close the chunk, and carry the last <code>overlap_words</code> words forward &mdash; the same paragraph-aware approach from Session 3.3.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Build the corpus and the vector store</h3>
+    <p>Find <code>build_corpus_chunks()</code> and its <code>&#35; TODO</code>. Flatten every document's chunks into a single list of <code>{"doc": filename, "text": chunk_text}</code> dicts across all four PDFs. Then fill in <code>CampusVectorStore.__init__()</code> (vectorize every chunk on construction) and <code>.search()</code> (score every entry by cosine similarity, sort descending, return the top <code>k</code>).</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Citation-grounded generation</h3>
+    <p>Find <code>format_context()</code>, <code>build_rag_prompt()</code>, and <code>extract_citations()</code>. Number each retrieved chunk <code>[1]</code>, <code>[2]</code>, ... tagged with a human-readable source label (<code>"housing_handbook.pdf"</code> &rarr; <code>"Housing Handbook"</code>) &mdash; and don't leak the similarity score into the output. Build a prompt that requires every sentence to end with a citation marker and instructs the model to say plainly when it can't answer from the context. Then wire <code>answer_question()</code> together: search, format, prompt, call the model, extract citations, and resolve which source documents were actually cited.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Diagnose and fix the chunking bug</h3>
+    <p>Once Parts 1&ndash;3 pass, the Part 4 check will almost certainly fail: both <code>"What is the maximum course load for a student on probation?"</code> and <code>"What happens if I drop below full-time enrollment while living in a dorm?"</code> retrieve <code>registration_guide.pdf</code> instead of the correct document. Don't jump to a fix. First print the chunks for <code>registration_guide.pdf</code> and notice there's suspiciously few of them. Try a few different <code>target_words</code> values and confirm the boundary never moves &mdash; proof the bug is upstream of chunk size. Then print <code>repr(text[:300])</code> and look at how the real extracted text is structured. Only then write <code>chunk_text_by_caps_header()</code>, splitting on lines that are entirely uppercase, and confirm both questions now retrieve the right document.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">5</span> Compare baseline vs. fixed across every question</h3>
+    <p>Run every test question in <code>offline_test()</code> against both <code>build_corpus_chunks()</code> (baseline) and <code>build_corpus_chunks_fixed()</code> (caps-header). Confirm the fix resolves both known bugs without regressing any of the questions that already worked &mdash; a chunking change should be verified across the whole corpus, not just the two questions it was written to fix.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 6 &mdash; Debug the Code</h3>
+    <p>This citation extractor is supposed to return the sorted, unique list of citation numbers in an answer, but it's returning duplicates in the original order instead of a clean sorted set. Find and fix the bug.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_citations.py</span>
+      </div>
+      <pre><code>import re
+
+def extract_citations(answer_text):
+    matches = re.findall(r"\[(\d+)\]", answer_text)
+    return [int(m) for m in matches]
+
+print(extract_citations("Aid is disbursed within 10 days [1]. The deposit is $200 [2][2]."))
+&#35; prints [1, 2, 2] -- should print [1, 2]</code></pre>
+    </div>
+    <p><em>Hint:</em> the list comprehension keeps every match in the order it was found, duplicates included. Route the matches through a <code>set()</code> before converting back to a <code>sorted()</code> list.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. Run
+    <code>python3 starter.py</code> and confirm all four parts of
+    <code>offline_test()</code> pass, including the Part 4 assertions that
+    baseline chunking retrieves the wrong document and fixed chunking retrieves
+    the right one. Compare your implementation against <code>solution.py</code>
+    once you've given the diagnosis in Task 4 a genuine, unaided attempt &mdash;
+    that diagnostic sequence is the part most worth struggling with, not the
+    regex itself.
+  </div>
+
+  <div class="what-is">
+    <span class="label">Pro path: extend it</span>
+    Before reading the solution's diagnosis, find both chunking bugs yourself:
+    run the pipeline against both failing questions and confirm they retrieve
+    the wrong document. Inspect the actual chunk boundaries for
+    <code>registration_guide.pdf</code> &mdash; print them out, try a few
+    different <code>target_words</code> values, and confirm the boundaries
+    don't move no matter what you set. That's your evidence the bug is
+    upstream of chunk size. Only then look at how the section headers are
+    actually written in the extracted text, and design your own fix before
+    checking it against the reference solution.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.4 Building a RAG Pipeline — GenAI for Everyone</title>
+<meta name="description" content="Connect retrieval to generation for the first time: augment a prompt with retrieved chunks, generate a grounded answer, and add citation grounding so you can verify what the model actually used.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.4</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>Building a RAG Pipeline</h1>
+  <p><em>Retrieval &rarr; Augmentation &rarr; Generation, end to end, with citation grounding &mdash; the session where your research assistant finally speaks.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#third-step">1. The Third Step, Finally Made Real</a>
+    <a href="#prompt-dissected">2. A RAG Prompt Template, Dissected</a>
+    <a href="#citation-grounding">3. Why Citation Grounding Matters More Than It Might Seem</a>
+    <a href="#seams-show">4. Where the Seams Show &amp; Defensive Thinking</a>
+  </nav>
+
+  <div class="hook">
+    You've now built every individual piece of a RAG system without ever
+    actually using one to answer a question. Session 3.1 gave you the reason
+    RAG exists at all. Session 3.2 gave you the math underneath "find the
+    relevant text." Session 3.3 gave you a working local vector store that
+    could take a real question about a real PDF and hand back the most
+    relevant passages &mdash; and then, deliberately, stopped right there.
+    Imagine asking a brilliant research assistant a question, watching them
+    correctly pull the three most relevant pages out of a filing cabinet, lay
+    them neatly on your desk &mdash; and then just stand there. They did real,
+    useful work. But you still don't have an answer. Today, your research
+    assistant finally speaks.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="third-step">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. The Third Step, Finally Made Real</h2>
+
+    <p>
+      Recall the three-step move from Session 3.1: retrieve, augment,
+      generate. You've already built retrieve &mdash; Sessions 3.2&ndash;3.3
+      gave you the embeddings and vector store that make it work. Today's
+      session is almost entirely about the other two.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... "augment," concretely?</span>
+      Augment means taking the chunks your vector store handed back and
+      inserting them into the prompt, alongside the user's actual question, in
+      a structured way the model can clearly tell apart from the question
+      itself. This sounds almost too simple to need much thought &mdash; and
+      the basic mechanics genuinely are simple &mdash; but <em>how</em> you
+      structure that insertion has a real effect on answer quality, worth
+      treating with the same care you gave prompt design back in Week 2.
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... "generate," in a RAG context?</span>
+      Generate means asking the model to actually answer the question, but
+      with an instruction that fundamentally changes what kind of answer
+      you're asking for. You're not asking "what do you know about X?"
+      anymore. You're asking "given specifically this retrieved text, answer
+      this specific question, using only what's in front of you." That's a
+      different task than open-ended generation, and the prompt needs to say
+      so explicitly &mdash; otherwise you risk the model quietly falling back
+      on its own training-data memory instead of the text you worked hard to
+      retrieve, which defeats the entire purpose of building a retrieval
+      pipeline in the first place.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Retrieve was built in 3.2&ndash;3.3. Today is entirely about augment and generate.</li>
+        <li>Augment = inserting retrieved chunks into the prompt in a structured, addressable way.</li>
+        <li>Generate = answering <em>from the retrieved text specifically</em>, not from open-ended memory &mdash; and the prompt must say so.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="prompt-dissected">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. A RAG Prompt Template, Dissected</h2>
+
+    <p>
+      Here is roughly what a grounded RAG prompt looks like in practice, and
+      every piece of it is doing a specific job:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">rag_prompt_template.txt</span>
+      </div>
+      <pre><code>You are answering a question using ONLY the information in the provided
+context below. If the context does not contain enough information to
+answer the question, say so explicitly rather than guessing or using
+outside knowledge.
+
+CONTEXT:
+[1] {retrieved chunk 1 text}
+[2] {retrieved chunk 2 text}
+[3] {retrieved chunk 3 text}
+
+QUESTION: {user's question}
+
+Answer the question, and cite which numbered context chunk(s) support
+each part of your answer.</code></pre>
+    </div>
+
+    <p>Look at what each part is actually doing, because none of it is filler:</p>
+
+    <div class="real-world">
+      <span class="label">Every line is load-bearing</span>
+      <ul>
+        <li><strong>"ONLY the information in the provided context"</strong> is the single most load-bearing instruction in the entire template. Without it, you've built an elaborate, carefully-tuned retrieval system whose output the model is free to simply ignore in favor of its own memorized (and possibly outdated, possibly hallucinated) knowledge. This is what actually makes the system <em>retrieval-augmented</em> rather than just retrieval-adjacent.</li>
+        <li><strong>"If the context does not contain enough information... say so explicitly"</strong> directly addresses Session 3.1's central warning about confident-sounding fabrication. A retrieval system will sometimes retrieve chunks that are topically related but don't actually answer the question &mdash; you saw this happen yourself in Session 3.3's honest results. Without this instruction, a model handed near-miss context will often still produce a fluent, confident answer anyway.</li>
+        <li><strong>Numbered chunks</strong> turn an undifferentiated wall of retrieved text into addressable units. This single formatting choice is what makes citation possible at all &mdash; you cannot ask a model to cite "which part of the context" supported an answer if the context has no internal structure to point to.</li>
+        <li><strong>"cite which numbered context chunk(s) support each part of your answer"</strong> is the citation grounding instruction, and it's the piece that turns "the model says it used the context" into something you can actually verify.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>"ONLY the provided context" is the instruction that makes a system genuinely retrieval-augmented.</li>
+        <li>"Say so explicitly if you don't know" pre-empts confident fabrication from near-miss retrieval.</li>
+        <li>Numbered chunks are the prerequisite for citation &mdash; no addressable structure, no citation.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="citation-grounding">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Why Citation Grounding Matters More Than It Might Seem</h2>
+
+    <p>
+      It's worth pausing on why citation grounding deserves to be treated as a
+      first-class part of the pipeline rather than a nice-to-have polish step
+      you could add later.
+    </p>
+
+    <div class="what-is">
+      <span class="label">The invisible failure, made visible</span>
+      Without citations, a RAG system's output looks exactly the same whether
+      the model faithfully grounded its answer in the retrieved chunks or
+      quietly ignored them and answered from memory instead. Both produce a
+      fluent paragraph of text. There's no visible difference between "the
+      system worked as designed" and "the system silently bypassed its own
+      safeguards" &mdash; precisely the kind of failure that's invisible until
+      it causes real damage, echoing exactly the fluent-failure problem from
+      Session 3.1.
+    </div>
+
+    <p>
+      Citation grounding turns an invisible failure mode into a checkable one.
+      If a model's answer cites chunk <code>[2]</code>, you can go look at
+      chunk <code>[2]</code> and verify, directly, whether it actually
+      supports what the model claimed. If the model's answer makes a specific
+      claim with no citation attached, that's an immediate, visible signal
+      that something may have gone wrong &mdash; either the model used
+      outside knowledge, or it failed to ground a claim it should have
+      grounded.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">extract_citations_demo.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="14">import re
+
+def extract_citations(answer_text):
+    matches = re.findall(r"\[(\d+)\]", answer_text)
+    unique_numbers = {int(m) for m in matches}
+    return sorted(unique_numbers)
+
+answer = "Employees get 18 days of PTO [1]. Sick days do not roll over [2][2]."
+print("Model answer:", answer)
+print("Cited chunks:", extract_citations(answer))
+print("Now go look at chunk [1] and chunk [2] yourself -- do they")
+print("actually say what the model claims they say?")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; notice the citation list is a sorted set of unique chunk numbers, ready to check by hand against the real chunk text.</div>
+    </div>
+
+    <p>
+      This doesn't make a RAG system bulletproof &mdash; a model can still
+      cite a chunk that doesn't actually support its claim, which is a deeper
+      problem you'll learn to systematically catch in Session 3.5. But it
+      converts the central trust problem from Session 3.1 &mdash; "I can't
+      tell if this is grounded or fabricated" &mdash; into something with at
+      least a visible paper trail.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Without citations, a grounded answer and a hallucinated one are visually indistinguishable.</li>
+        <li>A citation lets you check a claim against the actual chunk it points to &mdash; concrete, not assumed.</li>
+        <li>Citations existing is not proof the citation is correct &mdash; that verification step still has to happen (Session 3.5).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="seams-show">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. Where the Seams Show &amp; Defensive Thinking</h2>
+
+    <p>
+      There's a small but genuinely important engineering detail worth naming
+      explicitly, because it's the kind of thing that's easy to get subtly
+      wrong on a first attempt: the format your retrieval step hands off needs
+      to match what your generation step expects to receive.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">adapter-step.txt</span>
+      </div>
+      <pre><code>Embedding stage:   a chunk is a plain string
+Retrieval stage:   a chunk is a (chunk_text, similarity_score) tuple
+Generation stage:  a chunk is a numbered, labeled unit: "[2] {chunk_text}"
+
+format_context() is the ADAPTER between retrieval's shape and
+generation's shape -- it strips the score and adds the number.</code></pre>
+    </div>
+
+    <p>
+      Session 3.3's <code>VectorStore.search()</code> returned a list of
+      <code>(chunk_text, similarity_score)</code> tuples. That similarity
+      score was essential for <em>building</em> the retrieval system and for
+      the kind of diagnostic work you did comparing chunk sizes &mdash; but it
+      has no place inside the final prompt you send to the model. A user's
+      question doesn't need to know that chunk 2 scored 0.74; the model needs
+      the chunk's actual text, clearly numbered, and nothing else cluttering
+      the context. This kind of small "adapter" step between pipeline stages
+      is extremely common in real production RAG systems, and it's worth
+      getting comfortable with rather than treating as an annoying
+      afterthought.
+    </p>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: a citation can never be more precise than the chunk it points to</summary>
+      <p>
+        There's a subtlety in citation grounding worth calling out explicitly.
+        A citation is only as good as what it points back to. If your numbered
+        context chunks are large, a citation that says "see chunk [2]" still
+        leaves the user (or your downstream system) hunting through several
+        hundred words to find the specific sentence that actually supports the
+        claim. This is a direct echo of Session 3.3's chunking trade-off,
+        reappearing in a new form: the same chunk size decision that affects
+        retrieval quality also affects how <em>precise</em> a citation can
+        possibly be. There's no single fix to put in place today &mdash; just
+        a connection worth holding onto, since you'll see exactly this tension
+        again when re-ranking and finer-grained retrieval come up in Session
+        3.5.
+      </p>
+    </details>
+
+    <p>
+      If Session 2.4's lesson about defensive parsing and Session 2.6's lesson
+      about designing for graceful failure feel like they're showing up again
+      here, that's not a coincidence &mdash; it's the same engineering
+      discipline, applied to a new kind of pipeline. A few things worth
+      building defensively into your RAG generation step today:
+    </p>
+
+    <div class="real-world">
+      <span class="label">Build these in defensively</span>
+      <ul>
+        <li><strong>What happens if retrieval returns nothing useful?</strong> If the top-k chunks all have very low similarity scores, the honest answer is often "I don't have enough information to answer this" &mdash; and your system should be willing to say that, rather than forcing a confident-sounding answer out of weak context.</li>
+        <li><strong>What happens if the model ignores the citation instruction?</strong> Models don't always perfectly follow every formatting instruction every time. A production system should have a plan for what to do if a citation is missing or malformed, rather than assuming the instruction will always be followed flawlessly.</li>
+        <li><strong>What happens if the question is genuinely unanswerable from the document set?</strong> This is different from "retrieval found weak matches" &mdash; this is "the document set fundamentally doesn't contain this information at all." Both should lead to the same honest "I don't have enough information" response, for the same underlying reason Session 3.1 first introduced: a system that knows the boundary of what it can answer is more trustworthy than one that always sounds confident.</li>
+      </ul>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill here isn't typing out the prompt template &mdash; it's deciding what each instruction has to guarantee before you write a word of it. Before asking an AI assistant to help draft a grounded RAG prompt, an experienced practitioner lists the failure modes first (model ignores context, model over-claims confidence, question is unanswerable) and only then writes instructions that specifically close each one.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python function that assembles a grounded RAG prompt from numbered context chunks and a question..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's template &mdash; does it include an explicit "only use the provided context" instruction, an explicit honest-uncertainty instruction, and a citation instruction? That comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python function build_rag_prompt(question, context) that fills in a prompt template with three required properties: (1) instructs the model to answer using ONLY the provided context, (2) instructs the model to explicitly say so if the context doesn't contain enough information rather than guessing, and (3) instructs the model to cite which numbered context chunk(s) support each part of its answer using [1], [2] style markers. The context argument is already a numbered string. Return the complete prompt as a single string.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A chunk's data shape is different at every pipeline stage &mdash; string, then (text, score), then numbered unit &mdash; and translating between them is normal "adapter" code.</li>
+        <li>A citation can never be more precise than the chunk it points to; chunk size affects citation precision, not just retrieval quality.</li>
+        <li>Build in honest "I don't know" behavior for weak retrieval, missing citations, and genuinely unanswerable questions.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>By the end of this session's exercise, you'll have a single function that takes a raw user question, runs it through retrieval, augments a prompt with the retrieved chunks in proper numbered format, sends that prompt to an LLM, and returns a generated answer with citations attached &mdash; a complete, working RAG application, end to end, over a real document.</li>
+      <li>It will not be a perfect one. Retrieval itself sometimes returns near-misses rather than clean hits, and adding a generation step on top doesn't fix that underlying problem &mdash; it can only generate an honest "I don't have enough information" response <em>if</em> you've built the defensive instructions to allow for that outcome.</li>
+      <li>That gap &mdash; between a RAG system that runs without errors and a RAG system that's actually trustworthy &mdash; is exactly where Session 3.5 picks up. Today, you build the complete machine. Next session, you learn to find out where it's lying to you.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>"Augment" and "generate" are where Session 3.1's framework finally becomes concrete code</strong> &mdash; retrieved chunks get inserted into a structured prompt, and the model is instructed to answer using only that context.</li>
+      <li><strong>"Use ONLY the provided context" is the single most load-bearing instruction in a RAG prompt.</strong> Without it, the model is free to quietly fall back on its own memorized knowledge, which defeats the purpose of retrieval entirely.</li>
+      <li><strong>Numbered context chunks are what make citation possible at all.</strong> You can't ask a model to cite "which part of the context" supported an answer if the context has no addressable internal structure.</li>
+      <li><strong>Citation grounding turns an invisible failure mode into a checkable one.</strong> A faithfully-grounded answer and a quietly-hallucinated one look identical without it; citations give you something concrete to verify against the real retrieved text.</li>
+      <li><strong>Pipeline stages have different internal data shapes, and that's normal, not a flaw.</strong> A chunk is a plain string during embedding, a (text, score) pair during retrieval, and a numbered labeled unit during generation.</li>
+      <li><strong>A citation can never be more precise than the chunk it points to.</strong> Chunk size affects not just retrieval quality but how specific a citation can possibly be.</li>
+      <li><strong>A trustworthy RAG system needs a defensive plan for "I don't know."</strong> Weak retrieval, a missing citation, or a genuinely unanswerable question should all be able to produce an honest "not enough information" response instead of a forced, confident-sounding guess.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the
+    end-to-end RAG exercise puts retrieve, augment, generate, and citation
+    extraction together into one working pipeline.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

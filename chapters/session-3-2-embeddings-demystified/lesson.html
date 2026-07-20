@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.2 Embeddings Demystified — GenAI for Everyone</title>
+<meta name="description" content="How embeddings turn text into vectors, why cosine similarity measures meaning instead of vocabulary, and a hand-computed walk-through of the math behind every RAG retrieval step.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.2</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>Embeddings Demystified</h1>
+  <p><em>Vector representations, semantic similarity, and cosine distance &mdash; the actual mechanism underneath every "find the relevant text" step in RAG.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#from-words-to-numbers">1. From Words to Numbers: What a Vector Actually Is</a>
+    <a href="#beyond-keywords">2. Why This Is a Leap Beyond Matching Keywords</a>
+    <a href="#cosine-similarity">3. Measuring "Closeness": Cosine Similarity</a>
+    <a href="#hand-walkthrough">4. A Concrete Walk-Through, by Hand</a>
+    <a href="#twenty-sentences">5. What "20 Sentences in 2D" Is Actually Showing You</a>
+  </nav>
+
+  <div class="hook">
+    Picture a librarian working in a library where every book has had its
+    title and cover torn off. She can't read a single word of any language.
+    And yet she's astonishingly good at her job: hand her any book, and
+    she'll correctly shelve it near other books about similar topics. Ask her
+    to find "something like this book about volcanoes," and she'll walk
+    straight to a shelf of books about earthquakes and tectonic plates &mdash;
+    not because she read the word "volcano," but because the books
+    <em>feel</em> alike to her, in a way she can sense but not name. That's
+    almost exactly what an embedding is: a way of measuring the <em>shape</em>
+    of meaning without reading a single word the way you do. Today you learn
+    how it actually works &mdash; the mechanism underneath every "find the
+    relevant text" step you learned you'd need in Session 3.1.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="from-words-to-numbers">
+    <span class="subtopic-label">Sub-topic 1 of 5</span>
+    <h2>1. From Words to Numbers: What a Vector Actually Is</h2>
+
+    <p>
+      Strip away the jargon for a second. A vector, in this context, is just
+      an ordered list of numbers &mdash; something like
+      <code>[0.2, -1.4, 0.8, 0.1, ...]</code>. Real embedding models produce
+      vectors with hundreds or thousands of numbers in them, but the
+      <em>idea</em> is identical to something far simpler you already know:
+      coordinates.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... an embedding?</span>
+      An embedding converts a piece of text &mdash; a word, a sentence, a
+      whole paragraph &mdash; into a vector that captures something about its
+      <em>meaning</em>. Just like a point at <code>(2, 3)</code> on a 2D graph
+      is close to <code>(2.1, 3.2)</code> and far from <code>(50, -30)</code>,
+      an embedding places text as a point in <em>meaning space</em>, except
+      using hundreds of numbers instead of two. No single position in the
+      vector means something as clean as "royalty-ness" &mdash; but across
+      the whole vector, the pattern of numbers encodes real semantic
+      properties, learned automatically from massive amounts of text during
+      training.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">coordinates-vs-embeddings.txt</span>
+      </div>
+      <pre><code>2D coordinates                          High-dimensional embeddings
+(2, 3) close to (2.1, 3.2)               "the cat sat on the mat" close to
+                                          "a feline rested on the rug"
+(2, 3) far from (50, -30)                "the cat sat on the mat" far from
+                                          "quarterly earnings rose 4 percent"
+2 numbers per point                      hundreds or thousands of numbers per point
+Axes are labeled (x, y)                  no single position has a human label,
+                                          but the whole pattern encodes meaning</code></pre>
+    </div>
+
+    <p>
+      Here's the property that makes this genuinely useful, not just a neat
+      trick: <strong>words and sentences with similar meaning end up as
+      nearby points in this high-dimensional space, and words and sentences
+      with different meaning end up far apart.</strong> "The cat sat on the
+      mat" and "A feline rested on the rug" produce vectors that are close to
+      each other, even though they share almost none of the same words
+      &mdash; because an embedding model captures <em>meaning</em>, not just
+      spelling or vocabulary overlap. Meanwhile, "The cat sat on the mat" and
+      "Quarterly earnings rose 4 percent" land far apart, because they're
+      about genuinely different things.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Why this is the load-bearing idea of RAG</span>
+      <ul>
+        <li>Once meaning becomes geometry, <em>finding relevant information</em> becomes <em>finding nearby points</em> &mdash; a problem computers solve extremely quickly, even across millions of candidates.</li>
+        <li>Every "find the relevant document" step in a RAG system, from Session 3.3 onward, is this exact operation running at scale.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>An embedding is a vector (a list of numbers) that encodes a piece of text's <strong>meaning</strong> as a point in space.</li>
+        <li>Texts with similar meaning produce nearby vectors; texts with different meaning produce vectors far apart &mdash; even with zero shared vocabulary.</li>
+        <li>This turns "find relevant text" into "find nearby points," the operation every RAG retrieval step relies on.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="beyond-keywords">
+    <span class="subtopic-label">Sub-topic 2 of 5</span>
+    <h2>2. Why This Is a Leap Beyond Matching Keywords</h2>
+
+    <p>
+      It's worth pausing on why this matters, because the alternative &mdash;
+      the thing embeddings replace &mdash; is more familiar and more limited
+      than people expect.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... keyword matching?</span>
+      Before embeddings, "search" mostly meant checking whether a document
+      contains the literal words in the query. This works fine when people
+      phrase things the same way the document does, and falls apart the
+      moment they don't. Someone searching a company wiki for "how do I get
+      reimbursed for travel" gets nothing useful from keyword search if the
+      actual policy document is titled "Expense Submission Procedures" and
+      never uses the words "reimbursed" or "travel." The <em>meaning</em>
+      overlaps almost completely. The <em>words</em> barely overlap at all.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">keyword-vs-semantic.txt</span>
+      </div>
+      <pre><code>Query: "how do I get reimbursed for travel"
+Document title: "Expense Submission Procedures"
+
+Keyword search:   0 words in common  ->  NO MATCH (fails)
+Semantic search:  closely related concepts, nearby vectors  ->  MATCH (succeeds)</code></pre>
+    </div>
+
+    <p>
+      Embeddings solve exactly this gap. Because the comparison happens in
+      meaning-space rather than word-space, a query about "getting reimbursed
+      for travel" and a document about "expense submission procedures" can
+      end up as nearby vectors, because they're about closely related
+      concepts &mdash; even with close to zero vocabulary overlap. This is
+      why embeddings are the foundational building block beneath modern
+      semantic search and RAG: they let you search by <em>what something
+      means</em>, not just <em>what words it happens to use</em>.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Keyword search checks for literal word overlap &mdash; it fails whenever a query and a document describe the same idea with different words.</li>
+        <li>Embedding-based (semantic) search compares meaning, not vocabulary, so it succeeds exactly where keyword search fails.</li>
+        <li>This gap is the entire reason semantic search and RAG exist as a category.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="cosine-similarity">
+    <span class="subtopic-label">Sub-topic 3 of 5</span>
+    <h2>3. Measuring "Closeness": Introducing Cosine Similarity</h2>
+
+    <p>
+      So embeddings turn text into points in space, and similar meaning
+      produces nearby points. But "nearby" needs a precise mathematical
+      definition if a computer is going to use it &mdash; you can't tell a
+      program "just eyeball which ones look close together" the way you might
+      glance at a 2D scatter plot.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... cosine similarity?</span>
+      The most common way to measure closeness between two embedding vectors.
+      Imagine each vector as an arrow shooting out from the same starting
+      point, out into high-dimensional meaning-space. Cosine similarity asks
+      one specific question: <em>how similar is the direction these two
+      arrows are pointing in?</em> &mdash; completely ignoring how long either
+      arrow is.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">cosine-similarity-scale.txt</span>
+      </div>
+      <pre><code> 1.0   Exactly the same direction     -> maximally similar meaning
+ 0.85-0.95  Paraphrases of the same idea (typical, in practice)
+ 0.1-0.3    Unrelated topics (typical, in practice)
+ 0.0   A right angle                  -> essentially unrelated
+-1.0   Exactly opposite directions    -> maximally dissimilar (rare with real text)</code></pre>
+    </div>
+
+    <p>
+      In practice, when you compare real sentence embeddings, you'll mostly
+      see values clustered in the upper range &mdash; two sentences about
+      completely different topics might land around 0.1&ndash;0.3, while two
+      paraphrases of the same idea might land at 0.85&ndash;0.95. There's no
+      universal hard cutoff for "similar enough" &mdash; what counts as a good
+      match depends on your embedding model and your use case, which is
+      exactly the kind of practical calibration you'll wrestle with in
+      Session 3.3 when choosing a top-k retrieval threshold for a real vector
+      store.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Why direction, specifically, and not straight-line distance?</span>
+      Because for text embeddings, the <em>direction</em> a vector points in
+      tends to capture meaning far more reliably than its raw length, which
+      can vary for reasons unrelated to semantic content (like sentence length
+      or word frequency quirks). Two ways of saying "I love this restaurant"
+      should be considered highly similar regardless of small differences in
+      vector magnitude &mdash; and cosine similarity, by ignoring magnitude
+      entirely and focusing purely on direction, captures exactly that
+      intuition. This is why it's the dominant similarity measure across
+      nearly every real-world embedding and vector-search system you'll
+      encounter.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Cosine similarity measures the <strong>angle</strong> between two vectors, ignoring their length &mdash; a number typically between -1 and 1.</li>
+        <li>Near 1 = highly similar meaning; near 0 = essentially unrelated; near -1 = opposite (rare in practice with real text).</li>
+        <li>There's no universal "similar enough" cutoff &mdash; it depends on the embedding model and the use case.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="hand-walkthrough">
+    <span class="subtopic-label">Sub-topic 4 of 5</span>
+    <h2>4. A Concrete Walk-Through, by Hand</h2>
+
+    <p>
+      Let's make this fully concrete with numbers small enough to actually
+      compute, rather than leaving "vectors" as an abstract idea. Real
+      embeddings have hundreds of dimensions, but the math works identically
+      in 2 dimensions, where you can actually see it.
+    </p>
+
+    <p>
+      Suppose, in some simplified 2D meaning-space, three sentences produced
+      these embeddings:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">three-toy-vectors.txt</span>
+      </div>
+      <pre><code>"I adopted a puppy"          -> (4, 3)
+"I got a new dog"             -> (5, 2)
+"Stock prices fell sharply"   -> (-2, 4)
+
+cosine_similarity(A, B) = (A . B) / (|A| x |B|)
+  A . B  = dot product   = multiply matching components, then add them up
+  |A|    = vector length = square root of the sum of its squared components</code></pre>
+    </div>
+
+    <p>
+      Here's that exact formula as runnable Python. Change the tuples and
+      run it again to build intuition for how the score moves:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">cosine_by_hand.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="20">import math
+
+def cosine_similarity(a, b):
+    dot_product = sum(x * y for x, y in zip(a, b))
+    length_a = math.sqrt(sum(x * x for x in a))
+    length_b = math.sqrt(sum(y * y for y in b))
+    if length_a == 0 or length_b == 0:
+        return 0.0
+    return dot_product / (length_a * length_b)
+
+puppy = (4, 3)     # "I adopted a puppy"
+dog = (5, 2)       # "I got a new dog"
+stocks = (-2, 4)   # "Stock prices fell sharply"
+
+print("puppy vs dog:   ", round(cosine_similarity(puppy, dog), 2))
+print("puppy vs stocks:", round(cosine_similarity(puppy, stocks), 2))
+print("Notice: same real-world idea (getting a dog) scores high,")
+print("even though 'puppy' and 'dog' don't share a single word.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then try your own tuples and see how the score moves.</div>
+    </div>
+
+    <p>
+      Comparing "I adopted a puppy" <code>(4, 3)</code> and "I got a new dog"
+      <code>(5, 2)</code>:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">worked-example-1.txt</span>
+      </div>
+      <pre><code>Dot product:      (4 x 5) + (3 x 2) = 20 + 6 = 26
+Length of (4, 3): sqrt(16 + 9) = sqrt(25) = 5
+Length of (5, 2): sqrt(25 + 4) = sqrt(29) ~= 5.39
+Cosine similarity: 26 / (5 x 5.39) ~= 26 / 26.93 ~= 0.97   <- very high</code></pre>
+    </div>
+
+    <p>
+      That's a very high similarity score &mdash; which makes sense, since
+      both sentences are about the same real-world idea (getting a dog), even
+      though they don't share a single word in common. Now compare "I adopted
+      a puppy" <code>(4, 3)</code> and "Stock prices fell sharply"
+      <code>(-2, 4)</code>:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">worked-example-2.txt</span>
+      </div>
+      <pre><code>Dot product:       (4 x -2) + (3 x 4) = -8 + 12 = 4
+Length of (4, 3):  5 (from before)
+Length of (-2, 4): sqrt(4 + 16) = sqrt(20) ~= 4.47
+Cosine similarity: 4 / (5 x 4.47) ~= 4 / 22.36 ~= 0.18   <- near zero</code></pre>
+    </div>
+
+    <p>
+      A score near zero &mdash; these two sentences are about essentially
+      unrelated topics, and the math reflects that directly. You just
+      hand-verified, with arithmetic anyone can check, the exact computation
+      that powers every "find the most relevant document" step in a real RAG
+      system. Sessions 3.3 and 3.4 scale this idea up from 3 sentences in 2
+      dimensions to thousands of documents in hundreds of dimensions &mdash;
+      but the underlying operation, the dot-product-over-magnitudes formula
+      you just computed by hand, doesn't change at all.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Cosine similarity = dot product of two vectors, divided by the product of their lengths.</li>
+        <li>"I adopted a puppy" vs. "I got a new dog" scored ~0.97 &mdash; same idea, zero shared words.</li>
+        <li>"I adopted a puppy" vs. "Stock prices fell sharply" scored ~0.18 &mdash; unrelated topics.</li>
+        <li>This exact formula, unchanged, is what powers retrieval in a full-scale RAG system.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="twenty-sentences">
+    <span class="subtopic-label">Sub-topic 5 of 5</span>
+    <h2>5. What "20 Sentences in 2D" Is Actually Showing You</h2>
+
+    <p>
+      Today's exercise asks you to take 20 real sentences, turn them into
+      embedding-style vectors, and visualize them in 2D. Two things are
+      worth understanding <em>before</em> you do it, so the result means
+      something rather than just looking like a pretty scatter plot.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Honest note #1: these aren't real trained embeddings</span>
+      A real production embedding model learns its sense of meaning from a
+      staggering amount of text &mdash; far more than 20 short sentences could
+      ever provide. Building one from scratch isn't something you'll do today
+      (or, frankly, something almost anyone builds from scratch at all &mdash;
+      you'll typically call an existing embedding model, the way you called
+      LLM APIs in Week 1). So today's exercise uses a small, deliberately
+      transparent stand-in: a "concept anchor" score that checks which of a
+      handful of hand-picked topic words appear in each sentence, combined
+      with each sentence's own raw word counts for added texture. It is,
+      candidly, a simplification of what a real embedding model does
+      <em>automatically</em> &mdash; but the geometry it produces, and the
+      math you apply to it, work in exactly the same way a real embedding's
+      geometry would.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Honest note #2: a 2D plot is a distorted map, not a photograph</span>
+      Real embeddings &mdash; toy or production-grade &mdash; live in many
+      dimensions, not 2. To draw them on a flat 2D plot at all, you need a
+      <strong>dimensionality reduction</strong> technique (the exercise uses
+      PCA, a standard, widely-available one) that tries to preserve relative
+      distances as it flattens many dimensions down into 2 &mdash; a bit like
+      trying to flatten a globe into a 2D map. Some distortion is inevitable,
+      exactly the way Greenland looks enormous on a flat world map despite
+      being much smaller in reality. So the 2D plot you produce today is a
+      <em>useful approximation</em> of the underlying similarity structure,
+      not a perfectly faithful picture of it.
+    </div>
+
+    <p>
+      Watch for <strong>clustering</strong> in your plot: sentences about
+      pets should visually group together, separately from sentences about
+      cooking, finance, or space. With today's toy embedding, that clustering
+      is partly <em>engineered</em> &mdash; the concept-anchor scores are
+      organized by topic on purpose, since there isn't enough raw text here
+      for topic structure to emerge from word statistics alone. Try building
+      vectors from nothing but raw word counts, with no concept anchors, and
+      you'll see this directly: the clustering you'd expect barely appears,
+      because these sentences were written to share almost no literal
+      vocabulary even within a topic.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Why this matters beyond the toy exercise</span>
+      <ul>
+        <li>A real production embedding model doesn't need that engineered help &mdash; it has <em>learned</em>, from enormous amounts of text, which words and concepts relate to each other, so clustering by meaning emerges automatically from text alone, with no human ever telling it "these five sentences are about pets."</li>
+        <li>That automatic emergence &mdash; meaning organizing itself into visible structure purely from learned patterns, no labels required &mdash; is the real foundation that semantic search and RAG retrieval are built on.</li>
+        <li>Today's exercise lets you see the <em>shape</em> of that idea concretely, even though the specific vectors you're plotting got a deliberate hand from the seed list rather than learning topic structure unsupervised.</li>
+      </ul>
+    </div>
+
+    <p>
+      You now understand the actual computational substance behind "find the
+      relevant text," which is the load-bearing idea inside every RAG system
+      you'll build from here on. But notice what today's exercise
+      <em>doesn't</em> yet do: it doesn't organize a large real-world document
+      collection, it doesn't handle the question of how to split long
+      documents into the right-sized pieces before embedding them, and it
+      doesn't yet retrieve anything in response to a live user question.
+      Those are exactly the problems Session 3.3 takes on. You've built the
+      conceptual engine today. Next session, you put it in a car.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Today's "embedding" is a transparent stand-in: hand-seeded topic scores + raw word counts, not a trained model.</li>
+        <li>A 2D plot of high-dimensional vectors always distorts something &mdash; dimensionality reduction preserves relative structure, not exact distances.</li>
+        <li>Engineered clustering here stands in for what a real model learns automatically from scale of training data, not different math.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>An embedding converts text into a vector</strong> &mdash; a list of numbers &mdash; that encodes meaning as geometry. Texts with similar meaning produce nearby vectors; texts with different meaning produce vectors that are far apart.</li>
+      <li><strong>Embeddings compare meaning, not vocabulary.</strong> Two sentences can share almost no literal words and still land close together if they're about the same underlying concept &mdash; this is the core advantage over keyword matching.</li>
+      <li><strong>Cosine similarity measures the angle between two vectors, ignoring their length.</strong> A score near 1 means highly similar meaning; a score near 0 means essentially unrelated; the formula is the dot product divided by the product of the two vectors' magnitudes.</li>
+      <li><strong>A 2D embedding plot requires dimensionality reduction</strong>, which inevitably distorts some relationships when flattening many dimensions down to two &mdash; similar to how a flat world map distorts the relative size of landmasses.</li>
+      <li><strong>Today's toy embedding used engineered concept-anchor scores, not a real trained model</strong>, because 20 short sentences with deliberately diverse vocabulary aren't enough raw text for topic structure to emerge from word statistics alone. Real embedding models don't need engineered help &mdash; clustering by meaning emerges automatically from the sheer scale of training data.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the
+    Visualize Embeddings exercise turns the "closeness" you just computed by
+    hand into a 2D plot you can actually see.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

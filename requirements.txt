@@ -12,6 +12,12 @@ tiktoken>=0.7.0
 # Data & utility
 numpy>=1.26.0
 pandas>=2.2.0
+matplotlib>=3.8.0
+scikit-learn>=1.4.0
+
+# Week 3: RAG / PDF handling
+pdfplumber>=0.11.0
+pypdf>=4.2.0
 
 # Week 6: deployment/serving
 flask>=3.0.0

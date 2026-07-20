@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.6 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Scenario-based interview prep synthesizing all of Week 3: multi-document RAG, diagnosing chunking vs. retrieval failures, citation design, and scaling RAG to a new domain.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.6 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Synthesizing Week 3</h1>
+  <p>
+    These are scenario-based questions that pull together everything from Week 3
+    &mdash; the kind an interviewer uses to check whether you can actually
+    <em>reason about a retrieval system under real conditions</em>, not just define
+    "embedding" and "chunk." RAG interviews increasingly probe for exactly this:
+    can you diagnose a wrong answer, not just describe the architecture that's
+    supposed to prevent one? Each question below includes what a strong answer
+    sounds like, common red flags, and a natural follow-up. Click any question to
+    expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Why can real institutional documents that cross-reference each other be <em>harder</em> for retrieval than documents that don't overlap at all?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>With a single, self-contained document, every retrieved chunk is at least from "the right place" by definition &mdash; the worst case is an imprecise match within that one document. Once you add multiple documents that genuinely discuss overlapping topics (a registration guide that mentions financial aid holds, a housing handbook that mentions enrollment status), a chunk from the <em>wrong</em> document can still score highly, because it touches the right vocabulary in passing without containing the actual answer. That's a new failure mode, not just a harder version of the old one &mdash; a single-document system structurally can't retrieve from the wrong source, because there's only one source.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating "more documents" as simply "more data to search," with no acknowledgment that cross-referencing content actively degrades naive retrieval precision, or being unable to name a concrete mechanism for why a wrong-document chunk would score well.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you design an evaluation set that specifically catches this failure mode, rather than one that just measures average retrieval accuracy?" (e.g. deliberately including question pairs that target topically adjacent documents, and checking the retrieved <em>source</em>, not just whether the answer text looks reasonable.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> You fix a chunking bug for one document type by splitting on numbered headers. A new document type uses different formatting entirely. Walk me through how you'd approach it.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Don't assume the old fix transfers &mdash; verify it first. Load the new document, print a sample of the actually-extracted text (not the source PDF as viewed by a human, since extraction can lose formatting like blank lines), and look at what pattern reliably marks a new section in <em>that</em> text: numbers, ALL-CAPS headers, a consistent font-size artifact, something else entirely. Only then write a new splitting rule matched to that pattern, and verify it by actually running it against real test questions for that document &mdash; not by assuming structural similarity to the last fix. The transferable skill is the diagnostic process (inspect real extracted text, identify a survivable pattern, verify by running), not any specific regex.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Assuming the previous fix (or a fix copied from a tutorial) will just work because "it's still a document," or proposing a new regex without first looking at the actual extracted text of the new document type.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What would you check to confirm the bug is a chunking problem and not something else, like an embedding model that just doesn't handle this document's vocabulary well?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> What's the difference between a chunking error and a retrieval miss, and how would you tell which one you're looking at from a wrong answer alone?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A chunking error means the right information never made it into a coherent, well-formed chunk in the first place &mdash; it got merged with unrelated content, split mid-sentence, or diluted inside an oversized block, so even perfect retrieval logic can't find a clean answer that doesn't cleanly exist. A retrieval miss means the right chunk exists intact in the vector store, but the similarity search failed to rank it highly enough for this specific query (a vocabulary mismatch, a query phrased very differently from the source text). To tell them apart from a wrong answer alone: manually search the vector store for the expected chunk by its known content. If it doesn't exist as a clean unit at all, that's a chunking error. If it exists but scored low against the query, that's a retrieval miss &mdash; two different fixes (re-chunking vs. better embeddings, query rewriting, or hybrid search).</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating "the answer was wrong" as a single undifferentiated failure and reaching for a fix (like "add more chunks" or "use a better model") without first localizing whether the problem is in chunking or in the ranking step.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You confirm the correct chunk exists intact but the query doesn't retrieve it in the top 5. Name two different things you could try, and how you'd decide between them."</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> How would you design a multi-document RAG system's citations so a wrong-document retrieval is obvious without reading the model's full answer?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Every citation marker should carry a human-readable source label alongside its chunk number &mdash; "[1] (Source: Housing Handbook)," not a bare "[1]." That way, a reviewer scanning a batch of answers can catch a mismatch (a housing question citing the Registration Guide) at a glance, purely from the citation line, without needing to read the retrieved chunk's full text to notice something's off. This turns a hard-to-spot silent failure into a fast visual check, and it scales &mdash; it's the same amount of reviewer effort whether you're checking one answer or auditing a thousand logged answers for a pattern of wrong-document retrievals.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating citations as purely a user-trust feature ("so the user can verify it") without recognizing they're equally valuable as an internal debugging and monitoring signal, or proposing a design where the source document isn't visible without opening the underlying chunk.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you use that same labeling to build an automated monitoring check, not just a manual one?" (e.g. flag any answer whose cited source doesn't match an expected document for a known category of question.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> You successfully built a RAG system for customer support using product docs. Now you need to extend it to handle medical research papers. What changes would you make, and what could break?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Name the real domain differences first: medical papers are highly technical, structured (abstract/methods/results/conclusion), and jargon-heavy, versus customer-facing product docs with variable structure and accessible language. Then name what's likely to break: the same embedding model may not capture medical terminology well; a chunking strategy tuned for product docs likely ignores the paper's own structural sections; metadata that barely mattered before (citation count, author, publication date) now matters a lot; and the acceptable false-positive rate drops sharply, since a confidently wrong medical citation is far costlier than a confidently wrong product-doc answer. The concrete changes: evaluate the embedding model specifically on medical-domain queries before assuming it transfers, adapt chunking to the paper's own section structure (the exact same principle as this lab's caps-header fix, applied to a new domain), add metadata indexing, tighten citation requirements, and build a domain-specific evaluation set rather than reusing the product-docs one.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just point the same system at the new documents" with no acknowledgment of domain-specific risk, no mention of re-evaluating on a domain-specific test set, or treating every document domain as interchangeable.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You evaluate on 100 medical papers and get 30% accuracy. Is that good? What would you do next?" (Strong answers ask what the baseline and the cost of an error are before judging the number, then propose targeted error analysis rather than a blanket re-tune.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check across the whole week &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Cosine similarity measures the
+      <code>____</code> between two vectors, and is efficient and domain-agnostic.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="angle" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Carrying the last several words
+      of a closed chunk into the next chunk's buffer is called chunk
+      <code>____</code>, and helps prevent an answer from being cut off exactly at
+      a boundary.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="overlap" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A citation-grounded RAG prompt
+      should instruct the model to answer using <code>____</code> the retrieved
+      context, and say plainly when it can't.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="only" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Sparse (keyword) retrieval is
+      fast and interpretable but misses <code>____</code> matches that dense
+      embeddings would catch.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="semantic" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> There is no universal chunking
+      fix, only a universal chunking <code>____</code>: match your strategy to how
+      your real documents are structured, and verify it by running it.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="principle" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you can talk about Week 3 as a connected system, not five separate facts.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>For diagnostic questions, narrate your investigation out loud in order &mdash; "first I'd check whether the chunk exists at all, then whether it scored low" &mdash; interviewers are listening for the sequence, not just the eventual right answer.</li>
+    <li>When asked to extend a system to a new domain, always ask (or state you'd ask) what the acceptable error rate is before proposing changes &mdash; the right amount of engineering effort depends entirely on how costly a wrong answer is in that domain.</li>
+    <li>Pair these with Weeks 1 and 2's questions for a more realistic mixed-topic mock interview as you move further into the program.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="../../assessments/written-exams/week-03-exam.md">Week 3 Written Exam &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.1 Why LLMs Need External Knowledge — GenAI for Everyone</title>
+<meta name="description" content="Knowledge cutoffs, hallucination on facts, and the three-step idea behind RAG — plus the judgment call that matters more than the technique: knowing when RAG is (and isn't) the right tool.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.1</span>
+    <span class="badge-difficulty">Beginner</span>
+    <span class="reading-time">20&ndash;25 min read</span>
+  </div>
+  <h1>Why LLMs Need External Knowledge</h1>
+  <p><em>Welcome to Week 3. Before you touch an embedding, a vector store, or a
+  single line of retrieval code, you need the <em>why</em> &mdash; and just as
+  importantly, the judgment for when the answer is actually "you don't."</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#knowledge-cutoff">1. The Knowledge Cutoff: A Fact of Training, Not a Bug</a>
+    <a href="#hallucination-on-facts">2. Hallucination on Facts: Confident and Wrong Aren't Opposites</a>
+    <a href="#enter-rag">3. Enter RAG: Retrieve, Augment, Generate</a>
+    <a href="#rag-or-not">4. The Real Skill: Knowing When RAG Is (and Isn't) the Answer</a>
+  </nav>
+
+  <div class="hook">
+    Imagine you hire a brilliant new consultant. They've read an almost
+    unbelievable amount &mdash; most of the internet, decades of books, huge
+    swaths of published research. Ask them to explain quantum entanglement,
+    summarize a 19th-century novel, or write a sonnet about your dog, and
+    they're dazzling. You start trusting them with everything. Then one day
+    you ask: <em>"What did our company's board decide in last week's
+    meeting?"</em> And without missing a beat, in the same confident,
+    articulate voice, they tell you. Fluently. Specifically. Completely made
+    up &mdash; because they were never in that room, were never given the
+    minutes, and have no way to know. They don't say "I don't know." They
+    don't even seem to notice they don't know. They just answer. That is,
+    almost exactly, the situation you're in every time you use a large
+    language model &mdash; and Week 3 is about giving that consultant a
+    phone.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="knowledge-cutoff">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. The Knowledge Cutoff: A Fact of Training, Not a Bug</h2>
+
+    <p>
+      Every LLM you've used is trained on a snapshot. Engineers gather an
+      enormous amount of text, train the model on it over weeks or months,
+      and then stop. The model that emerges has absorbed everything in that
+      snapshot &mdash; but the snapshot has a last date on it: its
+      <strong>knowledge cutoff.</strong>
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a knowledge cutoff?</span>
+      The point in time after which no training data was included, so the
+      model has no reliable knowledge of events or facts that happened after
+      that date. It isn't a token limit, a refusal policy, or a safety
+      filter &mdash; it's simply the edge of what the model was ever shown.
+    </div>
+
+    <p>
+      This matters more than it might sound like it should, for a simple
+      reason: <strong>the world keeps moving and the model doesn't.</strong>
+      Ask a model about a well-established historical fact &mdash; when
+      World War II ended, how photosynthesis works, who wrote <em>Pride and
+      Prejudice</em> &mdash; and the cutoff is irrelevant, because that
+      information was true before the cutoff and is still true now. But ask
+      about something that depends on <em>when</em> you're asking &mdash;
+      who currently holds a particular office, what a company's latest
+      product is, what happened in the news this week &mdash; and the model
+      is, structurally, working from a photograph while the world has kept
+      filming.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">cutoff-safe-vs-cutoff-risky.txt</span>
+      </div>
+      <pre><code>TIMELESS (cutoff is irrelevant)              TIME-DEPENDENT (cutoff is risky)
+When did WWII end?                            Who is the current CEO of Company X?
+How does photosynthesis work?                 What's our latest product release?
+What is a binary search tree?                 What happened in markets today?
+Who wrote Pride and Prejudice?                 What's our refund policy right now?</code></pre>
+    </div>
+
+    <p>
+      Here's the trap: the model usually doesn't <em>feel</em> uncertain
+      about this. It doesn't experience "I'm not sure, my information might
+      be old." It generates the most statistically plausible continuation of
+      your question based on patterns in its training data &mdash; and if
+      its training data confidently discussed "the current CEO of Company X"
+      as some particular person, it will often state that just as
+      confidently today, even if that person left two years ago and the
+      model has no way of knowing it. The fluency of the answer carries no
+      information about its freshness.
+    </p>
+
+    <div class="real-world">
+      <span class="label">The single most important intuition today</span>
+      <ul>
+        <li><strong>A model's confidence is not a measurement of its accuracy.</strong> Those are two completely different signals that happen to look identical from the outside, because both are expressed in the same calm, complete sentences.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A knowledge cutoff is the point where the training snapshot ends &mdash; not a token limit or a filter.</li>
+        <li>Timeless facts are unaffected by the cutoff; anything depending on "what's true right now" is structurally at risk.</li>
+        <li>The model's tone gives you zero signal about whether it's answering from solid ground or thin air.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="hallucination-on-facts">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Hallucination on Facts: Confident and Wrong Aren't Opposites</h2>
+
+    <p>
+      You met the word "hallucination" back in Week 1, in the context of
+      models making things up in general. Today we need to sharpen that into
+      something more specific and more dangerous: <strong>hallucination on
+      facts that should be externally verifiable.</strong>
+    </p>
+
+    <div class="what-is">
+      <span class="label">Creatively wrong vs. factually wrong</span>
+      There's a meaningful difference between a model being creatively wrong
+      (you asked it to invent a fictional planet, and it did &mdash; that's
+      not a hallucination, that's the job) and a model being <em>factually</em>
+      wrong while presenting the answer as settled, checkable truth. The
+      second kind is the one that erodes trust in real applications, because
+      it's indistinguishable, on the surface, from the model getting it
+      right.
+    </div>
+
+    <p>
+      Why does this happen, mechanically? A language model generates text by
+      predicting, one token at a time, what's most likely to come next given
+      everything before it &mdash; including your question. When you ask a
+      specific factual question the model genuinely has reliable training
+      data about, this process tends to produce correct answers, because the
+      "correct" continuation really was the dominant pattern in training.
+      But when you ask about something the model has <em>thin, ambiguous, or
+      absent</em> training signal on &mdash; a very recent event, a niche
+      fact, a specific number, an obscure name &mdash; the model doesn't
+      have a built-in mechanism that says "stop, I don't actually know
+      this." It still has to produce <em>some</em> continuation, and it
+      produces the most plausible-sounding one available, which can be
+      entirely fabricated while reading exactly as fluently as the correct
+      answer would have.
+    </p>
+
+    <p>
+      Here's a tiny, deliberately toy simulation of exactly that failure.
+      This isn't a real LLM &mdash; it's a "model" with a fixed
+      <code>knowledge cutoff</code> and a small dictionary of things it
+      actually knows. Watch what it does when asked something past its
+      cutoff: it doesn't say "I don't know" &mdash; it confidently fabricates
+      an answer, in the exact same tone as the facts it actually knows.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">toy_hallucination.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="24"># A toy of why "confident" and "correct" are different signals.
+# This is NOT a real LLM -- just enough to show the shape of the problem.
+
+KNOWLEDGE_CUTOFF = "2023"
+
+KNOWN_FACTS = {
+    "when did WWII end": "1945 -- this is timeless, well before any cutoff.",
+    "what is a binary search": "an algorithm that repeatedly halves a sorted "
+                                "range to find a target -- timeless CS knowledge.",
+}
+
+# Nothing in this dict is real -- it represents "thin/absent training signal."
+def fabricate_confident_answer(question):
+    return (
+        "Based on available information, the answer is definitively "
+        "'Alex Rivera', appointed in early 2024."
+    )
+
+def ask(question):
+    if question in KNOWN_FACTS:
+        print(f"Q: {question}")
+        print(f"A: {KNOWN_FACTS[question]}")
+        print("   (Reliable: well inside training data, timeless.)\n")
+    else:
+        print(f"Q: {question}")
+        print(f"A: {fabricate_confident_answer(question)}")
+        print(f"   (Model's cutoff is {KNOWLEDGE_CUTOFF} -- it has NO way to")
+        print("    actually know this, but nothing in its output signals that.)\n")
+
+ask("when did WWII end")
+ask("who is the current CEO of Company X in 2026")
+print("Notice: both answers are phrased with identical confidence.")
+print("Only one of them is grounded in anything real.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; notice both answers read equally confident, even though only one is grounded in anything real.</div>
+    </div>
+
+    <p>
+      This is worth sitting with, because it overturns an intuition most
+      people bring from working with other software. A calculator that
+      doesn't know an answer throws an error. A search engine that finds
+      nothing returns zero results. A language model that doesn't "know"
+      something often doesn't fail loudly &mdash; it fails <em>fluently.</em>
+      That's what makes fact hallucination genuinely hazardous in real
+      applications: the failure mode looks identical to success.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Creatively wrong (you asked for fiction) is not the same as factually wrong (you asked for truth and got a confident guess).</li>
+        <li>No mechanism inside next-token prediction reliably says "I don't actually know this" &mdash; it always has to produce something.</li>
+        <li>The failure mode is fluent, not loud &mdash; that's exactly what makes it dangerous.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="enter-rag">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Enter RAG: Retrieve, Augment, Generate</h2>
+
+    <p>
+      A reasonable question at this point: why not just retrain the model
+      constantly, so the cutoff is never far behind? Two honest answers,
+      both worth understanding rather than just accepting.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Why "just retrain more often" doesn't solve this</span>
+      First, <strong>training is expensive and slow</strong> &mdash; it's
+      not something you do continuously in the background. Even with a
+      cutoff just weeks old, there's a meaningful gap between "what's true
+      right now" and "what the model learned." Second, and more
+      fundamentally: <strong>some information will never belong in a
+      model's weights at all.</strong> Your company's internal policy
+      documents. A customer's specific account history. The contents of a
+      contract someone uploaded five minutes ago. No amount of retraining
+      solves "the model needs to know something private, specific, or
+      freshly created that only exists in your documents."
+    </div>
+
+    <p>
+      This second point is the one that actually motivates RAG, more than
+      the cutoff does. The deeper, more durable reason you need external
+      knowledge retrieval is that <strong>a general-purpose model's weights
+      are never going to contain everything any specific application needs
+      to know</strong> &mdash; not your company's data, not a user's private
+      documents, not a fact that's simply too obscure to have made it into
+      training in any reliable way.
+    </p>
+
+    <p>
+      The fix, conceptually, is almost embarrassingly simple to state, even
+      though building it well (which you'll spend the rest of this week
+      doing) takes real engineering care: <strong>instead of relying on what
+      the model memorized during training, give it the actual relevant
+      information at the moment you ask the question, and instruct it to
+      answer based on that.</strong> This is the entire idea behind
+      Retrieval-Augmented Generation &mdash; RAG &mdash; before any of the
+      vocabulary (embeddings, vector stores, chunking, top-k retrieval)
+      you'll learn across Sessions 3.2&ndash;3.4.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">rag-three-steps.txt</span>
+      </div>
+      <pre><code>1. RETRIEVE   Given the user's question, find the specific pieces of real,
+              current, relevant text that might help answer it (from a
+              document set, a database, a knowledge base -- wherever the
+              real information lives).
+
+2. AUGMENT    Insert that retrieved text into the prompt, alongside the
+              user's question, so the model has it directly in front of it.
+
+3. GENERATE   Ask the model to answer USING that provided text, ideally
+              while explicitly grounding its answer in what was retrieved
+              rather than what it remembers from training.</code></pre>
+    </div>
+
+    <p>
+      Notice what this does to the consultant analogy: instead of trusting
+      the consultant's memory of last week's board meeting, you hand them
+      the actual minutes before asking the question. They're still the same
+      brilliant consultant &mdash; still excellent at reading, synthesizing,
+      and explaining &mdash; but now their answer is anchored to a real
+      source instead of an educated guess dressed up as a fact. This
+      reframes what an LLM is actually good at. It is an extraordinary
+      engine for <em>reading and reasoning over</em> information you give
+      it. It is a much less reliable engine for <em>recalling specific
+      facts purely from memory</em>, especially ones that are recent, niche,
+      or private. RAG plays to the first strength and routes around the
+      second weakness.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Retraining narrows the time-lag gap but never solves the "private/never-in-training-data" gap &mdash; that's the deeper reason RAG exists.</li>
+        <li>RAG is a three-step move: retrieve real text, augment the prompt with it, generate an answer grounded in it.</li>
+        <li>RAG doesn't make the model smarter &mdash; it hands the model something real to read instead of asking it to recall from memory.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="rag-or-not">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. The Real Skill: Knowing When RAG Is (and Isn't) the Answer</h2>
+
+    <p>
+      Here's where today's lesson earns its place before the building
+      begins. It's tempting, once you learn a powerful new tool, to want to
+      use it on everything. RAG is not free &mdash; it adds retrieval
+      infrastructure, latency, and real engineering complexity (which you'll
+      feel directly in Sessions 3.3 and 3.5) &mdash; so the actually
+      valuable skill isn't "I know how to do RAG," it's <strong>"I can tell
+      when RAG is the right tool and when it's overkill or even the wrong
+      fix entirely."</strong>
+    </p>
+
+    <div class="what-is">
+      <span class="label">When RAG is clearly the right call</span>
+      <ul>
+        <li>The answer depends on <strong>information not in the model's training data at all</strong> &mdash; internal company documents, a specific customer's data, content created after the cutoff.</li>
+        <li>The answer needs to be <strong>traceable to a real source</strong> &mdash; for compliance, trust, or simply because citing where an answer came from matters for the use case.</li>
+        <li>The underlying information <strong>changes over time</strong> and you need answers to reflect the current state, not a frozen snapshot.</li>
+      </ul>
+    </div>
+
+    <div class="what-is">
+      <span class="label">When reaching for RAG is the wrong move</span>
+      <ul>
+        <li>The task is about <strong>reasoning, writing, or transformation</strong>, not factual recall &mdash; summarizing a passage you've already provided, drafting an email, debugging code, brainstorming.</li>
+        <li>The information is genuinely <strong>timeless and well-established</strong> &mdash; a stable scientific concept, a common term, long-settled history.</li>
+        <li>The real problem is actually a <strong>prompting problem</strong> &mdash; the model has the right knowledge but you haven't given it the context or constraints (Session 2.1) to use it well.</li>
+      </ul>
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">rag-or-not.txt</span>
+      </div>
+      <pre><code>"What's our current refund policy?"          -> RAG (private + time-sensitive + needs a citation)
+"Explain how binary search works"            -> NOT RAG (timeless, model already knows it reliably)
+"Make this email sound more professional"    -> NOT RAG (all needed info is already in the prompt)
+"What were today's top market headlines?"    -> RAG (definitionally after any cutoff)</code></pre>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the judgment call itself is the skill, not the code. Before reaching for RAG on any real request, an experienced practitioner runs it through the same three questions: is this information outside the model's training data, does it need to be traceable to a source, and does it change over time? If the honest answer to all three is "no," the fix is almost never retrieval infrastructure &mdash; it's a clearer prompt, or nothing at all.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to help you reason through a "RAG or not?" call:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Here's a scenario: ... Walk me through whether this needs RAG, using the training-data-gap, traceability, and time-sensitivity framework..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare its reasoning against this lesson's framework &mdash; does it explicitly check training-data gap, traceability, and time-sensitivity, or does it just say "yes, use RAG" reflexively?
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Here is a scenario: [describe the task and where the needed information lives]. Using this framework, decide whether this genuinely needs Retrieval-Augmented Generation (RAG), or whether it needs something else: (1) Is the needed information outside what a general-purpose model could reliably have learned during training -- because it's private, created after a training cutoff, or simply too obscure? (2) Does the answer need to be traceable back to a real, citable source? (3) Does the underlying information change over time, so a frozen answer would go stale? If the answer to all three is genuinely "no," explain what the real fix is instead -- better prompting, a structured database/tool call, or nothing at all -- rather than defaulting to "add RAG."</pre></div>
+      </details>
+    </div>
+
+    <p>
+      This is genuinely a judgment call, and it's one you'll have to make
+      over and over in real GenAI work &mdash; which is exactly why today's
+      hands-on exercise asks you to practice it directly across six
+      different scenarios rather than just defining RAG and moving on.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>RAG adds real infrastructure, latency, and complexity &mdash; it's not a default, it's a decision.</li>
+        <li>Three green lights: training-data gap, need for source traceability, information that changes over time.</li>
+        <li>Three red flags: pure reasoning/writing tasks, timeless knowledge, or an under-specified prompt masquerading as a knowledge problem.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Teams that skip this judgment call in either direction pay for it: some build elaborate retrieval infrastructure for a problem a better prompt would have solved; others skip retrieval on a problem that desperately needed grounding, and ship something that hallucinates with total confidence.</li>
+      <li>A company's internal policy documents, contracts, and per-customer records were never going to be in any general-purpose model's training data &mdash; no retraining schedule fixes that, which is exactly why RAG exists as a category of engineering, not just a cutoff workaround.</li>
+      <li>The rest of this week (3.2&ndash;3.6) is entirely technique &mdash; embeddings, chunking, vector stores, citation grounding, failure modes. None of it matters if you get today's call wrong.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>A model's confidence is not a measurement of its accuracy.</strong> A hallucinated fact and a correct one are expressed in the same calm, fluent sentences &mdash; there's no built-in signal that distinguishes them from the outside.</li>
+      <li><strong>A knowledge cutoff matters for time-dependent facts, not timeless ones.</strong> Stable historical or scientific facts are unaffected by the cutoff; anything that depends on "what's true right now" is structurally at risk.</li>
+      <li><strong>The deeper reason for RAG isn't the cutoff &mdash; it's that a general-purpose model's weights will never contain everything a specific application needs to know</strong>, including private, internal, or freshly created information that was never going to be in any training set.</li>
+      <li><strong>RAG is a three-step move</strong>: retrieve the relevant real text, augment the prompt with it, and generate an answer grounded in what was retrieved rather than what the model remembers.</li>
+      <li><strong>RAG is not free</strong> &mdash; it adds retrieval infrastructure, latency, and engineering complexity, so the valuable skill is knowing when it's the right tool, not just knowing how to build it.</li>
+      <li><strong>Not every problem is a RAG problem.</strong> Reasoning/writing/transformation tasks, timeless-knowledge questions, and under-specified prompts are three common cases where reaching for RAG fixes the wrong layer.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the "RAG or
+    Not?" Decision Worksheet puts the judgment call into practice across six
+    realistic scenarios.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

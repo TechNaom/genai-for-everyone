@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.3 Vector Databases &amp; Retrieval — GenAI for Everyone</title>
+<meta name="description" content="How chunking, vector stores, and top-k retrieval turn a pile of documents into a system that can hand an LLM exactly the passages it needs to answer a real question.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.3</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>Vector Databases &amp; Retrieval</h1>
+  <p><em>From a handful of hand-picked sentences to a real library: chunking, vector stores, and top-k retrieval &mdash; the three pieces that decide what an LLM actually gets to see.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#chunking">1. Chunking: The Decision Nobody Tells You Is Hard</a>
+    <a href="#vector-stores">2. Vector Stores: A Library Card Catalog for Meaning</a>
+    <a href="#top-k">3. Top-k Retrieval: Choosing How Much Is Enough</a>
+    <a href="#pipeline">4. Putting the Three Pieces Together, End to End</a>
+  </nav>
+
+  <div class="hook">
+    Session 3.2 left you somewhere genuinely useful but also genuinely small:
+    20 sentences, turned into vectors, plotted in 2D, with four clusters you
+    could see with your own eyes. That was the right scale for
+    <em>learning</em> what an embedding is. It is nowhere near the right
+    scale for what you're actually going to build. Picture the real version
+    of this problem: your company has a 200-page employee handbook, forty
+    product spec documents, three years of meeting notes, and a support
+    knowledge base with two thousand articles. A user asks one question.
+    Somewhere across all of that &mdash; not in one convenient sentence, but
+    possibly buried in paragraph fourteen of a forty-page PDF &mdash; is the
+    actual answer. You can't hand the entire corpus to an LLM every time;
+    even with a generous context window, that's slow, expensive, and often
+    genuinely worse, because you've handed the model a haystack instead of
+    the needle. You need a system that, given a question, instantly
+    identifies the <em>small number</em> of passages actually worth reading
+    out of potentially millions of candidates. That system has three parts,
+    and today you build all three.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="chunking">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Chunking: The Decision Nobody Tells You Is Hard Until You've Made It Badly</h2>
+
+    <p>
+      Here's a question that sounds almost too basic to need an answer: when
+      you embed a document, what exactly do you embed? The whole document at
+      once? Each paragraph? Each sentence? It turns out this single decision
+      &mdash; called <strong>chunking</strong> &mdash; has an outsized effect
+      on whether your retrieval system actually works, and it's one of the
+      first places real RAG systems go wrong in practice.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... chunking?</span>
+      Chunking is the process of splitting a source document into smaller,
+      searchable pieces before you embed and store it. Every downstream
+      step &mdash; embedding, storing, retrieving &mdash; operates on
+      chunks, not on the whole document, so this one upstream decision
+      shapes everything that follows.
+    </div>
+
+    <p>
+      Embed an entire 40-page document as a single vector, and you've
+      created something almost useless for retrieval: that one vector is now
+      an average &mdash; a blur &mdash; of everything in the whole document,
+      from the executive summary to an appendix about printer settings. A
+      user's specific question about page 23 produces a query vector that
+      has to compete, in similarity terms, against this single enormous
+      blurred representation of "the whole document, vaguely." Specific
+      questions deserve specific matches, and a whole-document vector cannot
+      give you that.
+    </p>
+
+    <p>
+      Go to the opposite extreme &mdash; embed every single sentence as its
+      own chunk &mdash; and you run into a different problem: <strong>context
+      collapse</strong>. A sentence like "This also applies to part-time
+      employees" is perfectly clear in the paragraph it came from and nearly
+      meaningless on its own once it's been sliced out and embedded in
+      isolation. The embedding can only encode the meaning that's actually
+      present in the text you feed it; strip away the surrounding context
+      that gave a sentence its meaning, and the vector has nothing left to
+      represent.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">chunking-extremes.txt</span>
+      </div>
+      <pre><code>Whole document as 1 chunk    ->  vector is a blur of everything     -> too vague to match specific questions
+Every sentence as its own    ->  context collapse                  -> chunks lose the meaning around them
+~200-500 words, with overlap ->  the practical middle ground        -> specific enough AND self-contained enough</code></pre>
+    </div>
+
+    <p>
+      The practical answer sits in between, and it's less a fixed rule than a
+      genuine design decision: <strong>chunk by a roughly fixed size (commonly
+      somewhere in the range of a few hundred words, sometimes specified in
+      tokens), with enough overlap between consecutive chunks that an idea
+      spanning a chunk boundary doesn't get orphaned on one side of a hard
+      cut.</strong> A common pattern is something like 200&ndash;500 words per
+      chunk with a 10&ndash;20% overlap between consecutive chunks. There is
+      no single universally correct number &mdash; the right chunk size
+      depends on your documents (dense legal text behaves differently than a
+      casual FAQ) and on your retrieval goals, and tuning it is a real,
+      recurring task in production RAG work, not a one-time setting you pick
+      and forget.
+    </p>
+
+    <p>
+      There's a second, equally important dimension to chunking that's easy
+      to overlook if you only think about chunk <em>size</em>: chunk
+      <em>boundaries</em>. Where you cut matters as much as how big the
+      pieces are. Cutting a chunk in the middle of a sentence, or worse, in
+      the middle of a table or a numbered list, produces a chunk that's
+      syntactically broken even before you think about its meaning. Better
+      chunking strategies try to respect natural document structure &mdash;
+      paragraph breaks, section headers, list boundaries &mdash; splitting
+      <em>near</em> your target size rather than at a rigid character count
+      that might land anywhere.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">chunk_with_overlap.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="16"># A tiny, honest version of overlapping chunking. Real documents use
+# words (or tokens); this uses a short string so you can see it clearly.
+text = ("Employees accrue fifteen paid time off days per year. "
+        "Sick days are tracked separately and do not roll over. "
+        "Remote employees may work from home up to three days per week.")
+words = text.split()
+
+def chunk_text(words, chunk_size, overlap):
+    chunks = []
+    step = chunk_size - overlap
+    for i in range(0, len(words), step):
+        piece = words[i:i + chunk_size]
+        if len(piece) < 4:      # skip tiny trailing fragments
+            break
+        chunks.append(" ".join(piece))
+    return chunks
+
+for i, c in enumerate(chunk_text(words, chunk_size=10, overlap=3), 1):
+    print(f"Chunk {i}: {c}")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then change chunk_size and overlap and watch which words get shared between consecutive chunks.</div>
+    </div>
+
+    <div class="real-world">
+      <span class="label">In the Real World</span>
+      <ul>
+        <li>Dense legal or medical text often needs smaller, more precise chunks; casual FAQ content can tolerate larger ones.</li>
+        <li>Many production chunkers split on structural cues (headers, paragraph breaks) first, and only fall back to a raw word count when no natural boundary is nearby.</li>
+        <li>Chunk size is a setting teams revisit repeatedly as their document mix changes &mdash; not a value you set once at launch and never touch again.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Whole-document embeddings blur everything into one vague vector; single-sentence chunks risk context collapse.</li>
+        <li>The practical middle ground: roughly fixed-size chunks (often 200&ndash;500 words) with 10&ndash;20% overlap so boundary-spanning ideas aren't orphaned.</li>
+        <li>Chunk <em>boundaries</em> matter as much as chunk <em>size</em> &mdash; respecting paragraphs and headers beats a rigid character count.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="vector-stores">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Vector Stores: A Library Card Catalog for Meaning</h2>
+
+    <p>
+      Once you've chunked your documents and embedded each chunk, you have a
+      large pile of vectors, each one paired with the text it came from. You
+      need somewhere to put them &mdash; specifically, somewhere that can
+      answer the question "which of these thousands (or millions) of vectors
+      is closest to this new query vector?" <em>fast</em>.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a vector store?</span>
+      A vector store (sometimes called a vector database) is a system
+      purpose-built to hold embedding vectors alongside the text they
+      represent, and to answer nearest-neighbor queries &mdash; "what's
+      nearby?" &mdash; efficiently, even at very large scale.
+    </div>
+
+    <p>
+      You could, in principle, store your vectors in a plain list and compute
+      cosine similarity against every single one whenever a query comes in
+      &mdash; and for the 20-sentence example from last session, that would
+      work just fine. This approach, called a <strong>brute-force</strong> or
+      exhaustive search, scales linearly with the number of vectors: search a
+      million vectors, and you're computing a million similarity scores for
+      every single query. At real-world scale, that becomes too slow for an
+      interactive application.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">brute-force-vs-ann.txt</span>
+      </div>
+      <pre><code>Brute-force search   check EVERY stored vector      ->  exact, but scales linearly (slow at millions of vectors)
+ANN indexing         skip most of the database       ->  approximate, but scales sub-linearly (fast at any scale)
+
+Trade-off: ANN might occasionally miss the single mathematically-best match,
+in exchange for an enormous gain in speed.</code></pre>
+    </div>
+
+    <p>
+      Vector stores solve this with specialized indexing structures (the most
+      common family is called <strong>Approximate Nearest Neighbor</strong>,
+      or ANN, search) that organize vectors so that a search can skip over
+      most of the database without checking it directly &mdash; trading a
+      small amount of accuracy for an enormous gain in speed. This is a
+      genuinely different kind of database from the relational databases
+      (think rows, columns, and exact-match queries) you may already be
+      familiar with: a vector store is built from the ground up around the
+      question "what's nearby?" rather than "what matches exactly?"
+    </p>
+
+    <div class="what-is">
+      <span class="label">The names will keep changing; the concept won't</span>
+      You'll encounter named vector stores throughout your GenAI career
+      &mdash; some are standalone databases built specifically for this
+      purpose, others are extensions bolted onto existing database systems,
+      and some are lightweight, in-process libraries meant for smaller-scale
+      or local use (exactly the category today's exercise uses, since you're
+      building a local store over a single PDF rather than standing up
+      production infrastructure). The names and specific APIs will keep
+      changing as the field matures; the underlying concept &mdash; efficient
+      nearest-neighbor search over embeddings &mdash; is what's worth
+      actually understanding, because it transfers regardless of which
+      specific tool you end up using on the job.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A vector store exists to answer "what's nearby?" fast, over potentially millions of stored vectors.</li>
+        <li>Brute-force search checks every vector and scales linearly; ANN indexing trades a little accuracy for a lot of speed at scale.</li>
+        <li>A vector store is a fundamentally different kind of database from a relational one &mdash; nearest-neighbor search, not exact-match rows and columns.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="top-k">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Top-k Retrieval: Choosing How Much Is Enough</h2>
+
+    <p>
+      So you have your chunks embedded and stored, and a system that can find
+      the nearest vectors to a query quickly. The last piece is deciding:
+      when a question comes in, how many matching chunks do you actually
+      retrieve and hand to the model?
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... top-k retrieval?</span>
+      Top-k retrieval means retrieving the <em>k</em> most similar chunks to
+      a query (by cosine similarity, the metric from Session 3.2), where
+      <em>k</em> is a number you choose. Like chunk size, the right value of
+      <em>k</em> is a genuine trade-off, not a fixed constant.
+    </div>
+
+    <p>
+      Set <em>k</em> too low &mdash; say, k=1 &mdash; and you risk missing
+      the actual answer if it happens to be split across two adjacent
+      chunks, or if the single best-matching chunk by cosine similarity isn't
+      actually the most useful one for fully answering the question. Set
+      <em>k</em> too high &mdash; say, k=50 &mdash; and you start
+      reintroducing the exact problem RAG was supposed to solve in the first
+      place: you're handing the model a large pile of mostly-irrelevant
+      text, diluting the genuinely useful passages, increasing cost and
+      latency, and in some cases measurably <em>hurting</em> answer quality,
+      because models can struggle to stay focused on the right information
+      when it's surrounded by a lot of similar-sounding noise.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">top-k-tradeoff.txt</span>
+      </div>
+      <pre><code>k=1    fastest, cheapest        ->  no fallback if the top match is a near-miss
+k=3-10 typical real-world start ->  balances coverage against noise (tune per use case)
+k=50   maximal "coverage"       ->  dilutes context, raises cost/latency, can hurt answer quality</code></pre>
+    </div>
+
+    <p>
+      A typical real-world starting point is somewhere in the range of k=3
+      to k=10, but exactly like chunk size, the right number depends on your
+      documents, your typical query style, and direct experimentation &mdash;
+      which is precisely the kind of practical tuning Session 3.5 covers
+      when you learn to diagnose and fix retrieval problems systematically.
+    </p>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: "semantically close" isn't the same as "actually useful"</summary>
+      <p>
+        There's a subtlety worth naming here, because it previews a real
+        limitation you'll meet head-on in Session 3.5: top-k retrieval based
+        purely on cosine similarity finds chunks that are <em>semantically
+        close</em> to the query &mdash; but semantically close is not
+        automatically the same thing as <em>most useful for answering the
+        question</em>. A chunk can be topically related without containing
+        the specific fact being asked about, and the genuinely best answer
+        might be split across two chunks that individually look like only
+        moderate matches. This is one of several reasons production RAG
+        systems often add a second step &mdash; re-ranking the initial
+        top-k candidates with a more careful (and more expensive)
+        comparison &mdash; which you'll meet by name in Session 3.5.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Top-k retrieval pulls back the k most similar chunks to a query; k is a genuine trade-off, not a fixed constant.</li>
+        <li>Too low a k risks missing the answer; too high a k dilutes context and can hurt answer quality.</li>
+        <li>A typical starting range is k=3&ndash;10, tuned to your documents and query style.</li>
+        <li>Semantically close is not automatically the same as most useful for answering the question &mdash; the seed of re-ranking (Session 3.5).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="pipeline">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. Putting the Three Pieces Together, End to End</h2>
+
+    <p>
+      Step back and look at the full pipeline you're building today, because
+      it's worth seeing as a single connected sequence rather than three
+      separate ideas:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">retrieval-pipeline.txt</span>
+      </div>
+      <pre><code>1. Chunk    the source document into appropriately-sized, sensibly-bounded pieces
+2. Embed    each chunk using the same kind of vector representation from Session 3.2
+3. Store    every chunk's vector (+ original text) in a vector store built for nearest-neighbor search
+4. Embed    a real incoming question, using the SAME embedding approach
+5. Retrieve the top-k most similar chunks from the store
+6. Hand     those retrieved chunks to the model as context  -- the "augment" step from Session 3.1</code></pre>
+    </div>
+
+    <p>
+      Notice that step 6 is where this session connects directly back to
+      where Week 3 started. Session 3.1 told you, conceptually, that RAG
+      means handing the model real, relevant text instead of trusting its
+      memory. Today, for the first time, you have an actual mechanism
+      &mdash; chunking plus a vector store plus top-k retrieval &mdash; for
+      deciding <em>which</em> real, relevant text to hand it. Nothing about
+      generation has happened yet; today's exercise stops right after step
+      5, with a working local vector store that can take a real question
+      about a real PDF and hand back the most relevant passages. That's
+      deliberate. Session 3.4 adds the final step &mdash; actually
+      generating a grounded answer from what you retrieve &mdash; and brings
+      the entire system to life as a complete, working RAG pipeline.
+    </p>
+
+    <p>
+      When you build your local vector store over a real PDF today, pay
+      close attention to one thing in particular: try a few different chunk
+      sizes on the <em>same</em> document and the <em>same</em> test
+      questions, and watch the retrieved results change. A chunk size
+      that's too small will sometimes retrieve fragments that are
+      technically on-topic but missing the context to actually answer the
+      question. A chunk size that's too large will sometimes retrieve a
+      chunk that contains the right answer buried inside three paragraphs of
+      surrounding material that has nothing to do with the question. There
+      is no single "correct" setting waiting to be discovered &mdash;
+      there's a genuine engineering trade-off, and today is your first
+      chance to feel it directly rather than just read about it.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> before asking an AI assistant to scaffold a local vector store, an experienced practitioner decides the interfaces first &mdash; a chunking function with explicit size/overlap parameters, an embedding function that reuses the exact same vocabulary for chunks and queries, a similarity function, and a store class with just <code>add()</code> and <code>search()</code>. Naming those pieces up front is what keeps the AI assistant from collapsing chunking and embedding into one opaque blob you can't debug or swap out later.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python VectorStore class with add() and search(k) methods, using cosine similarity over word-count vectors..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's example &mdash; does it keep chunking, embedding, similarity, and storage as separate, swappable pieces, or does it merge them into one function you can't inspect?
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write plain Python (no external services, no API key) implementing a local retrieval pipeline over a list of text chunks: (1) a function chunk_text(text, chunk_size, overlap) that splits text into overlapping word-count chunks and skips trailing fragments under 15 words; (2) a function embed_chunks(chunks, vocab) that builds a word-count vector per chunk against a shared vocabulary; (3) a cosine_similarity(vec_a, vec_b) function that returns 0.0 for a zero-length vector instead of dividing by zero; (4) a VectorStore class with add(chunk_text, vector) and search(query_vector, k) methods, where search returns the top-k (chunk_text, score) tuples sorted by similarity descending. Keep each piece as a separate, independently testable function or method -- don't merge chunking and embedding into one step.</pre></div>
+      </details>
+    </div>
+
+    <p>
+      That hands-on feel for the trade-off is exactly what Session 3.5 will
+      ask you to diagnose systematically once you've seen a working pipeline
+      misbehave in Session 3.4. For now: build the engine, watch it retrieve
+      real passages from a real document in response to real questions, and
+      notice where it does well and where it struggles. You're not just
+      learning a technique today &mdash; you're building the actual
+      component that decides what an LLM gets to see before it answers,
+      which is, in a real sense, the single most consequential design
+      decision in any RAG system you'll ever build.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The full pipeline: chunk &rarr; embed &rarr; store &rarr; embed the query &rarr; retrieve top-k &rarr; hand to the model.</li>
+        <li>Today's exercise stops deliberately after retrieval, before generation &mdash; Session 3.4 adds the final step.</li>
+        <li>Different chunk sizes genuinely change what gets retrieved for the same question &mdash; a trade-off you should feel directly, not just read about.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>A generic introductory paragraph that briefly name-drops every topic in a document ("leave, remote work, expenses, and benefits") can score deceptively well against unrelated queries &mdash; it's superficially relevant to everything and substantively useful for nothing, a real and common retrieval failure mode.</li>
+      <li>Two closely related topics that share vocabulary &mdash; PTO and sick leave, for instance &mdash; are a genuinely hard case for chunking and retrieval to separate cleanly, and no single chunk size makes that difficulty disappear.</li>
+      <li>Teams that treat chunk size and k as "set once and forget" settings are usually the ones surprised months later when retrieval quality quietly degrades as the document mix changes.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Chunking is a genuine design decision, not a default setting.</strong> Whole-document embeddings blur everything into one vague vector; single-sentence chunks can lose the surrounding context that gave them meaning. The practical answer sits in between, tuned to your documents.</li>
+      <li><strong>Chunk boundaries matter as much as chunk size.</strong> Cutting mid-sentence or mid-list produces a chunk that's broken even before you consider its meaning &mdash; better chunkers respect natural structure like paragraphs and headers.</li>
+      <li><strong>A vector store exists to answer "what's nearby?" fast</strong>, using Approximate Nearest Neighbor indexing to avoid comparing a query against every single vector in the database.</li>
+      <li><strong>Top-k retrieval is a trade-off, not a fixed constant.</strong> Too low a k risks missing the answer; too high a k reintroduces noise and can measurably hurt answer quality by diluting the genuinely relevant passages.</li>
+      <li><strong>Semantically close is not the same as most useful for answering the question.</strong> A chunk can be topically related without containing the specific fact being asked about &mdash; this is exactly what motivates re-ranking, covered in Session 3.5.</li>
+      <li><strong>Today's exercise stops deliberately after retrieval, before generation.</strong> Chunking, embedding, storing, and retrieving form a complete sub-system on their own &mdash; Session 3.4 adds the final generation step on top.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the local
+    vector store exercise puts chunking, storing, and top-k retrieval into
+    practice on a real PDF.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

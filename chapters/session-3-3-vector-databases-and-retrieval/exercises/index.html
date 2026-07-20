@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.3 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 3.3: Vector Databases & Retrieval — build a local vector store over a real PDF handbook, chunking, embedding, storing, and retrieving top-k passages for real questions.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-3" data-chapter-id="session-3-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.3 Exercises</span>
+    <span class="reading-time">30 min, hands-on</span>
+  </div>
+  <h1>Exercises: Build a Local Vector Store Over a PDF</h1>
+  <p>
+    Take a real PDF &mdash; <code>sample_handbook.pdf</code>, a small company
+    employee handbook included in this folder &mdash; and build the full
+    retrieval pipeline from this session: chunk it, embed each chunk, store
+    the vectors, and retrieve the top-k most relevant chunks for real test
+    questions. This stops right before generation &mdash; Session 3.4 adds
+    that final step. No API key and no internet access required: it reuses
+    the word-count embedding approach from Session 3.2.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3, plus <code>numpy</code> and <code>pdfplumber</code>
+    installed (<code>pip install numpy pdfplumber --break-system-packages</code>).
+    Download all three files below into the same folder &mdash;
+    <code>starter.py</code> needs <code>sample_handbook.pdf</code> sitting
+    right next to it to run &mdash; then run
+    <code>python3 starter.py</code> from a terminal in that folder.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+    <a href="sample_handbook.pdf">sample_handbook.pdf</a>
+  </div>
+
+  <h2>Why word-count vectors work here (unlike in 3.2)</h2>
+  <p>
+    Session 3.2's exercise needed hand-seeded "concept anchors" because 20
+    short sentences didn't share enough vocabulary for plain word counts to
+    show real topic clustering. Today's chunks are full paragraphs of real
+    text, which changes the math: there's simply more shared, topically
+    relevant vocabulary per chunk, so plain word-count vectors produce
+    genuinely useful retrieval without any hand-seeding. You'll verify this
+    yourself &mdash; no concept-anchor trick needed this time.
+  </p>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. Fill in four TODOs, in order, to complete
+    the pipeline: <code>chunk_text()</code>, <code>embed_chunks()</code>,
+    <code>cosine_similarity()</code>, and the <code>VectorStore</code>
+    class's <code>add()</code> and <code>search()</code> methods.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Chunk the text</h3>
+    <p>Fill in <code>chunk_text(text, chunk_size, overlap)</code>: split the extracted PDF text into overlapping word-count chunks. Walk through the word list in steps of <code>chunk_size - overlap</code>, taking <code>chunk_size</code> words at a time, and skip any trailing chunk under 15 words &mdash; those are usually leftover fragments at the very end of the document.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Embed each chunk</h3>
+    <p>Fill in <code>embed_chunks(chunks, vocab)</code>: build a word-count vector for every chunk against the shared vocabulary, exactly like the word-count component from Session 3.2 &mdash; a vector of length <code>len(vocab)</code> where each position counts how many times that vocabulary word appears in the chunk.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Implement cosine similarity and the vector store</h3>
+    <p>Fill in <code>cosine_similarity()</code> (same formula as 3.2, returning 0.0 for a zero-length vector), then <code>VectorStore.add()</code> (store a chunk and its vector together) and <code>VectorStore.search()</code> (compute similarity against every stored vector, sort descending, and return the top-k <code>(chunk_text, score)</code> pairs).</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Retrieval</h3>
+    <p>Once your pipeline runs, read the top-1 result for each of the five test questions. One of them &mdash; the sick-leave question, "How many sick days do employees get and do they roll over?" &mdash; is very likely to retrieve the <strong>wrong</strong> chunk at the default settings, because PTO and sick leave share a lot of overlapping vocabulary ("days", "year", "employees", "roll over"/"carry over"). Try reducing <code>chunk_size</code> (call <code>run_pipeline("sample_handbook.pdf", chunk_size=30, overlap=5)</code> at the bottom of the file) and re-run. Does the correct sick-leave chunk move up in rank?</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">sick_leave_debug.txt</span>
+      </div>
+      <pre><code>Q: How many sick days do employees get and do they roll over?
+  [1] sim=0.482  Employees accrue fifteen days of paid time off (PTO) per year...
+  [2] sim=0.398  Sick days do not carry over to the following year. Employees
+                 should notify their manager as soon as possible when taking...
+
+&#35; At chunk_size=100, the WRONG chunk (PTO) often wins rank 1.
+&#35; Investigate: does a smaller chunk_size change which one wins?</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>class VectorStore:
+    def __init__(self):
+        self.chunks = []      &#35; list of chunk text strings
+        self.vectors = []     &#35; list of corresponding embedding vectors
+
+    def add(self, chunk_text, vector):
+        raise NotImplementedError("Fill in VectorStore.add()")
+
+    def search(self, query_vector, k=3):
+        &#35; 1. cosine_similarity(query_vector, v) for every stored v
+        &#35; 2. sort descending, return top-k (chunk_text, score) tuples
+        raise NotImplementedError("Fill in VectorStore.search()")
+
+TEST_QUESTIONS = [
+    "How many PTO days do employees get per year?",
+    "Can employees work from home, and how many days per week?",
+    "How much can I be reimbursed for meals while traveling?",
+    "What is the 401k matching policy?",
+    "How many sick days do employees get and do they roll over?",
+]</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. The value is in
+    implementing chunking, embedding, and the search logic correctly and
+    then <strong>reading the actual retrieved text</strong> for each
+    question, not matching a fixed expected output. For most of the five
+    test questions, the top-1 or top-2 chunk should genuinely contain the
+    answer at the default settings. Compare your implementation against
+    <code>solution.py</code> (run it with <code>python3 solution.py</code>)
+    once you've made a genuine attempt &mdash; it includes a fully worked-out
+    Pro path writeup of what changes across different chunk sizes.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.3 Project: The Chunk-Size Showdown — GenAI for Everyone</title>
+<meta name="description" content="Run the same sick-leave question against a real handbook PDF at two different chunk sizes and compare the actual retrieved results side by side — the Pro path build for Session 3.3.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-3" data-chapter-id="session-3-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.3 Project</span>
+    <span class="reading-time">25 min build</span>
+  </div>
+  <h1>The Chunk-Size Showdown</h1>
+  <p>The Pro path build for this session &mdash; the exercise had you run the sick-leave question against the handbook at different chunk sizes yourself, one at a time, and eyeball the difference. This project packages that same trade-off as one direct, side-by-side comparison: build two vector stores over the same PDF at two different chunk sizes, run the exact same hard question against both, and read the actual retrieved chunks next to each other.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>Q: "How many sick days do employees get and do they roll over?"
+
+--- Larger chunks (chunk_size=100, overlap=20 -> 11 chunks) ---
+  [1] sim=0.287  20 hours per week accrue PTO on a pro-rated basis, calculated
+                 as a percentage of the full-time accrual rate equal to their
+                 average weekly hours divide...
+  [2] sim=0.176  employee per calendar year for employees in approved remote
+                 or hybrid arrangements. This allowance does not roll over
+                 between years and resets each Ja...
+  [3] sim=0.175  Brightleaf Software Inc. -- Employee Handbook This handbook
+                 describes company policies on leave, remote work, expenses,
+                 and benefits. It is intended as...
+
+--- Smaller chunks (chunk_size=30, overlap=5 -> 33 chunks) ---
+  [1] sim=0.310  not roll over between years and resets each January 1st
+                 regardless of how much of the prior year's allowance was
+                 used. 5. Health and Retirement Benefi...
+  [2] sim=0.310  available in full starting January 1st rather than accruing
+                 monthly. Sick days do not carry over to the following year
+                 and are not paid out upon separ...
+  [3] sim=0.235  for accrued PTO under this policy. 2. Sick Leave Sick leave
+                 is tracked separately from PTO. Full-time employees receive
+                 10 sick days per calendar year...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    You'll need Python 3, plus <code>numpy</code> and <code>pdfplumber</code>
+    installed (<code>pip install numpy pdfplumber --break-system-packages</code>).
+    Download all three files below into the same folder &mdash;
+    <code>starter.py</code> needs <code>sample_handbook.pdf</code> sitting
+    right next to it &mdash; then run <code>python3 starter.py</code>. No
+    API key, no internet access needed: it reuses the same word-count
+    embedding pipeline from the Session 3.3 exercise.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+    <a href="sample_handbook.pdf">sample_handbook.pdf</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>
+    The chunking, embedding, and retrieval pipeline in <code>starter.py</code>
+    is already complete &mdash; it's the same <code>chunk_text()</code>,
+    <code>embed_chunks()</code>, <code>cosine_similarity()</code>, and
+    <code>VectorStore</code> you already built in the exercise. Running the
+    file builds two stores &mdash; one at <code>chunk_size=100</code>, one
+    at <code>chunk_size=30</code> &mdash; and prints the top-3 retrieved
+    chunks for the sick-leave question at each setting, one right after the
+    other. Your job is the <code>ANALYSIS</code> dictionary at the bottom of
+    the file: read the two printed result sets and fill in four fields:
+  </p>
+  <ul>
+    <li><strong>larger_chunks_top_result_is_correct</strong> &mdash; does the top-ranked result at chunk_size=100 actually answer the sick-leave question?</li>
+    <li><strong>smaller_chunks_correct_chunk_rank</strong> &mdash; at chunk_size=30, what rank does the genuinely correct sick-leave chunk land at?</li>
+    <li><strong>why_chunk_size_changes_the_winner</strong> &mdash; one to two sentences on why shrinking the chunk size changes which chunk wins.</li>
+    <li><strong>downstream_risk_of_the_wrong_chunk</strong> &mdash; one to two sentences on what breaks if a RAG system generated an answer from the wrong chunk.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">The habit this trains</span>
+    Don't guess at the answers before running the code &mdash; run
+    <code>starter.py</code> first, read the actual printed similarity
+    scores and chunk previews, and base your four answers on what's really
+    there. The honest result here isn't a clean win for either setting: the
+    smaller chunks get closer to the right answer, but even they don't
+    produce an unambiguous rank-1 hit. Reporting that honestly, instead of
+    rounding it up to "smaller chunks fixed it," is exactly the kind of
+    judgment call a retrieval system in production forces on you constantly.
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Add a third entry to <code>CHUNK_SETTINGS</code> (try <code>chunk_size=250, overlap=40</code>) and extend the printed comparison to three columns instead of two.</li>
+    <li>Swap in one of the other four test questions from the exercise and see whether the same chunk-size pattern holds, or whether that question is already solved cleanly at the default setting.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>Every retrieval system ships with a chunk-size decision baked in, and that decision is invisible until a specific question exposes it &mdash; usually in production, in front of a real user, not in a demo. The sick-leave question here is a small, contained version of that exact failure: two real policies (PTO and sick leave) share enough surface vocabulary that a plausible-looking chunking choice can silently retrieve the wrong one. Seeing the actual side-by-side comparison, with real similarity scores instead of a hand-wavy description of the trade-off, is what makes "tune your chunk size and monitor retrieval quality" a concrete practice instead of a slide-deck platitude.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

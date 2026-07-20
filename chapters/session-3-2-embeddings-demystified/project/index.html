@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.2 Project: Word Counts Alone — GenAI for Everyone</title>
+<meta name="description" content="Rebuild the 20-sentence embedding plot using only raw word counts, no concept-anchor scores, and watch topic clustering largely disappear — the Pro path build for Session 3.2.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.2 Project</span>
+    <span class="reading-time">20 min build</span>
+  </div>
+  <h1>Word Counts Alone</h1>
+  <p>
+    The Pro path build for this session &mdash; a direct, hands-on follow-up
+    to the Core path exercise's final question: what happens if you rebuild
+    the same 20 sentences' vectors using <em>only</em> raw word counts, with
+    no hand-seeded "concept anchor" topic scores at all?
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    You'll need Python 3 plus <code>numpy</code>, <code>scikit-learn</code>,
+    and <code>matplotlib</code> installed (the same libraries as the Core
+    path exercise) &mdash; run <code>pip install numpy scikit-learn
+    matplotlib</code> if you haven't already. Then download
+    <code>starter.py</code> below and run it from a terminal with
+    <code>python3 starter.py</code>. No API key, no internet access needed:
+    this is a fully offline exercise. It prints a vocabulary size, a vector
+    matrix shape, cosine-similarity sanity checks, and saves a plot to
+    <code>wordcount_only_plot.png</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>
+    Open <code>starter.py</code>. It reuses the exact same 20 sentences, topic
+    labels, tokenizer, and plotting code as the Core path exercise, so the two
+    plots are a fair, apples-to-apples comparison. Only one function is left
+    for you to fill in.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Build word-count-only vectors</h3>
+    <p>Fill in <code>build_wordcount_only_vectors()</code>. For each sentence, build a vector of length <code>len(vocab)</code> where position <code>i</code> counts how many times <code>vocab[i]</code> appears in that sentence &mdash; the same raw word-count vector the Core path exercise used as <em>half</em> of its hybrid embedding, except here it's the <em>whole</em> vector. Then L2-normalize each sentence's vector (divide by its own <code>np.linalg.norm</code>), guarding against dividing by zero for any row that happens to be all zeros. No concept-anchor seed score is added at all &mdash; that's the entire point of this exercise.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Sanity-check before trusting the plot</span>
+    Once the function is filled in, run the script &mdash; it prints cosine
+    similarity for the same four sentence pairs the Core path exercise
+    checked (two pet sentences, a pet vs. a finance sentence, two cooking
+    sentences, two space sentences). Compare the gap between the same-topic
+    pairs and the cross-topic pair against what the Core path exercise
+    printed &mdash; it should be noticeably smaller here.
+  </div>
+
+  <h2>Core comparison</h2>
+  <p>
+    Get the script running end-to-end, then open
+    <code>wordcount_only_plot.png</code> side by side with
+    <code>embeddings_plot.png</code> from the Core path exercise. Do the four
+    topic clusters still separate clearly, or does the clustering largely
+    disappear now that the concept-anchor scores are gone?
+  </p>
+
+  <div class="what-is">
+    <span class="label">What you should see, and why</span>
+    The lesson's prediction is that clustering should largely disappear
+    &mdash; not because the math changed (it's the exact same word-count
+    vectors, cosine similarity, and PCA reduction as before), but because
+    these 20 sentences were deliberately written with varied vocabulary even
+    within the same topic ("puppy," "cat," "dog," "parrot," and "kitten"
+    barely overlap with each other despite all being about pets). Twenty
+    short sentences simply don't contain enough raw text for topic structure
+    to emerge from word statistics alone. A real production embedding model
+    doesn't have this problem: it has learned, from billions of words of
+    training text, that those words all relate to the same underlying
+    concept, so clustering by meaning emerges automatically with no human
+    ever hand-seeding topic categories. Scale of training data &mdash; not
+    different math &mdash; is what makes the difference.
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Common bug &mdash; forgetting to guard the zero-vector case</h3>
+    <p>Exactly like the Core path exercise, if a sentence's word-count vector happens to be all zeros (shouldn't normally happen with this fixed sentence list, but is a real edge case any embedding pipeline has to handle for unexpected input), dividing by its norm without a guard crashes with a <code>ZeroDivisionError</code> or silently produces <code>NaN</code> values that quietly corrupt the whole plot. Guard it the same way: check whether the norm is <code>0</code> before dividing, and leave the row as zeros if it is.</p>
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Try weighting the word-count vector differently (e.g. down-weighting extremely common words like "the" and "a") and see whether that recovers any of the lost clustering without reintroducing hand-seeded topic scores.</li>
+    <li>Write five new sentences of your own, deliberately reusing the same few words within each topic (unlike this exercise's varied vocabulary), and see whether raw word counts alone can cluster them &mdash; a live demonstration of how much shared vocabulary actually matters for word-count-only clustering.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>It's easy to walk away from the Core path exercise thinking embeddings work by matching words in disguise &mdash; after all, the hybrid vectors did include word counts. This project exists to break that assumption with your own generated output: remove the hand-seeded signal, and the clustering weakens sharply, even though nothing about the underlying math changed. That gap is exactly what separates a small, engineered toy model from a real embedding model trained on a genuinely large amount of text. Understanding <em>why</em> scale matters &mdash; not just that it does &mdash; is what lets you reason clearly about embedding quality, model selection, and retrieval failures once you're building real RAG systems in the sessions ahead.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

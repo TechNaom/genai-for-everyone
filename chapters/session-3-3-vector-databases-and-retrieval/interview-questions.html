@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.3 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 3.3: vector databases, chunking strategy, and retrieval — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.3 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Vector Databases &amp; Retrieval</h1>
+  <p>
+    Chunking strategy and vector database selection are two of the most
+    reliably asked questions once an interview moves past embeddings 101 and
+    into "how would you actually build this." Interviewers are listening for
+    trade-off reasoning grounded in real numbers (scale, latency, cost), not
+    a memorized list of product names. Each question below includes what a
+    strong answer sounds like, common red flags, and a natural follow-up.
+    Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> You're building a RAG system over a 500-page legal document. How would you chunk it, and what trade-offs would you consider?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Names the core trade-off directly: small chunks retrieve precisely but risk losing surrounding context; large chunks preserve context but dilute the specific signal and can retrieve irrelevant material alongside the useful part. Mentions overlap as a way to avoid orphaning ideas at a chunk boundary. Crucially, ties the chunking strategy to the <em>document type</em> &mdash; legal text is dense and structured (sections, clauses, definitions), so a strong answer respects those natural boundaries rather than cutting at a rigid word count that might land mid-clause. Bonus: mentions storing metadata (section number, page, document title) alongside each chunk for traceability.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just split every 512 tokens" with no acknowledgment of trade-offs, no mention of document structure, or no awareness of why overlap matters at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your retrieval keeps returning irrelevant sections for a specific clause lookup. What's your first hypothesis, and how would you test it?" (e.g. chunk size may be too large and diluting the specific clause with unrelated surrounding text — test by re-chunking smaller and re-running the same query.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> You're choosing a vector database for a production RAG system handling 10 million documents. What factors would you evaluate, and would you pick an open-source or managed solution?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Lays out concrete evaluation criteria beyond "which one is popular": scale (does it actually handle 10M+ vectors with acceptable performance), query latency, concurrent query throughput, cost model (per-query vs. per-month), durability (backups, replication), and how easily vectors can be updated or re-embedded in place as documents change. On open-source vs. managed, names the real trade-off: open-source (e.g. FAISS, Milvus) gives more control but adds operational burden; managed (e.g. Pinecone, Weaviate Cloud) reduces ops work but introduces vendor lock-in and typically higher per-query cost. A strong answer treats the choice as depending on team size and ops maturity, not a universal "best" tool.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just pick Pinecone" (or any single tool) with no reasoning attached; no mention of latency or throughput; no cost consideration; treating "good at scale" and "production-ready" as the same thing.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Query latency is creeping up to 500ms in production. What are your options?" (e.g. tune the ANN index's accuracy/speed knob, shard the index, cache frequent queries, or reduce k.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Why can't you just embed an entire document as a single vector for retrieval purposes?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A single embedding for a long document has to represent everything in it at once, so it becomes an averaged, blurred representation of the whole thing. A specific query about one narrow part of the document then has to match against this single vague vector instead of a vector that actually represents the relevant passage &mdash; which produces poor, imprecise retrieval. A strong answer connects this directly to why chunking exists at all: it's the fix for exactly this problem.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Answering with something about computation time or storage limits instead of the actual semantic problem (the blurred/averaged vector), or implying there's a hard length cutoff on what can technically be embedded.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What's the failure mode at the opposite extreme — chunking down to individual sentences?" (e.g. context collapse: a sentence that was clear in its paragraph becomes nearly meaningless once isolated.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Walk me through the trade-off in choosing top-k for a retrieval system. What happens at the extremes?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Names both failure directions with a concrete mechanism for each: too low a k (e.g. k=1) risks missing the answer if it's split across adjacent chunks, or if the single top-similarity chunk isn't actually the most useful one — with no fallback candidate. Too high a k (e.g. k=50) dilutes the context handed to the model with mostly-irrelevant text, raises cost and latency, and can measurably hurt answer quality because the model has to sift through noise to find the signal. A strong answer names a realistic starting range (roughly k=3&ndash;10) and frames the exact value as something you tune against real queries, not something you can derive in the abstract.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Only describing one side of the trade-off, or suggesting there's a single objectively correct k independent of the documents and query style.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You've re-ranked the top-k candidates and precision improved, but recall dropped. Why, and how do you balance the two?" (e.g. re-ranking narrows toward the candidates that look most precisely relevant, which can push out a correct-but-less-obvious match that a looser first pass would have kept — the fix is usually widening the initial retrieval set before re-ranking, not narrowing k earlier in the pipeline.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Give an example of a chunk that would be semantically close to a query but still not useful for answering it.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A concrete example works best: an introductory paragraph that briefly name-drops every topic in a document ("this handbook covers leave, remote work, expenses, and benefits") will score moderately well against almost any query in that document, because it shares at least a little vocabulary with every topic — without substantively answering any specific one. A strong answer names why this matters in production: it's a real, common failure mode where the system retrieves something plausible-looking rather than failing loudly and obviously, which makes it more dangerous, not less. Bonus: connects this to why re-ranking or hybrid keyword+semantic search can help filter it out.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Unable to produce a concrete example, or conflating "semantically close" with "obviously wrong" — the whole point is that these chunks look reasonable at first glance.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you detect this failure mode in production before a user complains?" (e.g. log retrieved chunks and scores, spot-check whether top-1 results are actually specific and substantive rather than generically topical, and build a small labeled test set of queries with known correct chunks to measure retrieval accuracy against.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A whole-document embedding is an <code>____</code> of everything in the document, which is why it makes a poor retrieval target for specific questions.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="average,blur,averaged representation" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Chunk <code>____</code> keeps a boundary-spanning idea fully present in at least one of two adjacent chunks.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="overlap" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> <code>____</code> Nearest Neighbor indexing trades a small amount of accuracy for a large gain in search speed at scale.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="Approximate" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> A typical real-world starting range for top-k is about k=3 to k=<code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="10" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Production RAG systems often add a <code>____</code> step after initial retrieval to more carefully re-score the top-k candidates.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="re-ranking,reranking" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about chunking and retrieval trade-offs in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for trade-off reasoning grounded in real numbers, not a list of vector database names. Always attach a concrete "why" to any tool you mention.</li>
+    <li>If you've actually run the chunk-size comparison from this session's exercise, use your own retrieved results as your example &mdash; a real, specific observation beats a generic textbook answer every time.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-3-4-building-a-rag-pipeline/lesson.html">Next: Building a RAG Pipeline &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.5 RAG Failure Modes and Fixes — GenAI for Everyone</title>
+<meta name="description" content="Chunking errors, retrieval misses, and context stuffing — three named, diagnosable RAG failure modes, why re-ranking fixes both misses and stuffing, and the diagnostic order that separates debugging by luck from debugging by skill.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.5</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">20&ndash;25 min read</span>
+  </div>
+  <h1>RAG Failure Modes and Fixes</h1>
+  <p><em>Chunking errors, retrieval misses, and context stuffing &mdash; you've
+  already watched every one of these happen with your own eyes. Today they get
+  names, diagnostic signals, and a specific fix each.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#chunking-errors">1. Chunking Errors</a>
+    <a href="#misses-and-stuffing">2. Retrieval Misses and Context Stuffing</a>
+    <a href="#re-ranking">3. Re-Ranking: The Fix for Both</a>
+    <a href="#diagnosing-in-order">4. Diagnosing in Order: A Worked Example</a>
+  </nav>
+
+  <div class="hook">
+    Most sessions in this course introduce something genuinely new. This one
+    doesn't &mdash; and that's deliberate. Every failure mode you're about to
+    learn the name for, you've already watched happen with your own eyes, using
+    your own code, on real output you generated yourself. In Session 3.3, you
+    ran the exact same sick-leave question through three different chunk sizes
+    and not one of them got it cleanly right. In Session 3.4, you built a
+    generation step on top of that retrieval and learned, in the abstract, that
+    a confident-sounding answer built on weak context is indistinguishable from
+    one built on strong context &mdash; unless you actually go check. Today all
+    of that stops being "things that happened to occasionally go wrong" and
+    becomes a vocabulary: a small number of named, recognizable failure
+    patterns, each with a specific diagnosis and a specific fix. Naming a
+    failure mode is what turns "huh, that's weird" into "I know exactly what to
+    check next" &mdash; the actual difference between debugging by luck and
+    debugging by skill.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="chunking-errors">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Chunking Errors</h2>
+
+    <p>
+      You met this one directly, back in Session 3.3. A <strong>chunking
+      error</strong> is any case where the way you split a document actively
+      works against retrieval &mdash; either by orphaning an idea across a
+      chunk boundary (too-small chunks, no overlap), or by diluting a specific
+      fact inside a chunk so broad it competes poorly against more
+      "generically relevant-sounding" text (too-large chunks).
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a chunking error?</span>
+      A retrieval failure caused specifically by how the source document was
+      split into pieces &mdash; not by the query, not by the embedding model,
+      not by k. The fact you're looking for genuinely exists in the source
+      text, but the way it got cut apart during chunking means no single
+      retrievable chunk contains it cleanly.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">orphaned-idea.txt</span>
+      </div>
+      <pre><code>chunk_size=15, overlap=0
+
+Chunk 15: "...available in full starting January 1st rather than
+           accruing monthly. Sick days do not carry"
+Chunk 16: "over to the following year and are not paid out
+           upon separation from the company..."
+
+Neither chunk alone contains the phrase "carry over" -- the exact
+verb phrase that answers the question, split precisely down the middle
+by a zero-overlap cut.</code></pre>
+    </div>
+
+    <p>
+      The diagnostic signal is specific: if you ask a system a question with a
+      clear, factual answer that you know exists verbatim somewhere in the
+      source documents, and the top retrieved chunk either doesn't contain
+      that fact at all, or contains it buried in the middle of several
+      paragraphs of unrelated material, you're looking at a chunking error.
+      The fix isn't a single universal chunk size &mdash; you already learned
+      that in Session 3.3 &mdash; but a documented process: test multiple
+      chunk sizes against a representative set of real questions (not just one
+      or two &mdash; a handful spanning the range of topics and phrasing your
+      real users actually use), and watch specifically for cases where two
+      related-but-distinct topics share enough vocabulary that a clumsy chunk
+      size blurs the boundary between them.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A chunking error is caused by <strong>how a document was split</strong> &mdash; too small with no overlap orphans an idea across a boundary; too large dilutes a fact inside irrelevant surrounding text.</li>
+        <li>Signal: the fact exists in the source, but no single retrieved chunk contains it cleanly.</li>
+        <li>Fix: test multiple chunk sizes against real, representative questions &mdash; there's no universal correct size.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="misses-and-stuffing">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Retrieval Misses and Context Stuffing</h2>
+
+    <p>
+      These two failure modes are opposites of each other, which is exactly
+      why it's worth learning them side by side: mixing them up leads you to
+      apply exactly the wrong fix.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a retrieval miss?</span>
+      A broader category than a chunking error, though chunking errors are one
+      common cause of it. A retrieval miss is simply: the chunk that actually
+      contains the answer exists somewhere in your document set, but it didn't
+      make it into the top-k results handed to the model at all.
+    </div>
+
+    <p>
+      This can happen for reasons that have nothing to do with chunk size.
+      Recall Session 3.2's central limitation of the toy word-count embeddings
+      you built: a query asking about "canine companions" and a document
+      discussing "dogs" would show low similarity under a word-count approach,
+      even though they mean almost the same thing, because there's no shared
+      vocabulary for the math to find. Real embedding models reduce this risk
+      substantially &mdash; that's the entire reason they're trained on
+      enormous amounts of text &mdash; but they don't eliminate it. Any
+      embedding-based retrieval system can miss a genuinely relevant chunk
+      simply because the query and the answer happen to be phrased very
+      differently from each other.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">vocabulary-mismatch.txt</span>
+      </div>
+      <pre><code>Query: "Can I telecommute instead of going to the office?"
+Handbook's actual wording: "remote", "remotely", "hybrid"
+                            (never "telecommute")
+
+Top-3 results under a word-count embedding:
+  [1] sim=0.436  401(k) and health plan tiers        -- unrelated
+  [2] sim=0.434  home-office equipment reimbursement -- shares "office"
+  [3] sim=0.384  parental leave                      -- unrelated
+
+The actual Remote Work Policy section never appears in the top-3 at
+all. "telecommute" shares zero letters with "remote" -- there is no
+vocabulary overlap for the math to find.</code></pre>
+    </div>
+
+    <p>
+      The diagnostic signal here is almost identical to a chunking error from
+      the outside &mdash; "the system didn't find the right answer" &mdash;
+      which is exactly why you need to actually inspect <em>which</em> chunks
+      got retrieved, not just whether the final answer was right. If the
+      correct chunk never appears anywhere in your top-k results, no matter
+      how generously you set k, that's a retrieval miss, and the fix is
+      different from a chunking fix: a larger k, a better embedding model, or
+      &mdash; as you'll see in the next section &mdash; a re-ranking step that
+      can recover a near-miss the first retrieval pass almost found.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... context stuffing?</span>
+      The failure mode hiding inside a temptation that feels completely
+      reasonable the first time you meet it: "retrieval is uncertain, so why
+      not just set k very high and hand the model a lot of context &mdash;
+      surely more information can only help?" It can't. Context stuffing is
+      what happens when the model is handed ten, twenty, or fifty retrieved
+      chunks, most of which are only weakly relevant or entirely irrelevant,
+      and somewhere in that pile is the one chunk that actually matters.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">quality-cliff.txt</span>
+      </div>
+      <pre><code>k=10 against an 11-chunk handbook -- nearly the entire document
+retrieved for one specific question about PTO days.
+
+Rank   1     2     3     4     5     6     7     8     9     10
+sim  0.359 0.345 0.299 0.262 0.243 0.153 0.148 0.147 0.053 0.025
+                                     ^-- visible cliff after rank 5
+
+4 of the 10 chunks (40%) score below 0.15 -- "probably not actually
+relevant" -- yet all 10 get handed to the model as if equally worth
+considering.</code></pre>
+    </div>
+
+    <p>
+      Models don't have unlimited, uniform attention across an enormous block
+      of text &mdash; burying a single relevant fact inside a large amount of
+      surrounding noise measurably increases the odds the model either misses
+      it, blends it with irrelevant nearby text, or produces a vaguer,
+      hedgier answer than the same fact would have gotten if it had been
+      handed cleanly and alone.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Opposite symptoms, opposite fixes</span>
+      <ul>
+        <li>A retrieval miss and context stuffing can produce the identical visible symptom &mdash; a wrong or weak final answer.</li>
+        <li>But they call for <strong>opposite fixes</strong>: a miss wants more, or better-targeted, retrieval. Stuffing wants less, more precisely chosen context.</li>
+        <li>If you find yourself increasing k as a generic fix for "retrieval doesn't seem reliable enough," without first checking <em>why</em> the right answer isn't showing up at lower k, you're at serious risk of trading a retrieval-miss problem for a context-stuffing problem instead.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Retrieval miss: the correct chunk exists but never enters the top-k &mdash; often from vocabulary mismatch between the query and the source text.</li>
+        <li>Context stuffing: a high k retrieves mostly weak or irrelevant chunks that dilute the one that actually matters.</li>
+        <li>They look similar from the outside (wrong answer) but need opposite fixes &mdash; diagnose before you touch k.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="re-ranking">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Re-Ranking: The Fix for Both</h2>
+
+    <p>
+      You were promised this term back in Session 3.3, and here it is.
+      <strong>Re-ranking</strong> is a second retrieval pass: instead of
+      trusting the first round of top-k cosine-similarity results as final,
+      you retrieve a larger initial pool of candidates (say, the top 20
+      instead of the top 3), then run a more careful, more computationally
+      expensive comparison between the query and each of those 20 candidates
+      specifically, and keep only the best few after this second look.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... re-ranking?</span>
+      A two-pass retrieval strategy: a wide, cheap first pass (embedding
+      cosine similarity) narrows the entire document set down to a
+      manageable candidate pool, and a narrower, more expensive second pass
+      (a model that directly evaluates "how well does this specific chunk
+      answer this specific query") picks the genuinely best few from that
+      pool before anything reaches the generation step.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">re-ranking-two-pass.txt</span>
+      </div>
+      <pre><code>Pass 1 (cheap, wide):   entire corpus  --cosine sim-->  top 20 candidates
+Pass 2 (expensive, narrow): top 20  --query-aware scoring-->  best 3-5
+
+Fixes a retrieval miss: a near-miss that scored just outside a
+narrow top-3 cutoff survives into the top-20 pool and gets a second,
+more careful look.
+
+Fixes context stuffing: even though the initial pool is wide, only
+the re-ranked best few reach the model -- not all 20.</code></pre>
+    </div>
+
+    <p>
+      Why does this help with both failure modes at once? For retrieval
+      misses: casting a wider net initially (top 20 instead of top 3) gives a
+      near-miss &mdash; a chunk that scored just outside your original top-3
+      cutoff but is actually the right answer &mdash; a real chance to be
+      reconsidered, rather than being permanently discarded by the first
+      pass's cutoff. For context stuffing: the re-ranking step itself acts as
+      a quality filter, so you can retrieve a more generous initial pool
+      without committing to handing all 20 candidates to the generation step
+      &mdash; only the re-ranked, genuinely-best few make it into the final
+      prompt.
+    </p>
+
+    <p>
+      The "more careful, more expensive comparison" in re-ranking is usually a
+      different and more computationally intensive kind of model than the
+      embedding similarity you used for the first pass &mdash; one that can
+      directly evaluate relevance rather than just measuring vector closeness.
+      This is exactly why re-ranking is typically applied as a second pass
+      over a smaller candidate pool rather than as the primary search
+      mechanism over your entire document set: it's too expensive to run
+      against every chunk in a large corpus, but very practical to run
+      against the 20 candidates your first-pass retrieval already narrowed
+      things down to.
+    </p>
+
+    <div class="what-is">
+      <span class="label">One important limit: re-ranking still isn't magic</span>
+      Re-ranking recovers a near-miss &mdash; a chunk that scored just below
+      the cutoff but is still meaningfully similar under the first pass. It's
+      much less reliable at recovering a chunk with near-zero vocabulary
+      overlap under the original embedding, the way "telecommute" vs. "remote
+      work" was in the previous section &mdash; that class of miss is better
+      addressed by upgrading the embedding model itself, or by a re-ranker
+      specifically trained to catch semantic (not just lexical) relevance.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Re-ranking = wide, cheap first pass + narrow, expensive second pass over just those candidates.</li>
+        <li>It helps misses (near-misses survive the first cutoff) and stuffing (only the best few reach the model) at once.</li>
+        <li>It's applied after a first-pass narrowing, not over the whole corpus, because the second pass is too expensive to run at full scale.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="diagnosing-in-order">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. Diagnosing in Order: A Worked Example</h2>
+
+    <p>
+      Step back and notice something about the three failure modes you've
+      just learned, compared to Session 3.1's original warning about
+      hallucination. A chunking error, a retrieval miss, and context stuffing
+      are all failures with a discoverable cause and a specific, targeted fix.
+      You can point at exactly what went wrong and exactly what to change.
+      That draws a sharp line between two very different kinds of problems
+      that can produce the same symptom &mdash; a wrong or unhelpful answer.
+      One kind is a <em>pipeline</em> problem: something in chunking,
+      retrieval, or context assembly didn't do its job well, and fixing that
+      specific stage fixes the symptom. The other kind, which you'll meet
+      properly in Week 5, is closer to a <em>trust</em> problem: even with a
+      well-functioning pipeline, you still need systematic evaluation to catch
+      cases where everything technically worked but the answer was still
+      subtly wrong in a way no single component failure explains. Today is
+      squarely about the first kind &mdash; and learning to recognize and name
+      pipeline failures is itself the prerequisite for telling the two kinds
+      apart, rather than throwing every bad answer into one undifferentiated
+      "the AI was wrong" bucket.
+    </p>
+
+    <p>
+      It's worth walking through, once, exactly how this diagnostic process
+      plays out, because the skill is in the <em>order</em> you check things,
+      not just in knowing the three names.
+    </p>
+
+    <p>
+      Suppose a user asks your handbook bot: "How many sick days do I get and
+      do they carry over?" &mdash; your exact Session 3.3 test case &mdash;
+      and the system answers confidently with the PTO carryover policy
+      (10-day cap, paid out on separation) instead of the sick-leave policy
+      (no carryover, never paid out). The answer is fluent, specific, and
+      entirely wrong for this question. Where do you look first?
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">diagnostic-order.txt</span>
+      </div>
+      <pre><code>WRONG first move: judge the answer's tone/fluency.
+  -- Session 3.4 already showed fluency tells you nothing about
+     correctness. A confident wrong answer and a confident right
+     answer read identically.
+
+RIGHT first move: inspect what was actually retrieved.
+  Correct chunk absent from top-k entirely?
+    -> retrieval miss (or a chunking error, if you can trace it to
+       a boundary cutting through the sick-leave section -- the two
+       often travel together)
+  Correct chunk present, but buried 8th of 10 alongside a lot of
+  other material?
+    -> context stuffing -- the information was technically
+       available, just poorly surfaced
+
+Each produces the IDENTICAL symptom (wrong sick-leave answer) but
+points to a different stage of the pipeline and a different fix.</code></pre>
+    </div>
+
+    <p>
+      Skipping straight to "the model is bad at following instructions"
+      &mdash; without first checking what it was actually given to work with
+      &mdash; is the single most common mistake at this stage, and it's the
+      mistake today's exercise is specifically designed to train you out of.
+      You'll be handed a RAG pipeline today, not one you build from scratch
+      &mdash; a working but deliberately broken system, with one of today's
+      three failure modes built into each test case on purpose. Your job is
+      diagnostic: given a real question and a real wrong (or weak) answer,
+      figure out <em>which</em> failure mode is responsible, using the same
+      kind of direct inspection you practiced in Sessions 3.3 and 3.4 &mdash;
+      looking at what was actually retrieved, not just trusting that the
+      final answer's fluency means the pipeline worked.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill in this exercise isn't running the script &mdash; it's resisting the shortcut of pattern-matching a case number to the order failure modes were introduced in this lesson. Before writing up a diagnosis, an experienced practitioner re-reads the actual printed similarity scores and chunk text for that specific case, because the evidence &mdash; not the lesson's ordering &mdash; is what proves the diagnosis.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to help you structure a diagnosis write-up from raw retrieval output:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Given this printed list of retrieved chunks and similarity scores, help me identify..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, or whatever assistant you use, and compare what it produces against this lesson's worked example &mdash; does it force you to cite a specific similarity score or exact chunk text, or does it let you get away with a generic restatement of a failure mode's definition?
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>I'm debugging a RAG pipeline. Here is the exact printed output from a retrieval test: [paste the question, pipeline config, and the ranked list of retrieved chunks with similarity scores]. Do NOT propose a fix yet. First, tell me only what the evidence in this output actually shows: is the chunk that would answer the question present anywhere in the list, and if so at what rank and score? Is there a sharp drop-off in similarity scores anywhere in the list, and after which rank? Quote the specific scores and chunk text you're using as evidence -- do not describe a failure mode in the abstract.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A pipeline problem (chunking, retrieval, stuffing) has a discoverable cause and a targeted fix; a trust/evaluation problem (Week 5) doesn't reduce to one component.</li>
+        <li>Diagnostic order: inspect retrieved chunks first, never judge by the final answer's fluency or tone.</li>
+        <li>The same symptom can have more than one cause traveling together &mdash; a chunking error and a retrieval miss often show up hand in hand.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Building a RAG pipeline that works on your test questions is necessary but not sufficient for production use &mdash; the real test is whether you, or someone on your team, can diagnose it quickly and correctly when a user reports a bad answer on a question you never thought to test.</li>
+      <li>Production RAG teams keep a running log of retrieved chunks and similarity scores per query specifically so a bad answer can be diagnosed after the fact, without needing to reproduce it live.</li>
+      <li>"Just increase k" is one of the most common well-intentioned mistakes in real RAG debugging &mdash; it treats a symptom instead of first checking which of the three failure modes actually caused it.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>A chunking error, a retrieval miss, and context stuffing can all produce the identical visible symptom</strong> &mdash; a wrong or weak final answer &mdash; but they point to different stages of the pipeline and require different fixes.</li>
+      <li><strong>The diagnostic move is always the same: inspect what was actually retrieved, not just whether the final answer sounds right.</strong> Fluency tells you nothing about which failure mode (if any) you're looking at.</li>
+      <li><strong>Retrieval misses and context stuffing call for opposite fixes.</strong> One needs more or better-targeted retrieval; the other needs less, more precisely chosen context. Reaching for "just increase k" without diagnosing first risks trading one failure mode for the other.</li>
+      <li><strong>Re-ranking helps with both misses and stuffing at once</strong>: cast a wider initial net (so near-misses survive the first cutoff), then apply a more expensive, more precise second-pass comparison to keep only the genuinely best few before generation.</li>
+      <li><strong>A pipeline failure and a trust/evaluation failure are different categories of problem</strong>, even though both can produce a wrong answer. Today is about the first category; Week 5 covers the second.</li>
+      <li><strong>The same symptom can have more than one cause traveling together</strong> &mdash; a chunking error and a retrieval miss often show up hand in hand, since awkward chunk boundaries are one common cause of a chunk failing to be retrieved at all.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the Debug a
+    Broken RAG Pipeline exercise puts today's diagnostic order into practice on
+    a real, deliberately broken system.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

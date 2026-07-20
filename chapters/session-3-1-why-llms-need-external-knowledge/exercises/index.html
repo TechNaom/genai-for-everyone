@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.1 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 3.1: Why LLMs Need External Knowledge — the &quot;RAG or Not?&quot; Decision Worksheet, deciding across six realistic scenarios whether retrieval is genuinely the right fix.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-1" data-chapter-id="session-3-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.1 Exercises</span>
+    <span class="reading-time">15 min, hands-on</span>
+  </div>
+  <h1>Exercises: The "RAG or Not?" Decision Worksheet</h1>
+  <p>
+    Build the habit of running any "we need retrieval for this" request
+    through a real framework <em>before</em> writing a single line of
+    retrieval infrastructure &mdash; the single most valuable instinct from
+    this session. This is a pure reasoning-and-classification exercise: no
+    API calls, no paid keys, just plain Python that runs anywhere.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python3 --version</code>).
+    Download <code>starter.py</code> below, then run it from a terminal with
+    <code>python3 starter.py</code>. It prints your answers in a readable
+    format and flags any scenario you haven't filled in yet.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. For each of the six scenarios in the
+    <code>SCENARIOS</code> list, fill in three fields. Run every scenario
+    through the same three questions from the lesson: is the needed
+    information outside the model's training data, does the answer need to
+    be traceable to a real source, and does the underlying information
+    change over time? If the honest answer to all three is "no," look for a
+    reasoning/writing task, a timeless-knowledge task, or a prompting
+    problem in disguise instead.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Make the decision</h3>
+    <p>For every scenario, set <code>decision</code> to <code>"RAG"</code>, <code>"Not RAG"</code>, or <code>"Something else"</code> (be specific about what "something else" actually is &mdash; a tool call, a database lookup, a prompting fix).</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Justify it with the framework</h3>
+    <p>Set <code>reasoning</code> to 2&ndash;4 sentences that explicitly reference at least one of the three RAG criteria (training-data gap, source traceability, time-sensitivity) or one of the three non-RAG signals (reasoning task, timeless knowledge, prompting problem). A gut-feel answer without the framework doesn't count.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Name the real fix</h3>
+    <p>If your decision is anything other than <code>"RAG"</code>, set <code>actual_fix</code> to the real fix &mdash; "better prompting," "the model already knows this reliably," "this needs a tool call to a calculator/API, not retrieval," or "this needs a database lookup, not semantic search." Leave it as <code>None</code> when the decision is <code>"RAG"</code>.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Code (Pro path)</h3>
+    <p>For scenario 4 (the HR chatbot), go one level deeper: even once you've correctly identified that this needs <em>some</em> form of retrieval, is semantic/vector-based RAG &mdash; the kind you'll build in 3.2&ndash;3.4 &mdash; actually the right mechanism, or does "how many sick days do I have left" call for a direct, structured database lookup instead, with the model only used to phrase the final answer? Write 3&ndash;4 sentences on the distinction.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">scenario_4.py</span>
+      </div>
+      <pre><code>{
+    "id": 4,
+    "scenario": "How many paid sick days do I have left this year?",
+    "decision": "RAG",              &#35; correct so far, but which KIND of retrieval?
+    "reasoning": "...",
+    "actual_fix": None,             &#35; is "None" really right here?
+}
+&#35; Question: is vector-based semantic search the right tool for a single,
+&#35; precise, per-employee numeric lookup -- or is something else?</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>SCENARIOS = [
+    {
+        "id": 1,
+        "scenario": "What does Section 4.2 of our NDA template say about "
+                     "confidentiality duration?",
+        "decision": None,     &#35; TODO: "RAG" / "Not RAG" / "Something else"
+        "reasoning": None,    &#35; TODO
+        "actual_fix": None,   &#35; TODO (or leave None if decision is "RAG")
+    },
+    &#35; ... 5 more scenarios ...
+]
+
+
+def print_worksheet(scenarios):
+    incomplete = []
+    for s in scenarios:
+        if s["decision"] is None:
+            incomplete.append(s["id"])
+            continue
+        &#35; ... print decision, reasoning, actual_fix ...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. A couple of the
+    six scenarios are genuinely debatable at the edges. The goal isn't
+    perfect agreement with <code>solution.py</code>; it's being able to
+    <strong>defend your classification with the training-data-gap /
+    traceability / time-sensitivity framing.</strong> Compare your reasoning
+    against <code>solution.py</code> (run it with <code>python3
+    solution.py</code>) once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

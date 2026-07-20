@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.5 Quiz — GenAI for Everyone</title>
+<meta name="description" content="Interactive fill-in-the-blank quiz for Session 3.5: RAG Failure Modes and Fixes — instant Check-button feedback.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-5" data-chapter-id="session-3-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="lesson.html">&larr; Back to the lesson</a></p>
+
+  <span class="chapter-badge">Session 3.5 Quiz</span>
+  <h1>RAG Failure Modes and Fixes</h1>
+  <p>
+    Fill in each blank, then press its <strong>Check</strong> button (or press
+    Enter) to see instantly if you're right. There's no penalty for guessing
+    again &mdash; try until you get it. Answer from memory first; that's the
+    whole point of a recall check.
+  </p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="q1"><span class="q-num">1</span> A <code>____</code> error
+      happens when the way a document is split actively works against
+      retrieval &mdash; either orphaning an idea across a boundary, or
+      diluting a fact inside an overly broad chunk.</label>
+      <div class="fib-row">
+        <input type="text" id="q1" class="fib-blank" data-answers="chunking" aria-label="Answer for question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q2"><span class="q-num">2</span> A retrieval
+      <code>____</code> means the correct chunk exists somewhere in the
+      document set, but it didn't make it into the top-k results at all.</label>
+      <div class="fib-row">
+        <input type="text" id="q2" class="fib-blank" data-answers="miss" aria-label="Answer for question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q3"><span class="q-num">3</span> Context
+      <code>____</code> is what happens when a generously high k buries the
+      one genuinely relevant chunk inside a large pile of weakly relevant or
+      irrelevant ones.</label>
+      <div class="fib-row">
+        <input type="text" id="q3" class="fib-blank" data-answers="stuffing" aria-label="Answer for question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q4"><span class="q-num">4</span> Re-ranking works by
+      retrieving a larger <code>____</code> pool of candidates first, then
+      applying a more careful, more expensive comparison to keep only the
+      best few.</label>
+      <div class="fib-row">
+        <input type="text" id="q4" class="fib-blank" data-answers="initial,candidate,initial candidate" aria-label="Answer for question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q5"><span class="q-num">5</span> When diagnosing a wrong
+      answer, the correct first move is to inspect the actual
+      <code>____</code>, not the fluency or tone of the final answer.</label>
+      <div class="fib-row">
+        <input type="text" id="q5" class="fib-blank" data-answers="retrieved chunks,chunks,retrieval" aria-label="Answer for question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q6"><span class="q-num">6</span> A retrieval miss and
+      context stuffing can produce the same wrong answer, but they require
+      <code>____</code> fixes &mdash; one wants more/better-targeted
+      retrieval, the other wants less, more precisely chosen context.</label>
+      <div class="fib-row">
+        <input type="text" id="q6" class="fib-blank" data-answers="opposite,different,opposite/different" aria-label="Answer for question 6">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q7"><span class="q-num">7</span> A pipeline failure (like a
+      chunking error) has a discoverable cause and a specific fix; a
+      <code>____</code> failure, covered in Week 5, can happen even when the
+      pipeline technically worked.</label>
+      <div class="fib-row">
+        <input type="text" id="q7" class="fib-blank" data-answers="trust,evaluation,trust/evaluation" aria-label="Answer for question 7">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q8"><span class="q-num">8</span> A user asks "Can I
+      telecommute?" but the handbook only ever uses the word "remote" &mdash;
+      this is most precisely a <code>____</code> caused by vocabulary
+      mismatch.</label>
+      <div class="fib-row">
+        <input type="text" id="q8" class="fib-blank" data-answers="retrieval miss" aria-label="Answer for question 8">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score! You've got the three failure modes and the diagnostic order down &mdash; on to the exercises.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="lesson.html">&larr; Back to Lesson</a>
+    <a href="exercises/index.html">Exercises &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.1 Quiz — GenAI for Everyone</title>
+<meta name="description" content="Interactive fill-in-the-blank quiz for Session 3.1: Why LLMs Need External Knowledge — instant Check-button feedback.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-1" data-chapter-id="session-3-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="lesson.html">&larr; Back to the lesson</a></p>
+
+  <span class="chapter-badge">Session 3.1 Quiz</span>
+  <h1>Why LLMs Need External Knowledge</h1>
+  <p>
+    Fill in each blank, then press its <strong>Check</strong> button (or press
+    Enter) to see instantly if you're right. There's no penalty for guessing
+    again &mdash; try until you get it. Answer from memory first; that's the
+    whole point of a recall check.
+  </p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="q1"><span class="q-num">1</span> A model's <code>____</code> is
+      not a measurement of its <code>____</code> &mdash; both can look identical
+      from the outside.</label>
+      <div class="fib-row">
+        <input type="text" id="q1" class="fib-blank" data-answers="confidence,accuracy" aria-label="Answer for question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q2"><span class="q-num">2</span> A model that doesn't "know"
+      something often doesn't fail loudly &mdash; it fails <code>____</code>,
+      producing the most plausible-sounding continuation even if it's fabricated.</label>
+      <div class="fib-row">
+        <input type="text" id="q2" class="fib-blank" data-answers="fluently" aria-label="Answer for question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q3"><span class="q-num">3</span> The point in time after which
+      no training data was included is called the model's knowledge <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="q3" class="fib-blank" data-answers="cutoff" aria-label="Answer for question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q4"><span class="q-num">4</span> The deeper, more durable
+      reason for needing retrieval is that a general-purpose model's
+      <code>____</code> will never contain everything a specific application
+      needs to know.</label>
+      <div class="fib-row">
+        <input type="text" id="q4" class="fib-blank" data-answers="weights" aria-label="Answer for question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q5"><span class="q-num">5</span> RAG's three conceptual steps
+      are retrieve, augment, and <code>____</code> &mdash; where the model
+      actually produces the grounded answer.</label>
+      <div class="fib-row">
+        <input type="text" id="q5" class="fib-blank" data-answers="generate" aria-label="Answer for question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q6"><span class="q-num">6</span> A task that's really about
+      reasoning, writing, or transformation rather than factual recall is a
+      sign that RAG is <code>____</code> the right tool for the job.</label>
+      <div class="fib-row">
+        <input type="text" id="q6" class="fib-blank" data-answers="not" aria-label="Answer for question 6">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q7"><span class="q-num">7</span> Retraining a model more
+      often narrows the time-lag gap, but private company data was
+      <code>____</code> going to be in a general-purpose model's training
+      set no matter how recently it was trained.</label>
+      <div class="fib-row">
+        <input type="text" id="q7" class="fib-blank" data-answers="never" aria-label="Answer for question 7">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q8"><span class="q-num">8</span> A policy that updates
+      occasionally and needs to be quoted accurately is a strong RAG
+      candidate because it is both time-sensitive and requires source
+      <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="q8" class="fib-blank" data-answers="traceability" aria-label="Answer for question 8">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score! You've got the Session 3.1 judgment call down &mdash; on to the exercises.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="lesson.html">&larr; Back to Lesson</a>
+    <a href="exercises/index.html">Exercises &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.5 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Diagnose three planted RAG failure modes -- a chunking error, a retrieval miss, and context stuffing -- by running a deliberately broken pipeline and inspecting the actual retrieved chunks, not by fixing the bugs.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.5 Exercises</span>
+    <span class="reading-time">30 min, diagnostic</span>
+  </div>
+  <h1>Exercises: Debug a Broken RAG Pipeline</h1>
+  <p>
+    This exercise is <strong>diagnosis, not coding.</strong> You're handed a
+    working-but-broken RAG pipeline with three bugs planted on purpose &mdash;
+    one per failure mode from today's lesson: a chunking error, a retrieval
+    miss, and context stuffing. Your job is to run it, inspect the chunks it
+    actually retrieves, and correctly name what went wrong &mdash; the same
+    discipline the lesson walked through in its worked example.
+  </p>
+
+  <div class="debug-card">
+    <h3>🐞 Do not fix <code>broken_pipeline.py</code></h3>
+    <p>
+      It's broken on purpose, and it's meant to stay that way. Fixing the
+      bugs would skip the actual skill this exercise trains: reading a
+      pipeline's real output and correctly identifying which failure mode
+      you're looking at from the evidence alone, before you ever touch the
+      configuration. Your written work goes in <code>starter.py</code>, a
+      completely separate file.
+    </p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3, plus <code>pdfplumber</code> and <code>numpy</code>:
+    <code>pip install pdfplumber numpy --break-system-packages</code>. No API
+    key and no internet access needed &mdash; everything runs against the
+    included <code>sample_handbook.pdf</code>, reusing the same offline
+    chunking/embedding/retrieval code from Sessions 3.3&ndash;3.4.
+  </div>
+
+  <div class="download-links">
+    <a href="broken_pipeline.py">broken_pipeline.py (given, read-only)</a>
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Run <code>python broken_pipeline.py</code> first. It prints three cases
+    &mdash; a pipeline configuration, a real question, and the top-k chunks
+    that configuration actually retrieved, each with its similarity score.
+    Read that output closely before opening <code>starter.py</code>.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Diagnose Case 1</h3>
+    <p>Question: "How many sick days do employees get and do they roll over?" &mdash; run at <code>chunk_size=15, overlap=0</code>. Look at the top-3 chunks: does the complete fact about sick-day carryover appear intact in any single chunk, or does it look like it got cut across a boundary?</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Diagnose Case 2</h3>
+    <p>Question: "Can I telecommute instead of going to the office?" &mdash; run at a normal chunk configuration. Does the handbook's actual remote-work section show up anywhere in the top-3 at all? If not, that's a different failure mode than Case 1, even though the visible symptom (a wrong-sounding pipeline) looks similar from the outside.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Diagnose Case 3</h3>
+    <p>Question: "How many PTO days do employees get per year?" &mdash; run at <code>k=10</code> against an 11-chunk document. Look at how the similarity scores change from rank 1 to rank 10. Is there a point where the scores clearly fall off a cliff into "not actually relevant"?</p>
+  </div>
+
+  <h2>What to fill in</h2>
+  <p>
+    Open <code>starter.py</code>. For each of the three <code>CASE</code>
+    dictionaries, set:
+  </p>
+  <ul>
+    <li><strong>diagnosis</strong> &mdash; exactly one of <code>"chunking error"</code>, <code>"retrieval miss"</code>, or <code>"context stuffing"</code>.</li>
+    <li><strong>evidence</strong> &mdash; 2&ndash;4 sentences citing something specific and checkable from the actual printed output: an exact similarity score, an exact chunk boundary, a missing word. Not a generic restatement of the failure mode's definition.</li>
+    <li><strong>proposed_fix</strong> &mdash; 1&ndash;3 sentences on what you'd actually change in the pipeline's configuration.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">Resist the pattern-match</span>
+    Case 1, Case 2, and Case 3 do not necessarily correspond to failure
+    modes 1, 2, and 3 in that exact order just because the lesson introduced
+    them that way. Read each case's actual evidence independently before
+    committing to a diagnosis &mdash; the whole point of this exercise is
+    practicing the inspect-first habit, not memorizing an ordering.
+  </div>
+
+  <h2>Pro path &mdash; extended challenge</h2>
+  <ol>
+    <li><strong>Find the exact orphaned word.</strong> For Case 1, work out which two consecutive chunks (at <code>chunk_size=15, overlap=0</code>) the sick-leave-carryover sentence got split across, and identify the specific word or phrase missing from both halves.</li>
+    <li><strong>Propose a re-ranking fix for Case 2.</strong> A larger <code>k</code> alone doesn't reliably fix a genuine vocabulary mismatch the way it can help with a narrowly-missed near-match. Explain why in 2&ndash;3 sentences, and describe what a re-ranking step would need to actually evaluate to recover from this kind of miss.</li>
+    <li><strong>Quantify Case 3's dilution.</strong> Calculate what fraction of the 10 retrieved chunks score below 0.15 &mdash; a reasonable "probably not actually relevant" threshold for this toy embedding &mdash; and use that to argue for a more conservative <code>k</code>.</li>
+  </ol>
+  <p>
+    For a sharper follow-up on Case 2 &mdash; instead of just confirming the
+    correct chunk is missing from the top-3, digging into exactly which
+    words in the wrongly-retrieved chunks caused them to outrank it &mdash;
+    see the project.
+  </p>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    A fully worked answer key, with reasoning for all three cases plus the
+    Pro path answers, is in <code>solution.py</code>. Do your own diagnosis
+    first &mdash; this is a genuinely useful skill to practice under your
+    own steam before comparing notes.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.4 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 3.4: citation and grounding in RAG, and chunking strategy trade-offs — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.4 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: RAG Grounding and Chunking</h1>
+  <p>
+    These mirror how RAG-focused interviews actually probe candidates:
+    fundamentals of retrieval and chunking first, then the harder question of
+    whether a candidate actually understands what citations do and don't
+    prove. Interviewers are listening for trade-off reasoning and concrete
+    failure modes, not textbook recall. Each question below includes what a
+    strong answer sounds like, common red flags, and a natural follow-up.
+    Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> How would you ensure that an LLM's responses in a RAG system are grounded in the retrieved documents and properly cited? What could go wrong?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Grounding techniques: a strict prompt ("only answer from the provided context; if not in context, say 'I don't know'"), better retrieval quality upstream, a citation format the model is instructed to follow (e.g. numbered chunk markers), and a validation step that checks whether the cited text actually exists in the retrieved docs. What can go wrong: hallucinated citations (the model cites a document or chunk that wasn't actually retrieved), out-of-context citations (a correct fact attached to the wrong claim), missed citations (the model uses a fact but forgets to cite it), and context-length pressure forcing the model to selectively use only part of what was retrieved. A strong answer also mentions measurement &mdash; something like citation accuracy, the percentage of claims that are genuinely supported by their cited source.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just tell the LLM to cite sources" with no mention of validation; not acknowledging that citations can be hallucinated or misapplied; no measurement strategy at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You have high citation accuracy but low answer quality. What's happening?" (e.g. the model is correctly citing real chunks, but the retrieved chunks themselves are the wrong ones for the question &mdash; citation accuracy measures faithfulness to what was retrieved, not whether retrieval found the right material in the first place.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> A teammate says: "We added citations to our RAG system's answers, so now we know it's never hallucinating." What's wrong with that conclusion?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Citations only verify that the model <em>attempted</em> to point to a specific chunk &mdash; they don't verify that retrieval actually found the right chunk in the first place, or that the cited chunk genuinely supports the specific claim attached to it. Retrieval itself can return weak or wrong-topic matches even with reasonable settings (surface-vocabulary overlap winning over actual relevance, for instance). A model can cite one of these flawed retrieved chunks in full good faith, producing an answer with a citation attached that is still wrong or unsupported, because the upstream retrieval &mdash; not the generation or citation step &mdash; was the actual point of failure. Citations make grounding checkable; they don't make retrieval correct.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Agreeing that citations alone eliminate hallucination risk; not distinguishing between "the model attempted to ground its answer" and "the grounding was actually correct."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you actually measure whether citations are trustworthy?" (e.g. manually or programmatically checking a sample of cited chunks against the claims attached to them &mdash; a spot-check citation-accuracy audit.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> You're building a RAG system over a 500-page legal document. How would you chunk it, and what trade-offs would you consider?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Acknowledges that large documents need splitting for both retrieval precision and context-window limits. Mentions concrete strategies: fixed-size chunks (e.g. ~512 tokens), semantic-boundary chunks (paragraphs, sections), or a hybrid. Lays out the trade-off explicitly: small chunks give more precise retrieval but lose surrounding context; large chunks preserve context but risk retrieving irrelevant material alongside the relevant part; overlapping chunks smooth the handoff between chunks at the cost of some redundant storage. For a legal document specifically, a strong answer is domain-aware: respect sentence, paragraph, and section boundaries rather than chunking mid-paragraph, and store metadata (source, page number, section) for traceability &mdash; which becomes exactly what makes a precise citation possible later.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just split every 512 tokens" with no trade-off discussion; no consideration of document structure; no awareness of why overlap helps.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your retrieval is returning irrelevant sections. How would you fix it?" (e.g. inspect chunk boundaries for mid-sentence splits, try smaller or section-aware chunks, add a re-ranking step, or check whether the embedding model is capturing legal terminology well.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Why is "use only the provided context" arguably the single most important line in a RAG prompt?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Without an explicit instruction to use only the provided context, a model is free to quietly fall back on its own training-data memory instead of the retrieved text &mdash; meaning all the careful engineering work in chunking, embedding, and retrieval has no guaranteed effect on the final answer at all. This instruction is specifically what makes a system "retrieval-augmented" rather than merely "retrieval-adjacent": the retrieval step ran, but nothing forced the generation step to actually rely on it. A strong answer also notes this instruction pairs naturally with an honest-uncertainty instruction ("if the context doesn't contain enough information, say so") rather than working against it.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Framing it as a minor style preference rather than a functional requirement; not connecting it to the risk of the model silently ignoring retrieval.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you test whether that instruction is actually doing anything?" (e.g. run the same question through the prompt with and without that line and compare whether the model's behavior changes on a question it can't answer from context.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> How should a well-designed RAG system behave when the retrieved context doesn't actually contain the answer?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>It should produce an honest "I don't have enough information to answer this" response rather than a fluent, confident guess &mdash; and this should hold for two related but distinct situations: weak retrieval (the top-k chunks scored low, meaning nothing very relevant was found) and a genuinely unanswerable question (the information simply isn't in the document set at all, regardless of retrieval quality). A strong answer notes this depends on an explicit prompt instruction telling the model that saying "I don't know" is an acceptable, preferred outcome when the context doesn't support an answer &mdash; without that permission, models tend to default toward producing *some* fluent answer rather than an honest refusal.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Assuming the model will naturally decline to answer without being told to; not distinguishing "weak retrieval" from "genuinely unanswerable" as related but separate cases.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you catch it in testing if this behavior silently broke?" (e.g. maintain a small set of test questions deliberately unanswerable from the document set, and check that the system still says so honestly whenever the prompt template changes.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A citation shows the model
+      <code>____</code> to ground its answer in a chunk &mdash; it does not guarantee the
+      chunk actually supports the claim.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="attempted,tried" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Small chunks give more precise retrieval
+      but lose surrounding <code>____</code>; large chunks preserve it but risk pulling in
+      irrelevant material.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="context" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> "Use only the provided context" is what
+      makes a system genuinely retrieval-<code>____</code> rather than retrieval-adjacent.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="augmented" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> A well-designed RAG system should say
+      "I don't have enough <code>____</code>" rather than guess, whether the cause is weak
+      retrieval or a genuinely unanswerable question.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="information" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Overlapping chunks smooth the handoff
+      between chunks at the cost of some redundant <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="storage" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about RAG grounding in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>When asked about citations, always separate "the model attempted to cite" from "the citation is actually correct" &mdash; that distinction is what separates a strong answer from a weak one on this topic.</li>
+    <li>Anchor every trade-off (chunk size, overlap, grounding instructions) to a concrete failure mode you've seen, not an abstract rule &mdash; interviewers are listening for that concreteness.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-3-5-rag-failure-modes-and-fixes/lesson.html">Session 3.5: RAG Failure Modes &amp; Fixes &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

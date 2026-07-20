@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.1 Project: The Wrong-Direction Failure Report — GenAI for Everyone</title>
+<meta name="description" content="Diagnose what actually breaks when the RAG-or-not call goes wrong in the opposite direction, across all six scenarios — the Pro path build for Session 3.1.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.1 Project</span>
+    <span class="reading-time">20 min build</span>
+  </div>
+  <h1>The Wrong-Direction Failure Report</h1>
+  <p>The Pro path build for this session &mdash; built directly on the "Pro path" prompt at the bottom of the lesson: for each of the six scenarios from the exercises worksheet, beyond just naming the right call, sketch what actually goes wrong when someone makes the call in the <em>opposite</em> direction &mdash; a full RAG pipeline for a scenario that never needed one, or prompting alone for a scenario that genuinely needed retrieval.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>Scenario 1: A legal tech startup wants their AI assistant to answer
+questions like 'What does Section 4.2 of our standard NDA template say
+about confidentiality duration?' by quoting the exact clause.
+Correct call: RAG
+Wrong-direction mistake: handled with prompting alone, no retrieval
+----------------------------------------------------------------------
+  What the wrong call looks like: Someone writes a well-crafted prompt
+  asking the model to 'quote Section 4.2 of our standard NDA template'
+  and ships it without ever giving the model the actual template text.
+  Failure mode:                   The model has never seen this
+  company's specific NDA template -- it's private content, not public
+  training data -- so it generates a plausible-sounding clause that
+  resembles a typical confidentiality-duration clause but isn't the
+  real one...
+  Cost of the mistake:            A real legal/compliance risk --
+  someone could act on a quoted clause that was never actually in the
+  contract.</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Download <code>starter.py</code> below and run <code>python3 starter.py</code>.
+    No API key, no internet access, and no external libraries needed &mdash;
+    this is a pure diagnostic-reasoning exercise.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>
+    The same six scenarios from the exercises worksheet, each already tagged
+    with its <code>correct_call</code> (<code>"RAG"</code> or
+    <code>"Not RAG"</code>) and its <code>wrong_direction</code> &mdash; the
+    specific opposite-direction mistake to analyze. Scenarios 1, 3, 4, and 6
+    genuinely need RAG, so their wrong-direction mistake is handling them
+    with prompting alone. Scenarios 2 and 5 don't need RAG at all, so their
+    wrong-direction mistake is building a full retrieval pipeline anyway.
+    Fill in the three <code>None</code> fields for each case:
+  </p>
+  <ul>
+    <li><strong>wrong_call</strong> &mdash; one sentence on what the opposite-direction mistake looks like in practice.</li>
+    <li><strong>failure_mode</strong> &mdash; 2&ndash;3 sentences on what concretely breaks: who notices, how, and why it's bad.</li>
+    <li><strong>cost_of_the_mistake</strong> &mdash; one sentence naming the type of cost (wasted engineering time, latency, a wrong answer shipped to a real user, a compliance risk).</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">The habit this trains</span>
+    It's easy to memorize which scenarios need RAG as a checklist. It's far
+    more valuable to be able to explain the <em>cost</em> of getting it wrong
+    in either direction &mdash; skipping retrieval on a genuine RAG scenario
+    ships a confidently wrong answer to a real user, while building
+    retrieval infrastructure for a scenario that never needed it burns
+    engineering time and latency for no accuracy gain. Naming the specific
+    failure, not just "that's the wrong call," is real engineering judgment.
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Pick one scenario and sketch what the fix would look like in code or pseudocode once the wrong call has already shipped &mdash; how would you detect it in production before a customer does?</li>
+    <li>Write a seventh scenario from your own work or coursework where you've seen (or could imagine) someone reach for RAG when they didn't need it, or skip it when they did &mdash; and analyze it the same way.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>Session 3.1's real lesson isn't "here's what RAG is" &mdash; it's "here's how to tell when you need it." That judgment only sharpens once you can articulate the cost of getting it wrong in both directions, not just recite the right answer. An engineer who can say "skipping retrieval here means a support bot confidently misstates a return policy to a real customer" or "adding retrieval here means burning latency and engineering time on a task the model already does well" is demonstrating exactly the judgment real GenAI work demands &mdash; and exactly what the rest of Week 3's engineering will assume you already have.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

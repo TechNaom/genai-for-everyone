@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.2 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 3.2: Visualize embeddings of 20 sentences in 2D — build a hybrid toy embedding, implement cosine similarity, and watch topic clusters emerge.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-2" data-chapter-id="session-3-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.2 Exercises</span>
+    <span class="reading-time">25 min, hands-on</span>
+  </div>
+  <h1>Exercise: Visualize Embeddings of 20 Sentences in 2D</h1>
+  <p>
+    Turn 20 real sentences into embedding vectors, reduce them to 2D, and
+    plot them &mdash; so you can directly <em>see</em> sentences with similar
+    meaning cluster together, exactly like the lesson described. No API key,
+    no internet access needed &mdash; the toy embedding you'll build is fully
+    transparent, plain Python plus a few common libraries.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 plus <code>numpy</code>, <code>scikit-learn</code>,
+    and <code>matplotlib</code> installed: run
+    <code>pip install numpy scikit-learn matplotlib</code>. Then download
+    <code>starter.py</code> below and run it from a terminal with
+    <code>python3 starter.py</code>. It prints a vocabulary size, a vector
+    matrix shape, cosine-similarity sanity checks, and saves a plot to
+    <code>embeddings_plot.png</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. It gives you 20 sentences across four
+    topics (pets, cooking, finance, space), a hand-seeded vocabulary of
+    "concept anchor" words for each topic, and the plotting/dimensionality
+    reduction code already wired up. You fill in two functions.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Build the hybrid embedding vectors</h3>
+    <p>Fill in <code>build_concept_vectors()</code>. For each sentence: (a) count how many of its words appear in each topic's seed list &mdash; a 4-number "seed score" &mdash; and L2-normalize it; (b) build the sentence's raw word-count vector across the full vocabulary and L2-normalize it the same way; (c) concatenate the two with <code>np.hstack</code>, weighting the seed score by <code>2.0</code> and the word counts by <code>1.0</code>, so topic identity dominates while each sentence keeps its own specific variation.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Implement cosine similarity</h3>
+    <p>Fill in <code>cosine_similarity()</code> using the exact formula from the lesson: <code>(A &middot; B) / (|A| &times; |B|)</code>. The dot product, divided by the product of each vector's Euclidean norm. Guard the zero-vector edge case &mdash; if either vector's length is 0, return <code>0.0</code> instead of dividing by zero.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Sanity-check before trusting the plot</span>
+    Once both functions are filled in, run the script &mdash; it prints
+    cosine similarity for a few sentence pairs (two pet sentences, a pet vs.
+    a finance sentence, two cooking sentences, two space sentences). Same-topic
+    pairs should score noticeably higher than the cross-topic pair. If they
+    don't, something is off in your vector construction before you even look
+    at the plot.
+  </div>
+
+  <h2>Core path</h2>
+  <p>
+    Get the script running end-to-end. Open <code>embeddings_plot.png</code>
+    and check: do the four topics visually separate into roughly distinct
+    regions of the plot, even though nothing in your code ever told it which
+    topic each sentence belonged to?
+  </p>
+
+  <h2>Example output</h2>
+  <p>
+    A correct run produces something like this &mdash; four loosely separated
+    color-coded clusters, one per topic. Your own plot's exact layout will
+    differ (PCA is sensitive to the input vectors), but the same rough
+    separation should appear:
+  </p>
+  <img
+    src="embeddings_plot_solution.png"
+    alt="Example scatter plot of the 20 sentences reduced to 2D with PCA, colored by topic (pets, cooking, finance, space), showing four loosely separated clusters"
+    style="max-width:100%;border-radius:var(--radius);border:1px solid var(--color-border);box-shadow:var(--shadow-sm);display:block;margin:1.25rem 0;"
+  >
+
+  <div class="debug-card">
+    <h3>🐞 Common bug &mdash; forgetting to guard the zero-vector case</h3>
+    <p>If a sentence happens to score zero on every seed word AND has words entirely outside the vocabulary passed in (shouldn't normally happen here, but is a real edge case any embedding pipeline has to handle), its vector's norm is <code>0</code>. Dividing by that norm without a guard crashes with a <code>ZeroDivisionError</code> or silently produces <code>NaN</code> values that quietly corrupt the whole plot. This is exactly why the TODO instructions call out checking <code>norm_a == 0 or norm_b == 0</code> before dividing &mdash; a real production embedding pipeline hits this exact edge case with empty documents or documents in an unsupported language.</p>
+  </div>
+
+  <h2>Ready for more?</h2>
+  <p>
+    Once your plot shows four separated clusters, head to the
+    <a href="../project/index.html">Pro path project</a>: rebuild the same 20
+    sentences using <em>only</em> raw word counts, no concept-anchor scores at
+    all, and watch the clustering largely disappear &mdash; a direct,
+    hands-on demonstration of why real embedding models don't need hand-seeded
+    topic lists.
+  </p>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. The goal isn't
+    pixel-identical output to <code>solution.py</code>; it's implementing the
+    formula correctly and being able to explain, in your own words, why
+    same-topic pairs score higher than cross-topic pairs. Compare your
+    reasoning against <code>solution.py</code> (run it with
+    <code>python3 solution.py</code>) once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

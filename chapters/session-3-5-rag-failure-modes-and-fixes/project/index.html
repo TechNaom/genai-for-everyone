@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.5 Project: The Surface-Word Overlap Investigation — GenAI for Everyone</title>
+<meta name="description" content="Don't just confirm a retrieval miss -- find the specific coincidental word overlap that let the wrong chunks outrank the one that actually answers the question. The Pro path build for Session 3.5.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-3-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 3.5 Project</span>
+    <span class="reading-time">25 min build</span>
+  </div>
+  <h1>The Surface-Word Overlap Investigation</h1>
+  <p>
+    The Pro path build for this session &mdash; a direct extension of the
+    exercises' Case 2, built on the lesson's own Pro path challenge: for a
+    retrieval miss, don't just confirm the correct chunk is absent from the
+    top-k. Look at what <em>did</em> get retrieved instead, and find the
+    specific surface-level word overlap that let each wrong chunk outrank
+    the one that actually answers the question.
+  </p>
+
+  <h2>The setup</h2>
+  <p>
+    Case 2 from the exercises, reproduced here exactly (not modified):
+    the question <em>"Can I telecommute instead of going to the office?"</em>
+    against a pipeline configured with <code>chunk_size=100, overlap=20</code>.
+    The exercises worksheet already established this is a retrieval miss
+    &mdash; the handbook's Remote Work Policy section never appears in the
+    top-3. This project goes one layer deeper: <em>why did the wrong chunks
+    win?</em>
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Download <code>starter.py</code> below. You'll need
+    <code>pdfplumber</code> and <code>numpy</code>:
+    <code>pip install pdfplumber numpy --break-system-packages</code>. No
+    API key and no internet access needed &mdash; everything runs against
+    the included <code>sample_handbook.pdf</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>Two functions and a written analysis. Fill in the marked stubs in <code>starter.py</code>:</p>
+  <ul>
+    <li><strong>shared_words(query, chunk)</strong> &mdash; returns the sorted list of words that literally appear in both the query and a given chunk. This turns "surface-level word overlap" from a vague phrase into something concrete and checkable.</li>
+    <li><strong>find_chunk_by_keyword(full_ranking, keyword)</strong> &mdash; searches the FULL ranking (every chunk in the store, not just the top-3 the broken pipeline actually used) for the first chunk containing a known keyword, and reports its true rank and score.</li>
+  </ul>
+  <p>Then fill in the <code>ANALYSIS</code> dict after running the investigation:</p>
+  <ul>
+    <li><strong>coincidental_shared_word</strong> &mdash; of the top-3 wrongly-retrieved chunks, one shares a specific, low-frequency <em>content</em> word with the query that the others don't (not a generic stopword like "the" or "of"). Which word, and which chunk does it come from?</li>
+    <li><strong>would_a_bigger_k_reliably_fix_this</strong> &mdash; the correct chunk's true rank turns out to be close to, but just outside, the k=3 cutoff. Does that mean a slightly larger k would reliably fix this question? What would you need to check before trusting that as a general fix, rather than a coincidence of this one phrasing?</li>
+    <li><strong>proposed_fix</strong> &mdash; what you'd actually change.</li>
+  </ul>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>--- Top-3 retrieved (what the broken pipeline actually hands the model) ---
+
+[1] sim=0.436
+    shared words with query: ['of', 'the', 'to']
+    chunk: dependents, across all available health plan tiers...
+
+[2] sim=0.434
+    shared words with query: ['of', 'the']
+    chunk: employee per calendar year for employees in approved remote...
+
+[3] sim=0.384
+    shared words with query: ['instead', 'of', 'the']
+    chunk: months are eligible for 16 weeks of paid parental leave...
+
+--- Where the chunk that actually answers the question really ranks ---
+Rank #5 of 11, sim=0.315
+chunk: over to the following year and are not paid out... 3. Remote
+Work Policy Employees in eligible roles may work remotely up to
+three days per week without prior approval...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">What that output is actually showing you</span>
+    Rank #3 is a chunk about <strong>parental leave</strong> &mdash; a
+    completely different topic from remote work &mdash; and yet it shares a
+    word with the query that neither of the top-2 chunks do:
+    <code>"instead"</code>. That single rare-word match, on top of the
+    generic stopword overlap almost every chunk gets, is enough to push an
+    off-topic chunk above the chunk that actually answers the question,
+    which sits just two ranks below the k=3 cutoff.
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Run the same investigation against Case 1's question ("How many sick days do employees get and do they roll over?") at <code>chunk_size=15, overlap=0</code> &mdash; does a similar coincidental overlap pattern show up, or is that case purely a chunking problem?</li>
+    <li>Rephrase the query to remove the coincidental overlap (drop "instead of") and see whether the correct chunk's rank improves, stays the same, or gets worse &mdash; a direct test of whether the word you found was actually load-bearing.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>"The retrieval missed it" is where most debugging stops in practice, and it's not wrong &mdash; but it's not specific enough to fix anything with confidence. The engineers who get RAG systems to actually work in production are the ones who go one step further and ask "missed it in favor of <em>what</em>, and <em>why did that win</em>?" That's the difference between noticing a fire and finding the spark &mdash; and it's the same instinct that will matter next session, when you're building a system with no failure mode handed to you and have to find your own sparks.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

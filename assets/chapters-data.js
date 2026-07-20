@@ -106,12 +106,44 @@ window.GFE_MODULES = [
     title: "Week 3 — Working with Data: Embeddings & RAG",
     examPath: "assessments/written-exams/week-03-exam.md",
     chapters: [
-      { id: "session-3-1", num: "3.1", title: "Why LLMs Need External Knowledge", path: null, subtopics: [] },
-      { id: "session-3-2", num: "3.2", title: "Embeddings Demystified", path: null, subtopics: [] },
-      { id: "session-3-3", num: "3.3", title: "Vector Databases & Retrieval", path: null, subtopics: [] },
-      { id: "session-3-4", num: "3.4", title: "Building a RAG Pipeline", path: null, subtopics: [] },
-      { id: "session-3-5", num: "3.5", title: "RAG Failure Modes & Fixes", path: null, subtopics: [] },
-      { id: "session-3-6", num: "3.6", title: "Week 3 Lab — Mini Build Day (Policy Q&A Bot)", path: null, subtopics: [] }
+      { id: "session-3-1", num: "3.1", title: "Why LLMs Need External Knowledge", path: "chapters/session-3-1-why-llms-need-external-knowledge/lesson.html", subtopics: [
+        { id: "knowledge-cutoff", title: "The Knowledge Cutoff: A Fact of Training, Not a Bug" },
+        { id: "hallucination-on-facts", title: "Hallucination on Facts: Confident and Wrong Aren't Opposites" },
+        { id: "enter-rag", title: "Enter RAG: Retrieve, Augment, Generate" },
+        { id: "rag-or-not", title: "The Real Skill: Knowing When RAG Is (and Isn't) the Answer" }
+      ] },
+      { id: "session-3-2", num: "3.2", title: "Embeddings Demystified", path: "chapters/session-3-2-embeddings-demystified/lesson.html", subtopics: [
+        { id: "from-words-to-numbers", title: "From Words to Numbers: What a Vector Actually Is" },
+        { id: "beyond-keywords", title: "Why This Is a Leap Beyond Matching Keywords" },
+        { id: "cosine-similarity", title: "Measuring \"Closeness\": Cosine Similarity" },
+        { id: "hand-walkthrough", title: "A Concrete Walk-Through, by Hand" },
+        { id: "twenty-sentences", title: "What \"20 Sentences in 2D\" Is Actually Showing You" }
+      ] },
+      { id: "session-3-3", num: "3.3", title: "Vector Databases & Retrieval", path: "chapters/session-3-3-vector-databases-and-retrieval/lesson.html", subtopics: [
+        { id: "chunking", title: "Chunking: The Decision Nobody Tells You Is Hard" },
+        { id: "vector-stores", title: "Vector Stores: A Library Card Catalog for Meaning" },
+        { id: "top-k", title: "Top-k Retrieval: Choosing How Much Is Enough" },
+        { id: "pipeline", title: "Putting the Three Pieces Together, End to End" }
+      ] },
+      { id: "session-3-4", num: "3.4", title: "Building a RAG Pipeline", path: "chapters/session-3-4-building-a-rag-pipeline/lesson.html", subtopics: [
+        { id: "third-step", title: "The Third Step, Finally Made Real" },
+        { id: "prompt-dissected", title: "A RAG Prompt Template, Dissected" },
+        { id: "citation-grounding", title: "Why Citation Grounding Matters More Than It Might Seem" },
+        { id: "seams-show", title: "Where the Seams Show & Defensive Thinking" }
+      ] },
+      { id: "session-3-5", num: "3.5", title: "RAG Failure Modes & Fixes", path: "chapters/session-3-5-rag-failure-modes-and-fixes/lesson.html", subtopics: [
+        { id: "chunking-errors", title: "Chunking Errors" },
+        { id: "misses-and-stuffing", title: "Retrieval Misses and Context Stuffing" },
+        { id: "re-ranking", title: "Re-Ranking: The Fix for Both" },
+        { id: "diagnosing-in-order", title: "Diagnosing in Order: A Worked Example" }
+      ] },
+      { id: "session-3-6", num: "3.6", title: "Week 3 Lab — Mini Build Day (Policy Q&A Bot)", path: "chapters/session-3-6-week-3-lab-policy-qa-bot/lesson.html", subtopics: [
+        { id: "the-build", title: "The build: a bot over four cross-referencing PDFs" },
+        { id: "why-this-tool", title: "Why this build needs every technique from the week" },
+        { id: "the-bug", title: "The bug you're going to find, and the fix" },
+        { id: "done-well", title: "\"Done well\" vs. \"done technically\"" },
+        { id: "reflection", title: "Reflection: what clicked, what's fuzzy" }
+      ] }
     ]
   },
   {

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.3 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 6.3: Choosing & Switching Models — closed vs. self-hosted, adapter layers, and fallback design, with a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.3 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Choosing & Switching Models</h1>
+  <p>
+    Model-selection and reliability questions come up constantly once a role
+    involves shipping GenAI features past the prototype stage &mdash; interviewers
+    use them to check whether you think about production trade-offs, not just
+    whether a demo works. Each question below includes what a strong answer sounds
+    like, common red flags, and a natural follow-up. Click any question to expand
+    it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> When would you recommend self-hosting an open-weight model instead of using a closed API, given that the closed API is probably higher quality?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Data residency/compliance requirements that prohibit sending data to a third party; extremely high, steady-state volume where fixed infrastructure cost undercuts per-token pricing; and an acknowledgment of the trade-off &mdash; self-hosting adds real operational burden (uptime, scaling, staying current with new releases) most projects don't need on day one. A strong answer also notes that most teams should default to a closed API and move only when a specific driver appears.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Self-hosting is always cheaper" (ignores infrastructure and operational cost); no mention of compliance/data-residency as a real driver; treating this as a purely technical decision with no business context.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your self-hosted model needs to be updated to a newer open-weight release. What does that process look like compared to a closed API's automatic updates?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Your codebase calls a specific provider's SDK directly in 40 different files. What's the risk, and how would you fix it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Risk: switching providers, adding a fallback, or upgrading the SDK requires finding and changing all 40 call sites &mdash; slow and error-prone, with a real chance of missing one. Fix: introduce an adapter layer &mdash; a single function or module wrapping provider calls &mdash; so business logic calls one consistent interface regardless of provider. A strong answer also mentions that this is what makes adding a fallback strategy cheap later.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Not identifying the maintainability risk clearly; proposing "just rewrite all 40 files" as the fix rather than introducing an abstraction; no mention of how this affects fallback design.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Design the function signature for that adapter layer."</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> You've built a fallback: if the primary provider times out, retry against a secondary model. In production, the primary is experiencing intermittent slowness (not full outages), and 15% of requests are triggering the fallback unnecessarily. What's wrong, and how would you fix it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Diagnoses that the fallback's trigger condition (a raw timeout) is too sensitive to transient slowness, not just genuine failures. Proposes a fix: a more tolerant timeout, or a circuit-breaker pattern that only engages the fallback after sustained failures rather than per-request. Recognizes the trade-off: falling back too eagerly serves users a weaker model unnecessarily often.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"The fallback is working as designed, no issue" (misses the real problem); no concrete fix proposed; failing to distinguish transient slowness from genuine outages.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would a circuit breaker specifically prevent this compared to a per-request timeout retry?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> True or false: most teams should start with a self-hosted open model to avoid vendor lock-in from day one. Defend your answer.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>False. Most teams should start with a closed API because setup cost is near zero, and move to self-hosting only when a specific driver (data residency, extreme steady volume, a needed guarantee) appears. "Vendor lock-in" is solved by an adapter layer, not by self-hosting from day one &mdash; self-hosting up front adds real infrastructure burden most projects don't need yet, and doesn't even fully avoid switching costs on its own.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Answering "true" without qualification; conflating "avoiding vendor lock-in" with "avoiding closed APIs entirely" instead of pointing to the adapter pattern as the actual fix.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If not self-hosting, what actually protects a team from vendor lock-in on day one?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> What is a circuit breaker pattern, and why is it better than retrying a failing provider on every single request?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A circuit breaker stops sending requests to a provider after N consecutive failures, waiting out a cooldown period before trying again &mdash; instead of retrying (and adding latency and cost) on every single request during an outage. It's better because repeatedly hitting a provider that's clearly down wastes time and resources on requests very likely to fail anyway, and adds needless latency to the user-facing request path.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Describing a circuit breaker as just "a fallback" without the cooldown/consecutive-failure mechanism; not explaining the cost of retrying a doomed request on every call.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you decide the right value for N (the failure count) and the cooldown duration?"</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Most teams default to a <code>____</code>
+      API and move to self-hosting only when a specific driver appears.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="closed" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> An <code>____</code> layer wraps every
+      provider call behind one consistent function, so business logic never touches an
+      SDK directly.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="adapter" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A <code>____</code> fallback falls back to
+      a faster/cheaper model on failure, trading quality for a guaranteed response.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="quality-tiered" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> A circuit breaker waits out a
+      <code>____</code> period after N consecutive failures before trying a provider
+      again.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="cooldown" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Logging which provider actually served
+      each request is what lets you measure the fallback <code>____</code> over time.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="rate" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about model selection and reliability in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for trade-off reasoning grounded in production reality, not a memorized definition of "adapter pattern." Anchor every answer to a concrete cost: engineering time, latency, or risk.</li>
+    <li>It's fine to think out loud ("if it's a compliance requirement, self-hosting might be the only option regardless of quality...") &mdash; the reasoning is what's being evaluated, not just the final word.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-6-4-monitoring-observability/lesson.html">Next: Monitoring &amp; Observability &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

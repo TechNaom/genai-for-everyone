@@ -214,12 +214,43 @@ window.GFE_MODULES = [
     title: "Week 6 — Deployment, Cost, Scaling & MLOps-for-GenAI",
     examPath: "assessments/written-exams/week-06-exam.md",
     chapters: [
-      { id: "session-6-1", num: "6.1", title: "From Notebook to Application", path: null, subtopics: [] },
-      { id: "session-6-2", num: "6.2", title: "Cost & Latency Engineering", path: null, subtopics: [] },
-      { id: "session-6-3", num: "6.3", title: "Choosing & Switching Models", path: null, subtopics: [] },
-      { id: "session-6-4", num: "6.4", title: "Monitoring & Observability", path: null, subtopics: [] },
-      { id: "session-6-5", num: "6.5", title: "CI/CD & Versioning for Prompts", path: null, subtopics: [] },
-      { id: "session-6-6", num: "6.6", title: "Week 6 Lab — Mini Build Day", path: null, subtopics: [] }
+      { id: "session-6-1", num: "6.1", title: "From Notebook to Application", path: "chapters/session-6-1-from-notebook-to-application/lesson.html", subtopics: [
+        { id: "gap", title: "The Gap Between a Script and a Service" },
+        { id: "three-changes", title: "The Three Changes That Make It Real" },
+        { id: "why-env-vars", title: "Why Environment Variables, Specifically" },
+        { id: "worked-scenario", title: "A Real-World Scenario, Worked Through" }
+      ] },
+      { id: "session-6-2", num: "6.2", title: "Cost & Latency Engineering", path: "chapters/session-6-2-cost-latency-engineering/lesson.html", subtopics: [
+        { id: "token-economics", title: "Token Economics, in Practice" },
+        { id: "caching-batching", title: "Caching and Batching: Paying Once Instead of Every Time" },
+        { id: "model-routing", title: "Model Routing: Not Every Request Needs Your Best Model" },
+        { id: "measure-first", title: "The Core Discipline: Measure Before You Optimize" }
+      ] },
+      { id: "session-6-3", num: "6.3", title: "Choosing & Switching Models", path: "chapters/session-6-3-choosing-switching-models/lesson.html", subtopics: [
+        { id: "closed-vs-open", title: "Closed API vs. Open, Self-Hosted — the Real Trade-off" },
+        { id: "adapter-pattern", title: "Designing for Switchability: the Adapter Pattern" },
+        { id: "fallback-strategies", title: "Fallback Strategies" },
+        { id: "worked-scenario", title: "A Real-World Scenario, Worked Through" }
+      ] },
+      { id: "session-6-4", num: "6.4", title: "Monitoring & Observability", path: "chapters/session-6-4-monitoring-observability/lesson.html", subtopics: [
+        { id: "minimum-bar", title: "The Minimum Bar: What to Log, and Why \"Feels Worse\" Isn't a Fact" },
+        { id: "drift", title: "Drift: Why a System That Never Changed Can Still Get Worse" },
+        { id: "feedback-loop", title: "The Feedback Loop: Your Cheapest Source of Real Labels" },
+        { id: "worked-scenario", title: "A Real-World Scenario, Worked Through" }
+      ] },
+      { id: "session-6-5", num: "6.5", title: "CI/CD & Versioning for Prompts", path: "chapters/session-6-5-cicd-versioning-for-prompts/lesson.html", subtopics: [
+        { id: "why-versioning", title: "Why Prompts Need Version-Control Discipline" },
+        { id: "the-regression-gate", title: "The CI Regression Gate" },
+        { id: "versioning-strategy", title: "Versioning Strategy: Files, Tags, and the Golden Dataset" },
+        { id: "rollback", title: "Rollback: The Fastest Safe Response" }
+      ] },
+      { id: "session-6-6", num: "6.6", title: "Week 6 Lab — Mini Build Day", path: "chapters/session-6-6-week-6-lab-mini-build-day/lesson.html", subtopics: [
+        { id: "the-build", title: "The build: one deployable project, five pieces" },
+        { id: "what-deployable-means", title: "What \"deployable\" actually means (and doesn't)" },
+        { id: "the-gate", title: "The startup-time regression gate" },
+        { id: "done-well", title: "\"Done well\" vs. \"done technically\"" },
+        { id: "reflection", title: "Reflection: what clicked, what's fuzzy" }
+      ] }
     ]
   },
   {

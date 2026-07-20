@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.3 Project: The Fallback Rate Monitor — GenAI for Everyone</title>
+<meta name="description" content="Implement call_model_with_fallback — catch a simulated provider outage, auto-retry against a fallback, and log which path was used so you can measure the fallback rate. The Pro path build for Session 6.3.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.3 Project</span>
+    <span class="reading-time">25 min build</span>
+  </div>
+  <h1>The Fallback Rate Monitor</h1>
+  <p>The Pro path build for this session &mdash; on top of the adapter layer from the exercises, implement a fallback wrapper that catches a simulated provider outage, auto-retries against a fallback, and logs which path was used so you can measure how often the fallback actually fires.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>=== Single call with fallback ===
+{'text': '[primary] answer to: What is a circuit breaker?', 'cost': 0.03, 'latency_ms': 30, 'used_provider': 'primary'}
+
+=== Measuring the fallback rate over many calls ===
+Fallback triggered on 11/50 calls (22.0%) -- expect roughly 25% given
+primary's simulated outage rate</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Download <code>starter.py</code> below and run <code>python starter.py</code>.
+    No API key and no internet access needed &mdash; the primary provider's
+    outage is simulated in-process with <code>random</code>, so this is a fully
+    offline, deterministic-enough-to-grade exercise.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>
+    Two mocked providers are already defined for you: <code>primary</code>
+    (stronger, but simulates a 25% outage rate by raising
+    <code>ConnectionError</code>) and <code>secondary</code> (always available, a
+    little weaker/cheaper). Fill in three functions:
+  </p>
+  <ul>
+    <li><strong>call_model(prompt, provider)</strong> &mdash; the same adapter pattern from the lesson: look up the provider function and call it, raising a clear <code>ValueError</code> for an unrecognized name.</li>
+    <li><strong>call_model_with_fallback(prompt, primary, fallback)</strong> &mdash; call <code>primary</code>; if it raises <code>ConnectionError</code>, automatically retry against <code>fallback</code>. Tag the result with <code>used_provider</code>, and append a record to <code>CALL_LOG</code> either way.</li>
+    <li><strong>measure_fallback_rate(n_calls)</strong> &mdash; fire <code>n_calls</code> requests through <code>call_model_with_fallback</code>, then use <code>CALL_LOG</code> to report the count and percentage that actually needed the fallback.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">The habit this trains</span>
+    A fallback that exists in code but is never measured is a fallback nobody
+    actually trusts in production &mdash; when someone asks "how often does this
+    actually kick in?", the honest answer should come from a log, not a guess.
+    Tagging every response with <code>used_provider</code> and accumulating that
+    into <code>CALL_LOG</code> is the small habit that turns a reliability claim
+    ("we have automatic failover") into an observable fact you could put on a
+    dashboard.
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Change <code>_call_primary</code>'s simulated outage rate and re-run <code>measure_fallback_rate</code> &mdash; confirm the measured rate tracks the change.</li>
+    <li>Add a third provider and a tiered fallback that tries primary, then secondary, then a last-resort tertiary provider, logging the full chain attempted.</li>
+    <li>Add a basic circuit breaker: after 3 consecutive primary failures, skip calling primary for the next 5 calls and go straight to the fallback &mdash; then measure how much that changes total latency across a batch.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>A fallback wrapper is easy to write and easy to leave completely untested in the one situation that matters: a real outage. The value here isn't the <code>try</code>/<code>except</code> &mdash; it's the discipline of logging which path served every request, so "our fallback works" is something you can prove with a number instead of assert with confidence. That's the same discipline that lets a team say, during a real incident, "yes, the fallback is handling it, here's the rate" instead of hoping quietly that it is.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

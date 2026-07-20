@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.5 CI/CD &amp; Versioning for Prompts — GenAI for Everyone</title>
+<meta name="description" content="Treat prompts like code: version them, run an automated regression gate against a golden dataset on every change, and roll back fast when a regression slips through.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.5</span>
+    <span class="badge-difficulty">Advanced</span>
+    <span class="reading-time">20&ndash;25 min read</span>
+  </div>
+  <h1>CI/CD &amp; Versioning for Prompts</h1>
+  <p><em>Session 5.1 taught you to compare prompt v1 against prompt v2 on a golden dataset, once, by hand. This session makes that comparison automatic, continuous, and impossible to skip &mdash; the same discipline software teams already apply to code, applied to prompts instead.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#why-versioning">1. Why Prompts Need Version-Control Discipline</a>
+    <a href="#the-regression-gate">2. The CI Regression Gate</a>
+    <a href="#versioning-strategy">3. Versioning Strategy: Files, Tags, and the Golden Dataset</a>
+    <a href="#rollback">4. Rollback: The Fastest Safe Response</a>
+  </nav>
+
+  <div class="hook">
+    A teammate changes one system prompt from "Answer concisely" to "Answer in
+    detail, and sound friendly" the night before launch. It's four words. Nobody
+    asks for a review, because it "obviously" can't break anything &mdash; it's not
+    code, it's just wording. Three days later, support tickets pile up: the
+    friendlier, more detailed bot has started giving wrong answers about refund
+    eligibility, and nobody can say exactly when it started or what changed. This
+    is the entire problem this session solves. A prompt is a specification for
+    behavior, exactly like code is &mdash; and specifications that change without
+    review, without a test, and without a rollback plan will eventually cost you a
+    production incident. The fix isn't more caution from individual engineers.
+    It's a pipeline that makes the careful thing the <em>automatic</em> thing.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="why-versioning">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Why Prompts Need Version-Control Discipline</h2>
+
+    <p>
+      It's tempting to treat a prompt as "just text" &mdash; something you can tweak
+      in a notebook, paste into a config, or edit directly in a dashboard without
+      the ceremony you'd apply to a code change. That instinct is exactly backwards,
+      and it's worth being precise about why.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a prompt-as-specification?</span>
+      A prompt is a specification for behavior, the same way a function signature
+      and its docstring specify behavior. Change one word in a system prompt
+      &mdash; "concisely" to "in detail," "professional" to "friendly" &mdash; and
+      you can measurably shift accuracy, tone, cost (longer answers mean more
+      output tokens), and latency, all from a single edit that looks trivial on a
+      diff. "Small" in text size does not mean "small" in behavioral impact.
+    </div>
+
+    <p>
+      Without version-control discipline, three concrete problems show up &mdash;
+      not hypothetically, but in every team that skips this:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">what-goes-wrong.txt</span>
+      </div>
+      <pre><code>1. No history       "What changed between the version that worked and the
+                     one that doesn't?" -- unanswerable without a diff trail.
+
+2. No fast recovery "It was fine yesterday" doesn't help if there's no known
+                     -good version to revert to in thirty seconds.
+
+3. No shared truth   Every teammate might be running a slightly different,
+                     un-tracked copy of "the support bot prompt" -- five
+                     versions duplicated across five files, none labeled.</code></pre>
+    </div>
+
+    <p>
+      The fix is not a new invention &mdash; it's the exact discipline code already
+      has, pointed at prompts instead: <strong>prompts live in version control as
+      their own files, and changes to them go through the same review process as
+      any other change that can alter production behavior.</strong> That single
+      habit is what makes everything else in this session possible.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A prompt is a specification for behavior &mdash; a one-word edit can shift accuracy, tone, cost, and latency at once.</li>
+        <li>No version history, no fast rollback, and no shared source of truth are the three concrete costs of treating prompts as casual text.</li>
+        <li>The fix: prompts live in version control as their own files, reviewed like any other behavior-changing code.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="the-regression-gate">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. The CI Regression Gate</h2>
+
+    <p>
+      Session 5.1's <code>RegressionTestSuite</code> compared prompt v1 against
+      prompt v2 on a golden dataset &mdash; but it was something you'd run
+      manually, once, when you remembered to. A CI-integrated version of that same
+      idea makes it run automatically, on every single change, with no one having
+      to remember anything.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">regression-gate-flow.txt</span>
+      </div>
+      <pre><code>Pull request changes prompts/support_bot.txt
+    |
+    v
+CI pipeline runs: score new prompt against golden dataset
+    |
+    v
+Compare to the last known-good baseline score
+    |
+    v
+If score drops beyond an acceptable threshold -> CI fails, PR is blocked
+If score holds or improves                     -> CI passes, safe to merge</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Why "beat a baseline," not "clear a fixed bar"?</span>
+      A fixed absolute threshold alone can't catch a regression: a new prompt
+      version could clear a bar of, say, 80% while still being meaningfully worse
+      than the 92% version it's replacing. Comparing against the <em>last
+      known-good baseline</em> specifically catches relative degradation &mdash;
+      the actual thing the gate exists to prevent. This is also why versioning
+      the golden dataset matters just as much as versioning the prompt: a
+      baseline comparison is only meaningful if you know both the prompt version
+      <em>and</em> the dataset version that produced each score.
+    </div>
+
+    <p>
+      This is conceptually identical to a unit test suite blocking a broken code
+      change &mdash; the only difference is what "broken" means. A unit test
+      typically asserts exact output equality; an LLM regression gate can't do
+      that, because LLM outputs aren't deterministic the way most unit-tested code
+      is. So instead of asserting equality, the gate <strong>scores behavior</strong>
+      against a rubric or golden dataset (Session 5.1/5.2's territory) and
+      compares that score to a baseline. Same gate, same purpose &mdash; a
+      different, score-based notion of "broken."
+    </p>
+
+    <p>
+      Here's the shape of that check as runnable code &mdash; a simplified,
+      mocked version of exactly what you'll build in the exercise:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">toy_regression_gate.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="20"># A toy CI regression gate: score two prompt versions, compare to baseline.
+# (mock_score stands in for "run the prompt against a golden dataset".)
+mock_scores = {
+    "v1_baseline": 0.92,
+    "v2_friendlier_tone": 0.78,   # regression: friendlier wording hurt precision
+}
+
+def check_regression(new_version, baseline_version, threshold_drop=0.05):
+    new_score = mock_scores[new_version]
+    baseline_score = mock_scores[baseline_version]
+    drop = baseline_score - new_score
+    passed = drop <= threshold_drop
+    status = "PASS" if passed else "FAIL"
+    print(f"{status}: {new_version} scored {new_score:.0%} vs baseline "
+          f"{baseline_score:.0%} (drop of {drop:.0%}, threshold {threshold_drop:.0%})")
+    return passed
+
+result = check_regression("v2_friendlier_tone", baseline_version="v1_baseline")
+print("Safe to merge." if result else "CI should block this merge.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then try raising threshold_drop to 0.15 and see the verdict flip.</div>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> before asking an AI assistant to scaffold a CI regression script, an experienced practitioner decides the contract first &mdash; what the function returns (a dict with the new score, baseline score, pass/fail, and a human-readable message), what "threshold" means (a drop relative to baseline, not an absolute floor), and what happens on failure (block the merge, don't just log a warning). Handing that contract to an assistant produces a script you can actually wire into a pipeline; skipping it produces a script that "runs" but doesn't gate anything.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python function that scores a new prompt version and a baseline version, then returns pass/fail based on a threshold drop..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's example &mdash; does it compare against a baseline rather than a fixed number, and does it return a clear, CI-log-friendly message either way?
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python function check_regression(new_version, baseline_version, threshold_drop=0.05) that scores both prompt versions using a scoring function, computes the drop as (baseline_score - new_score), and returns a dict with keys "new_score", "baseline_score", "passed" (bool), and "message" (a one-line human-readable summary suitable for a CI log). "passed" should be False if drop exceeds threshold_drop. Do not use any external libraries or API calls -- assume the scoring function is provided separately.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A CI regression gate scores a new prompt version against a golden dataset and compares that score to the last known-good baseline &mdash; not a fixed absolute number.</li>
+        <li>It's the same mechanism as a unit test suite blocking a broken change, just scoring behavior instead of asserting exact output equality.</li>
+        <li>Baseline comparisons are only meaningful if the golden dataset is versioned alongside the prompt that was scored against it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="versioning-strategy">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Versioning Strategy: Files, Tags, and the Golden Dataset</h2>
+
+    <p>
+      A regression gate is only as good as the versioning discipline underneath
+      it. Three concrete practices make the gate meaningful instead of
+      theoretical:
+    </p>
+
+    <div class="what-is">
+      <span class="label">Store prompts as their own files</span>
+      Not inline strings scattered through code, and not duplicated across five
+      different services. A standalone file (<code>support_bot_v3.txt</code>, or a
+      version field in a prompt config) means changes show up in diffs as
+      readable text edits, get their own commit history, and go through the same
+      pull-request review as anything else that changes behavior.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Tag or name versions explicitly</span>
+      Overwriting a prompt in place, silently, destroys the exact information
+      the regression gate needs: "what was the last known-good version?" Explicit
+      names or tags (<code>support_bot_v3.txt</code>, not just
+      <code>support_bot.txt</code> edited in place) are what made Session 5.1's
+      "v1 vs. v2" comparison possible at all &mdash; and it's what lets rollback
+      (next section) be a one-line operation instead of an archaeology project.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Version the golden dataset too</span>
+      A golden dataset isn't static &mdash; Session 6.4 covered how new
+      production failures get folded back into it over time. That means a score
+      of "90%" is only meaningful in the context of <em>which dataset version</em>
+      produced it. Version the golden dataset alongside the prompts it evaluates,
+      so a baseline comparison six months from now is still comparing like to
+      like.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">repo-layout.txt</span>
+      </div>
+      <pre><code>prompts/
+  support_bot_v1.txt
+  support_bot_v2.txt
+  support_bot_v3.txt          &lt;- current production version, tagged
+
+eval/
+  golden_dataset_v1.jsonl
+  golden_dataset_v2.jsonl     &lt;- current version, includes new prod failures
+
+ci/
+  regression_gate.py          &lt;- runs on every PR touching prompts/ or eval/</code></pre>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Why this matters beyond CI</span>
+      <ul>
+        <li>Named, versioned files make "what changed between the version that worked and the one that doesn't" an actual diff you can read, not a guessing game.</li>
+        <li>They prevent the quiet failure mode where three teammates are each running a slightly different, untracked copy of "the same" prompt.</li>
+        <li>They're the prerequisite for everything in the next section &mdash; rollback only works if there's a clearly identified previous version to roll back to.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Store prompts as their own versioned files &mdash; not inline strings duplicated across services.</li>
+        <li>Name or tag versions explicitly; silent overwrites destroy the history the gate depends on.</li>
+        <li>Version the golden dataset alongside the prompts it evaluates, since the dataset itself evolves over time.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="rollback">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. Rollback: The Fastest Safe Response</h2>
+
+    <p>
+      A regression gate catches most problems before they ship. It doesn't catch
+      everything &mdash; a golden dataset can't cover every case a real user will
+      hit, so occasionally a regression slips through and shows up in production
+      instead of in a pull request. When that happens, the question is: what's
+      the first move?
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... rollback-first response?</span>
+      When a regression is caught late &mdash; in production, not CI &mdash; the
+      fastest safe response is reverting to the last known-good prompt version,
+      exactly like reverting a bad code deploy. This is deliberately the
+      <em>first</em> move, not root-cause investigation. Investigating first
+      leaves the broken behavior live for as long as the investigation takes;
+      rolling back first stops users from experiencing the regression
+      immediately, and buys you time to investigate the root cause safely,
+      without the clock running against real customers.
+    </div>
+
+    <p>
+      This is exactly why the versioning discipline from the last section
+      matters in a crisis, not just in day-to-day development: rollback is only
+      a thirty-second operation if "the last known-good version" is a clearly
+      tagged, unambiguous file &mdash; not a guess about which of five untracked
+      copies was the one running last Tuesday.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">incident-timeline.txt</span>
+      </div>
+      <pre><code>T+0    Support flags a pattern of wrong refund answers in production.
+T+2min Roll back support_bot.txt to the last known-good tagged version.
+       (Regression stops affecting new conversations immediately.)
+T+5min Confirm via monitoring (Session 6.4) that quality metrics recovered.
+T+later Investigate root cause with the golden dataset -- no user impact
+       while this happens, because the safe version is already live.</code></pre>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>When a regression is caught in production, roll back to the last known-good version first &mdash; before investigating root cause.</li>
+        <li>Rollback stops user impact immediately; investigation happens afterward, without the clock running.</li>
+        <li>Rollback is fast only if versions are named and tagged clearly &mdash; another payoff of the versioning discipline in Sub-topic 3.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Software teams have run CI gates on every pull request for years; the exact same discipline &mdash; applied to prompts instead of code &mdash; is what separates teams that catch regressions in review from teams that catch them in a support queue.</li>
+      <li>Most production prompt incidents don't come from a dramatic rewrite &mdash; they come from a "small," unreviewed wording tweak that nobody thought needed a test.</li>
+      <li>Teams that skip prompt versioning almost always discover the cost the hard way: an incident where nobody can say which version was live, or what the last known-good version even was.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Prompts are specifications for behavior:</strong> version them, review changes to them, and test them exactly like code &mdash; a "small" wording change can shift accuracy, tone, cost, and latency all at once.</li>
+      <li><strong>A regression gate compares a new prompt's eval score to a known-good baseline</strong> and blocks the change if it drops too far, mirroring how a unit test suite blocks a broken code change &mdash; scoring behavior instead of asserting exact output equality.</li>
+      <li><strong>Store prompts as their own named, versioned files,</strong> and version the golden dataset alongside them, since the dataset itself evolves as new production failures get folded in.</li>
+      <li><strong>When a regression slips through to production,</strong> the fastest safe first response is rolling back to the last known-good prompt version &mdash; investigate root cause after, not before.</li>
+      <li><strong>The habit that matters most:</strong> treat every prompt edit, no matter how small it looks, as a change that deserves the same review and testing rigor as a code change.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the exercise
+    has you build the regression gate function itself.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.5 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 6.5: CI/CD and versioning for prompts — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.5 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: CI/CD &amp; Versioning for Prompts</h1>
+  <p>
+    Deployment- and MLOps-track interviews increasingly probe whether a
+    candidate treats prompts as production artifacts, not throwaway text.
+    Interviewers say they're listening for the same rigor you'd apply to a code
+    change &mdash; versioning, review, automated gates, a rollback plan &mdash;
+    not just familiarity with the words "CI/CD." Each question below includes
+    what a strong answer sounds like, common red flags, and a natural
+    follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Why should a CI regression check for a prompt change compare the new score to a baseline, rather than just checking it against a fixed absolute threshold?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A fixed threshold alone can't detect a regression &mdash; a new version could clear the bar while still being meaningfully worse than what it's replacing. Comparing to the last known-good baseline specifically catches relative degradation, which is the actual thing the gate needs to prevent. A strong answer also mentions that both the prompt and the golden dataset should be versioned together so baseline comparisons stay meaningful over time.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Not seeing the difference between an absolute threshold and a baseline comparison, or no mention of versioning the golden dataset alongside the prompts.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"A prompt change passes the CI gate but a real production issue shows up two weeks later on a case the golden dataset didn't cover. Whose fault is that, and what should happen next?" (Not really anyone's "fault" &mdash; it's an expected gap; the fix is folding the new failure case into the golden dataset, per the Session 6.4 feedback loop.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> What's the difference between a regression check that runs in CI and one that runs at service startup? What does the startup check catch that CI alone would miss?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>CI-time checks only fire when a change goes through the normal pull-request pipeline. Startup-time checks run every time the service process boots, regardless of how it got into that state. A concrete example strengthens the answer: a manual deploy that skips CI, or an environment variable/prompt version set incorrectly at the infrastructure level &mdash; both invisible to CI but caught at boot.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating the two as redundant or equivalent, or being unable to give a concrete scenario where only the startup check would catch the problem.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What should the service do if the startup regression check fails &mdash; and why is refusing to start better than starting anyway with a warning?" (Refusing to start prevents a known-bad version from ever serving real traffic; a warning that's easy to miss doesn't.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> A regression is caught in production, not CI. What's the fastest safe first response, and why isn't investigating the root cause the first step?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Roll back to the last known-good prompt version immediately &mdash; exactly like reverting a bad code deploy. Investigating root cause first leaves the broken behavior live in production for however long the investigation takes; rolling back first stops user impact immediately and buys time to investigate safely, without the clock running against real customers.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumping straight to "let's figure out what went wrong" as the first move, or not recognizing that rollback and root-cause investigation can (and should) happen in that order, not simultaneously as the first action.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What has to be true about how prompts are versioned for that rollback to take thirty seconds instead of an hour?" (Versions need to be named/tagged explicitly, not silently overwritten in place.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Why should prompts live as their own versioned files instead of inline strings scattered across a codebase?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Standalone files make prompt changes visible as readable diffs, give them their own commit history, and let them go through the same pull-request review as any other behavior-changing code. It also prevents the quiet failure mode where different services &mdash; or different teammates &mdash; are each running a slightly different, untracked copy of "the same" prompt.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating prompt text as fundamentally different from code because "it's just words," or missing the duplication/drift risk of inline strings copied across files.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your team has the same prompt hardcoded in three microservices. How would you fix that, structurally?" (Centralize it into one versioned source &mdash; a shared file, package, or config service &mdash; that all three services read from.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Why does non-determinism in LLM outputs not prevent you from building an automated pass/fail check for a prompt change?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Non-determinism means you can't check for exact output equality the way a typical unit test does. But you can still score behavior against a rubric or golden dataset (Session 5.1/5.2) and compare that score to a baseline &mdash; which is exactly what a regression gate does. The gate doesn't need identical output every run; it needs the aggregate score to stay within an acceptable range of the baseline.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Concluding that automated testing "doesn't really work" for LLM behavior, or not distinguishing between exact-match testing and score-based regression testing.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you set the threshold_drop for a regression gate on a customer-facing bot versus an internal tool? Should they be the same?" (No &mdash; customer-facing surfaces usually warrant a tighter threshold given higher blast radius.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A CI regression gate compares a new prompt version's score against a stored <code>____</code>, not a fixed number alone.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="baseline" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> A <code>____</code>-time check catches a bad prompt version even when it bypassed CI entirely (e.g. a manual deploy).</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="startup,boot" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> When a regression hits production, <code>____</code> to the last known-good version comes before root-cause investigation.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="rollback,rolling back,reverting" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Prompts should live as their own <code>____</code> files, not inline strings duplicated across a codebase.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="versioned" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Non-determinism means you can't check for exact output <code>____</code>, but you can still score behavior against a baseline.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="equality,match" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about CI regression gates and rollback in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for trade-off reasoning and concrete examples, not textbook recall. Anchor every answer to a real scenario: a specific threshold, a specific rollback timeline, a specific file layout.</li>
+    <li>If you're not sure, reason out loud from the code-analogy: "this is like a unit test suite, except..." &mdash; that's exactly the framing interviewers are checking for.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-6-6-week-6-lab-mini-build-day/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.3 Choosing & Switching Models — GenAI for Everyone</title>
+<meta name="description" content="Choose a model deliberately — closed API vs. self-hosted open weights — and design an adapter layer plus fallback strategy so switching providers never means a rewrite.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.3</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">20&ndash;25 min read</span>
+  </div>
+  <h1>Choosing & Switching Models</h1>
+  <p><em>By now you've called two or three different models across this program. This session turns "which model?" into a deliberate, revisitable engineering decision &mdash; and shows you how to build systems that can switch providers without a rewrite.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#closed-vs-open">1. Closed API vs. Open, Self-Hosted &mdash; the Real Trade-off</a>
+    <a href="#adapter-pattern">2. Designing for Switchability: the Adapter Pattern</a>
+    <a href="#fallback-strategies">3. Fallback Strategies</a>
+    <a href="#worked-scenario">4. A Real-World Scenario, Worked Through</a>
+  </nav>
+
+  <div class="hook">
+    Somewhere around Week 1, you picked a model &mdash; probably whichever one your
+    exercises defaulted to &mdash; and you've been calling it ever since. That was
+    the right call for getting started. But "which model" is not a decision you make
+    once at project kickoff and forget: the landscape changes constantly (new models
+    ship, prices shift overnight, a provider has an outage at 2 a.m.), and your
+    requirements change too &mdash; the model that was "good enough" for a prototype
+    is rarely the right one once real traffic and real budgets show up. This session
+    is about making that decision deliberately, and building systems that can
+    revisit it &mdash; switch providers, add a fallback &mdash; without tearing your
+    codebase apart to do it.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="closed-vs-open">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Closed API vs. Open, Self-Hosted &mdash; the Real Trade-off</h2>
+
+    <p>
+      There are two fundamentally different ways to get a model into your
+      application: pay a provider per request through a closed API (Claude, GPT,
+      Gemini), or download open-weight model files (Llama, Mistral, and others) and
+      run them on infrastructure you control. Neither is universally "better" &mdash;
+      they optimize for different things.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a closed API model?</span>
+      A model you call over the network by sending an API key and a prompt. You
+      never see the weights, never host anything, and the provider handles every
+      operational concern &mdash; uptime, scaling, security patches, and rolling out
+      improved versions. You pay per token, and the cost scales directly with usage.
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... an open-weight, self-hosted model?</span>
+      A model whose weights are published and downloadable, which you then run
+      yourself &mdash; on your own GPUs, in your own cloud account, behind your own
+      serving stack. You own every operational concern the closed-API provider would
+      otherwise have handled: hosting, scaling, monitoring, and keeping up with new
+      releases yourself.
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Closed API (Claude, GPT, Gemini)</th>
+          <th>Open-weight, self-hosted (Llama, Mistral, etc.)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Setup cost</strong></td>
+          <td>Near zero &mdash; get an API key, start calling it</td>
+          <td>Real infrastructure work: hosting, a serving framework, scaling</td>
+        </tr>
+        <tr>
+          <td><strong>Per-request cost</strong></td>
+          <td>Pay per token, scales directly with usage</td>
+          <td>Fixed infrastructure cost regardless of usage (can undercut per-token pricing at very high, steady volume)</td>
+        </tr>
+        <tr>
+          <td><strong>Quality ceiling</strong></td>
+          <td>Usually the strongest available models</td>
+          <td>Competitive, but typically a step behind the best closed models</td>
+        </tr>
+        <tr>
+          <td><strong>Data control</strong></td>
+          <td>Data leaves your infrastructure (subject to the provider's policies)</td>
+          <td>Full control &mdash; critical for some regulated or sensitive workloads</td>
+        </tr>
+        <tr>
+          <td><strong>Operational burden</strong></td>
+          <td>Provider handles uptime, scaling, updates</td>
+          <td>You own uptime, scaling, and staying current with new releases</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="real-world">
+      <span class="label">The default, and when it flips</span>
+      <ul>
+        <li>Most teams start on a closed API because the setup cost is near zero &mdash; you can be calling a top-tier model within the hour.</li>
+        <li>Teams move to self-hosting only when a specific driver appears: a hard data-residency or compliance requirement, extremely high steady-state volume where the economics flip in self-hosting's favor, or a need for guarantees a third-party API simply can't offer.</li>
+        <li>"Self-hosting is always cheaper" is a myth &mdash; it's only cheaper past a volume threshold, and it always costs real operational effort to reach and maintain that threshold.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Closed APIs win on setup speed and (usually) quality ceiling; open self-hosted models win on data control and cost at very high steady volume.</li>
+        <li>Most projects default to a closed API and switch only when a specific driver &mdash; compliance, volume, or a guarantee &mdash; appears.</li>
+        <li>Self-hosting trades a per-token bill for an ongoing operational bill; it isn't automatically cheaper.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="adapter-pattern">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Designing for Switchability: the Adapter Pattern</h2>
+
+    <p>
+      Here's the mistake that makes switching painful later: baking a specific
+      provider's API shape directly into your business logic. If forty different
+      functions across your codebase each call
+      <code>anthropic.Anthropic().messages.create(...)</code> directly, then
+      switching providers &mdash; or adding a fallback &mdash; means finding and
+      editing all forty of them. The fix is a thin layer that sits between your
+      business logic and any specific provider.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... an adapter (layer)?</span>
+      A single function (or small module) that every other part of your codebase
+      calls instead of talking to a provider's SDK directly. It hides each
+      provider's specific request/response shape behind one consistent interface, so
+      the rest of your code never needs to know or care which provider is actually
+      being used underneath.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">adapter_pattern.py</span>
+      </div>
+      <pre><code>def call_model(prompt: str, provider: str = "anthropic") -> str:
+    if provider == "anthropic":
+        return _call_anthropic(prompt)
+    elif provider == "openai":
+        return _call_openai(prompt)
+    raise ValueError(f"Unknown provider: {provider}")
+
+&#35; Every call site in your business logic calls call_model(prompt) --
+&#35; never a provider's SDK directly. Adding a new provider, or falling
+&#35; back to one, means adding a function -- not rewriting every call site.</code></pre>
+    </div>
+
+    <p>
+      Notice what this buys you: your application code calls
+      <code>call_model(prompt)</code> and never touches a provider-specific
+      request or response shape. Adding a new provider means writing one new
+      <code>_call_&lt;provider&gt;</code> function and one new branch &mdash; it does
+      not mean hunting down every place your app talks to a model. This is the exact
+      pattern the Core-path exercise has you build and use to compare providers
+      side by side.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real design decision here isn't the <code>if/elif</code> &mdash; it's deciding the return shape <em>before</em> writing any provider-specific code. Every provider function needs to return something with the same keys (text, cost, latency) so the rest of your code, and any comparison logic, can treat every provider identically. Decide that contract first; the branching is the easy part.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to scaffold this adapter:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python adapter function that wraps two mocked model providers behind one call_model() interface..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against the pattern above &mdash; does every provider function return the same shape, and does an unknown provider name raise a clear error instead of failing silently?
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python module with a dictionary PROVIDERS mapping provider names to functions. Each provider function takes a prompt string and returns a dict with exactly the keys "text", "cost", and "latency_ms" -- so every provider's output has the same shape. Then write a single call_model(prompt, provider="...") function that looks up the provider in PROVIDERS and calls it, raising a clear ValueError (naming the unknown provider) if the name isn't found. Do not let any call site touch a provider's internals directly -- everything goes through call_model.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>An adapter layer is one consistent function your business logic calls, instead of a specific provider's SDK.</li>
+        <li>Adding or swapping a provider becomes "add one function," not "find and rewrite every call site."</li>
+        <li>The design decision that matters most is a consistent return shape across every provider function.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="fallback-strategies">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Fallback Strategies</h2>
+
+    <p>
+      A production system that depends on a single provider with no fallback has a
+      single point of failure it didn't need to have. Once you have an adapter
+      layer, adding a fallback on top of it is cheap &mdash; you're just calling a
+      second provider function when the first one raises. There are a few common
+      shapes this takes, and they optimize for different things.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">fallback-strategies.txt</span>
+      </div>
+      <pre><code>Hard fallback           primary fails/times out -> retry the SAME request against a
+                        secondary provider automatically. Optimizes for: preserving
+                        quality via a different provider.
+
+Quality-tiered fallback try the best model first; on failure, fall back to a
+                        faster/cheaper model rather than failing the request
+                        outright. Optimizes for: guaranteeing SOME response, even
+                        at a quality trade-off.
+
+Circuit breaker         after N consecutive failures from a provider, stop trying
+                        it for a cooldown period instead of adding latency to
+                        every request with a doomed retry. Optimizes for: not
+                        wasting time/cost hammering a provider that's clearly down.</code></pre>
+    </div>
+
+    <p>
+      A hard fallback and a quality-tiered fallback both retry against a second
+      provider &mdash; the difference is intent. A hard fallback assumes the
+      secondary provider is roughly interchangeable and just wants the same job
+      done elsewhere. A quality-tiered fallback deliberately accepts a weaker model
+      as the price of getting <em>any</em> answer back rather than an error. A
+      circuit breaker is a different kind of safeguard entirely: it protects you
+      from retrying a provider that's already known to be down, which just adds
+      latency and cost to every request during an outage instead of helping.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">hard_fallback.py</span>
+      </div>
+      <pre><code>def call_model_with_fallback(prompt, primary, fallback):
+    try:
+        result = call_model(prompt, provider=primary)
+        result["used_provider"] = primary
+        return result
+    except ConnectionError:
+        result = call_model(prompt, provider=fallback)
+        result["used_provider"] = f"{fallback} (fallback from {primary})"
+        return result
+
+&#35; Logging used_provider on every call is what lets you measure, later,
+&#35; how often the fallback actually fires -- exactly what the Pro path
+&#35; project for this session has you build and instrument.</code></pre>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>No fallback = an avoidable single point of failure in production.</li>
+        <li>Hard fallback preserves quality via a second provider; quality-tiered fallback trades quality for guaranteed response; a circuit breaker avoids retrying a provider that's already known to be down.</li>
+        <li>Logging which provider actually served each request is what turns "we have a fallback" into a measurable fallback rate.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="worked-scenario">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. A Real-World Scenario, Worked Through</h2>
+
+    <p>
+      <strong>The setup:</strong> Your team built a feature entirely around one
+      provider's specific API &mdash; calls to that SDK are scattered directly
+      through the business logic, because in the early prototype days that felt
+      like the fastest way to ship. Six months later, that provider raises prices
+      sharply. Switching to a cheaper or better-value provider should be simple.
+      Instead, it means touching forty call sites across the codebase, because
+      provider-specific code was never isolated anywhere.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">what-it-would-have-cost.txt</span>
+      </div>
+      <pre><code>Without an adapter layer (the actual situation):
+  - 40 call sites, each hand-written against the old provider's SDK
+  - Every one has to be found, read, and rewritten by hand
+  - High risk of missing one, or introducing a subtle bug mid-rewrite
+  - Real engineering cost: days to weeks, plus a nervous rollout
+
+With an adapter layer (decided on in Week 6, not month 7):
+  - 1 new _call_&lt;new_provider&gt; function
+  - 1 changed default in call_model()
+  - 40 call sites: untouched, because they only ever called call_model()
+  - Real engineering cost: under an hour, and a much calmer rollout</code></pre>
+    </div>
+
+    <p>
+      Notice what actually changed between the two columns: not the number of
+      places the model gets called from &mdash; that's still forty. What changed is
+      whether provider-specific knowledge was isolated in <em>one</em> place or
+      smeared across <em>forty</em>. That's the entire value of the adapter pattern,
+      made concrete: it converts an expensive, risky, codebase-wide rewrite into a
+      single, contained, low-risk change.
+    </p>
+
+    <p>
+      This is also exactly the situation a fallback strategy protects you from in
+      the moment, rather than six months later: if that same provider had a
+      20-minute outage instead of a price hike, a hard fallback wired through the
+      same adapter would have kept requests succeeding &mdash; served by a secondary
+      provider &mdash; without a single user-facing error, and without anyone
+      touching code during the incident.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The cost of skipping an adapter layer doesn't show up on day one &mdash; it shows up the day you need to switch or add a fallback, at the worst possible time.</li>
+        <li>An adapter layer converts "rewrite forty call sites" into "add one function."</li>
+        <li>The same layer that makes switching cheap also makes a fallback cheap &mdash; they're the same investment.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Model pricing and rankings shift often enough that "which model" is treated as a recurring engineering review, not a one-time kickoff decision, at teams that operate GenAI features at scale.</li>
+      <li>Regulated industries (healthcare, finance, government) frequently choose self-hosted open models specifically for data-residency reasons, even when a closed API scores higher on quality benchmarks.</li>
+      <li>Teams that shipped an adapter layer early describe provider price hikes and outages as "a one-function change" or "we didn't even notice" &mdash; teams that didn't describe them as fire drills.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Closed APIs win on setup speed;</strong> self-hosted open models win on data control and cost at very high, steady volume &mdash; most projects start closed and switch only when a specific driver appears.</li>
+      <li><strong>An adapter layer</strong> between your business logic and any specific provider's API is what makes switching &mdash; or adding a fallback &mdash; cheap later instead of a codebase-wide rewrite.</li>
+      <li><strong>A single-provider system without a fallback</strong> has an avoidable single point of failure.</li>
+      <li><strong>Hard fallback, quality-tiered fallback, and circuit breaker</strong> are different tools: preserving quality via a second provider, guaranteeing some response at a quality cost, and avoiding wasted retries against a provider that's known to be down, respectively.</li>
+      <li><strong>Model choice isn't a one-time decision</strong> &mdash; revisit it as the landscape (new models, prices, outages) and your own requirements both change.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the exercises
+    put the adapter pattern into practice by comparing providers side by side.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

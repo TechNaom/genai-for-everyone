@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.6 Week 6 Lab — Mini Build Day — GenAI for Everyone</title>
+<meta name="description" content="Capstone lab for Week 6: combine the service wrapper, cost awareness, provider fallback, monitoring, and a regression gate from Sessions 6.1–6.5 into one deployable project with a DEPLOY.md and a startup-time safety gate.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Week 6 &middot; Session 6.6</span>
+    <span class="badge-difficulty">Capstone</span>
+    <span class="reading-time">~30&ndash;35 min (mostly building)</span>
+  </div>
+  <h1>Week 6 Lab &mdash; Mini Build Day</h1>
+  <p><em>Five sessions of deployment, cost, fallback, monitoring, and CI/CD theory, one afternoon where they all have to work together in the same process. Today "it ran once in a notebook" meets "it has to stay up, log everything, and refuse to start if it's broken."</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#the-build">1. The build: one deployable project, five pieces</a>
+    <a href="#what-deployable-means">2. What "deployable" actually means (and doesn't)</a>
+    <a href="#the-gate">3. The startup-time regression gate</a>
+    <a href="#done-well">4. "Done well" vs. "done technically"</a>
+    <a href="#reflection">5. Reflection: what clicked, what's fuzzy</a>
+  </nav>
+
+  <div class="hook">
+    A hiring manager doesn't ask to see your Week 1 script, then your Week 3
+    script, then your Week 5 script, one at a time. They say: <em>"Show me
+    something you built end to end."</em> A folder of five separate exercises
+    is a portfolio of practice reps. One project &mdash; a service that starts
+    with a single command, reads its configuration from the environment, logs
+    every request, keeps answering when its primary model provider goes down,
+    and refuses to even start if it's carrying a known regression &mdash; is a
+    demonstration of judgment. That's the entire gap this session closes. You
+    already built every piece of this in Sessions 6.1 through 6.5. Today they
+    stop being five separate files and become one thing you could actually
+    hand to a teammate.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="the-build">
+    <span class="subtopic-label">Sub-topic 1 of 5</span>
+    <h2>1. The build: one deployable project, five pieces</h2>
+
+    <p>
+      Today's lab doesn't introduce a single new concept. It's an integration
+      exercise, on purpose &mdash; and integration is its own skill, distinct
+      from knowing each piece in isolation. Here's exactly what each earlier
+      session hands you, and where it lands in today's build:
+    </p>
+
+    <div class="code-breakdown">
+      <dl>
+        <dt>Session 6.1 &mdash; service wrapper</dt>
+        <dd>The Flask app itself: an <code>/ask</code> endpoint that handles
+        requests as they arrive instead of running once and exiting, with
+        configuration (like <code>PORT</code>) read from the environment
+        rather than hard-coded.</dd>
+
+        <dt>Session 6.2 &mdash; cost and latency awareness</dt>
+        <dd>The instinct to measure, not guess: today's <code>/ask</code>
+        endpoint times every call and returns <code>latency_ms</code> alongside
+        the answer, the same measurement discipline from 6.2 applied at the
+        request level instead of the notebook level.</dd>
+
+        <dt>Session 6.3 &mdash; provider adapter with fallback</dt>
+        <dd><code>call_model_with_fallback()</code> &mdash; try the primary
+        provider, and if it raises a connection error, transparently retry
+        against a secondary. The caller never has to know which one actually
+        answered.</dd>
+
+        <dt>Session 6.4 &mdash; logging, stats, and feedback</dt>
+        <dd><code>REQUEST_LOG</code> and the <code>/health</code> endpoint
+        &mdash; every request's input, output, and latency captured, plus a
+        cheap way for infrastructure to check the process is alive without
+        exercising the full model-calling path.</dd>
+
+        <dt>Session 6.5 &mdash; CI/CD and regression gates</dt>
+        <dd><code>run_regression_check()</code> and <code>GOLDEN_DATASET</code>
+        &mdash; the same pass-rate-against-a-threshold logic from 6.5, moved
+        from a CI script into the service's own startup sequence.</dd>
+      </dl>
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... an integration lab?</span>
+      An integration lab doesn't test whether you can implement any one
+      technique &mdash; you already proved that five separate times this week.
+      It tests whether you can make several independently-correct pieces
+      cooperate inside one running process without any of them silently
+      breaking another. That's a different skill, and it's the one real
+      production code actually demands every day.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Today combines 6.1 (service), 6.2 (measurement), 6.3 (fallback), 6.4 (logging/health), and 6.5 (regression gate) into one process.</li>
+        <li>No new technique &mdash; the skill being tested is integration, not any single piece in isolation.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="what-deployable-means">
+    <span class="subtopic-label">Sub-topic 2 of 5</span>
+    <h2>2. What "deployable" actually means (and doesn't)</h2>
+
+    <p>
+      Say the word "deployed" out loud and most beginners picture a specific
+      cloud provider's dashboard. That's not what the word actually means in
+      this lab, and it's not what a hiring manager means when they use it
+      either.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... "deployable," precisely?</span>
+      A service that starts with one command, reads its configuration from
+      the environment, logs every request, degrades gracefully if its primary
+      model provider fails, and has a passing regression check before you'd
+      call it done. Every clause in that sentence is a property of the
+      <em>code</em>, not a property of <em>where it happens to run</em>. A
+      service demoed live on your own laptop that has all five properties is
+      more "deployable," in every way that matters, than a service running on
+      an expensive cloud host that has none of them.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">what-hosted-demo-means.txt</span>
+      </div>
+      <pre><code>Both of these satisfy the lab equally:
+
+1. Flask service running on localhost, demoed live over a call,
+   called with curl or a simple browser form.
+
+2. Same service, deployed to a free tier of Render, Railway,
+   Fly.io, or PythonAnywhere -- for the "it has a real public URL"
+   experience. (Check current free-tier terms before relying on
+   one long-term -- they change.)
+
+The artifact that matters is identical either way: a project with
+a clean README that lets a stranger `pip install -r requirements.txt`,
+set a couple of environment variables, and have it working in
+under 5 minutes.</code></pre>
+    </div>
+
+    <p>
+      That last line &mdash; "working in under 5 minutes, for a stranger,
+      without asking you anything" &mdash; is the actual bar. It's a harder
+      bar than it sounds. It means your <code>README</code> or
+      <code>DEPLOY.md</code> has to spell out every environment variable, the
+      exact start command, and how to verify the thing is actually healthy
+      &mdash; not "should just work," which is the phrase that precedes almost
+      every failed onboarding attempt in real engineering teams.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Why this framing matters beyond the lab</span>
+      <ul>
+        <li>Interviewers and hiring managers consistently say the same thing: a project with a working service, a README a stranger can follow, visible logging, and a passing eval gate reads as production judgment &mdash; regardless of which specific host it happens to run on.</li>
+        <li>Teams that treat "deployed" as "runs on Cloud Provider X" tend to skip the properties that actually matter (config hygiene, logging, graceful degradation) and only discover the gap during their first real incident.</li>
+        <li>A <code>DEPLOY.md</code> a stranger can follow in 5 minutes is, by itself, a skill worth demonstrating &mdash; onboarding friction is one of the most common, least glamorous causes of slow teams.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>"Deployable" = five concrete properties of the code (one-command startup, env-based config, logging, graceful degradation, passing regression check) &mdash; not a specific cloud host.</li>
+        <li>Local-and-demoed-live and free-tier-hosted both satisfy the lab equally.</li>
+        <li>The real bar: a stranger, using only your <code>DEPLOY.md</code>, working in under 5 minutes, without asking you anything.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="the-gate">
+    <span class="subtopic-label">Sub-topic 3 of 5</span>
+    <h2>3. The startup-time regression gate</h2>
+
+    <p>
+      The Pro path's centerpiece is a small but genuinely important design
+      decision: where does the regression check from Session 6.5 actually
+      run? A CI pipeline is the obvious answer &mdash; and it's necessary, but
+      it isn't sufficient on its own.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a startup-time gate?</span>
+      A CI-time regression check only fires when a change goes through the
+      normal pull-request pipeline. It cannot catch a service that gets
+      started with bad configuration <em>outside</em> that pipeline &mdash; a
+      manual deploy that skips CI, a stale prompt version left in an
+      environment variable, a golden dataset pointed at the wrong file. A
+      startup-time gate re-runs the same check every single time the process
+      boots, regardless of how it got into that state, and refuses to start
+      at all if the check fails.
+    </div>
+
+    <p>
+      Here's the actual shape of it in this lab's starter code. Two functions
+      carry all the weight:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">starter.py (excerpt)</span>
+      </div>
+      <pre><code>def call_model_with_fallback(question: str) -> str:
+    """
+    TODO 1: call _call_primary; on ConnectionError, call _call_fallback instead.
+    """
+    raise NotImplementedError
+
+
+def run_regression_check() -> bool:
+    """
+    TODO 2 (Pro path): score GOLDEN_DATASET against call_model_with_fallback
+    (a simple substring/keyword check is fine), compute pass rate, print it,
+    and return True only if pass rate >= REGRESSION_THRESHOLD.
+    """
+    raise NotImplementedError
+
+
+if __name__ == "__main__":
+    # Pro path: startup-time regression gate -- refuse to start if it fails.
+    if not run_regression_check():
+        print("FATAL: regression check failed at startup. Refusing to start.", file=sys.stderr)
+        sys.exit(1)
+
+    port = int(os.environ.get("PORT", 5000))
+    app.run(port=port)</code></pre>
+    </div>
+
+    <p>
+      Notice the order of operations: the gate runs <strong>before</strong>
+      <code>app.run()</code> ever executes. If <code>run_regression_check()</code>
+      returns <code>False</code>, the process exits with a non-zero status and
+      never opens a port at all &mdash; there's no window where a broken
+      service is technically "up" and silently serving bad answers.
+    </p>
+
+    <p>
+      Try the core mechanic here &mdash; a small, self-contained version of the
+      same try/except fallback and pass-rate gate the real service uses,
+      shrunk down to something you can run and tweak in a few seconds:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">fallback_and_gate.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="26">import random
+
+random.seed(3)  # deterministic for this demo
+
+GOLDEN_DATASET = [
+    {"input": "vacation days after 2 years", "expected": "18"},
+    {"input": "parental leave weeks", "expected": "12"},
+]
+REGRESSION_THRESHOLD = 0.8
+
+
+def call_primary(question):
+    if random.random() < 0.2:            # ~20% of calls fail
+        raise ConnectionError("primary provider unavailable")
+    return f"[primary] answer to: {question}"
+
+
+def call_fallback(question):
+    return f"[fallback] answer to: {question}"
+
+
+def call_model_with_fallback(question):
+    try:
+        return call_primary(question)
+    except ConnectionError:
+        return call_fallback(question)   # degrade gracefully, don't crash
+
+
+def run_regression_check():
+    passed = 0
+    for example in GOLDEN_DATASET:
+        output = call_model_with_fallback(example["input"])
+        if example["input"] in output:    # stand-in for a real rubric check
+            passed += 1
+    pass_rate = passed / len(GOLDEN_DATASET)
+    print(f"Startup regression check: {pass_rate:.0%} (threshold {REGRESSION_THRESHOLD:.0%})")
+    return pass_rate >= REGRESSION_THRESHOLD
+
+
+if run_regression_check():
+    print("Gate passed -- service would start.")
+else:
+    print("Gate FAILED -- service refuses to start.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; notice the fallback keeps every question answered even when the primary "fails," and the gate only blocks startup on the pass rate, not on any individual provider hiccup.</div>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the interesting design decision here isn't the try/except &mdash; it's deciding what counts as "passing" for the regression check, and deciding to fail loudly (exit non-zero, no port opened) instead of failing quietly (start anyway with a logged warning). An experienced engineer treats "refuse to start" as the safer default for anything customer-facing, because a service that's silently degraded and technically "up" is far more dangerous than one that's visibly down &mdash; the second gets paged immediately, the first gets discovered by an angry user.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Flask service that calls a primary model function, falls back to a secondary on ConnectionError, and refuses to start if a startup regression check fails..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant
+          you use, and compare what it builds against this session's exercise
+          &mdash; does it actually exit non-zero and skip <code>app.run()</code>
+          on a failed gate, or does it just log a warning and start anyway? That
+          comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python Flask service with: (1) a call_model_with_fallback(question) function that calls a primary model function and, on ConnectionError specifically, retries against a secondary fallback function; (2) a POST /ask endpoint that validates a "question" field is present, calls call_model_with_fallback, times the call, logs the input/output/latency to an in-memory list, and returns the answer plus latency as JSON; (3) a GET /health endpoint that returns a status and the count of requests served so far, without calling the model at all; (4) a run_regression_check() function that runs a small golden dataset of question/expected pairs through call_model_with_fallback, computes a pass rate against a threshold, prints the result, and returns a boolean; (5) in the __main__ block, call run_regression_check() BEFORE app.run() and sys.exit(1) with a clear stderr message if it fails, so the service never actually starts serving traffic in a known-bad state. Read the port from the PORT environment variable, defaulting to 5000.</pre></div>
+      </details>
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why "refuse to start" beats "start with a warning"</summary>
+      <p>
+        It's tempting to make the startup gate softer &mdash; log a warning and
+        start anyway, so a flaky golden-dataset example doesn't take the whole
+        service down. Resist that temptation for anything customer-facing. A
+        service that's visibly down gets noticed immediately: a monitoring
+        alert fires, an on-call engineer gets paged, the fix happens in
+        minutes. A service that's quietly serving degraded answers behind a
+        green "status: ok" health check can run for days before anyone
+        realizes something's wrong &mdash; and by then it's a customer
+        complaint, not a deploy log. The failure mode you can see immediately
+        is almost always cheaper than the one that hides.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A CI-only regression check can't catch bad config introduced outside the normal PR pipeline &mdash; a manual deploy, a stale env var, a wrong golden dataset file.</li>
+        <li>A startup-time gate re-runs the same check on every boot and refuses to open a port if it fails &mdash; no window where a broken service looks "up."</li>
+        <li>Failing loudly (non-zero exit, no port) is the safer default; a service that's visibly down gets fixed faster than one that's silently degraded.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="done-well">
+    <span class="subtopic-label">Sub-topic 4 of 5</span>
+    <h2>4. "Done well" vs. "done technically"</h2>
+
+    <p>
+      It's entirely possible to fill in every <code># TODO</code>, watch the
+      service start, and still have missed the point of the lab. Here's the
+      difference, concretely.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Done technically (passes, but misses the point)</span>
+      You implement <code>call_model_with_fallback()</code> and
+      <code>run_regression_check()</code>, the service starts, <code>curl</code>
+      returns an answer, and you call it finished. But your
+      <code>README</code> just says "run the file" with no mention of
+      required environment variables, your <code>/health</code> endpoint was
+      never actually tested against a genuinely broken state, and you never
+      confirmed the gate really refuses to start when the pass rate is
+      pushed below threshold &mdash; you only ever saw it pass.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Done well (the actual goal)</span>
+      You deliberately break something &mdash; lower <code>REGRESSION_THRESHOLD</code>
+      past what your mocked providers can hit, or force <code>_call_primary</code>
+      to always raise &mdash; and confirm the service actually refuses to
+      start, with a clear message, and exits non-zero. You then hand your
+      <code>DEPLOY.md</code> to someone else (or re-read it cold yourself,
+      after a break) and check whether every step is genuinely followable
+      without any tribal knowledge you happen to be carrying in your head.
+    </div>
+
+    <p>
+      That distinction &mdash; verifying the failure path actually fails,
+      not just that the happy path happens to succeed &mdash; is exactly the
+      instinct Session 6.5's regression-gate thinking was building toward,
+      now applied to your own service instead of someone else's example.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>"It started and answered one question" and "I verified the failure path actually fails" are different bars.</li>
+        <li>Deliberately forcing a failing regression score is the only way to know your gate genuinely blocks startup, rather than just assuming it would.</li>
+        <li>A <code>DEPLOY.md</code> is only proven correct once someone who isn't you (or you, cold) has actually followed it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="reflection">
+    <span class="subtopic-label">Sub-topic 5 of 5</span>
+    <h2>5. Reflection: what clicked, what's fuzzy</h2>
+
+    <p>
+      Before moving into the Week 6 written exam, take five honest minutes
+      (genuinely worth doing, not a platitude) to answer these for yourself:
+    </p>
+    <ul>
+      <li>Could you explain, without looking back, the five properties that
+        make a service "deployable" &mdash; and name which Week 6 session
+        each one came from? If shaky, revisit Sub-topic 1.</li>
+      <li>Could you describe a concrete scenario where a startup-time gate
+        catches something a CI-only gate would miss? If not, Sub-topic 3 is
+        worth a second pass.</li>
+      <li>If your service's regression check failed for real production
+        reasons tomorrow, does your current design actually stop it from
+        serving traffic &mdash; or does it just log a warning and continue?
+        Answering that honestly is the whole point of Sub-topic 4.</li>
+    </ul>
+    <p>
+      This isn't busywork. The single best predictor of struggling with real
+      production systems later is assuming a safety mechanism works because
+      you wrote it, rather than because you watched it actually catch a
+      failure you deliberately caused.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Honest self-assessment now is cheaper than discovering a gap during an actual incident.</li>
+        <li>Shaky on "deployable" &rarr; Sub-topic 1 or 2. Shaky on the gate's purpose &rarr; Sub-topic 3.</li>
+        <li>A safety mechanism is only proven once you've watched it actually fire.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>"Show me something you built end to end" is one of the most common real interview prompts for GenAI-adjacent roles &mdash; and a single integrated project with visible logging, graceful degradation, and a passing gate answers it far better than five disconnected scripts ever could.</li>
+      <li>Startup-time regression gates are standard practice at companies that have been burned once by a manual deploy or a misconfigured environment variable silently shipping a known-bad prompt version to production.</li>
+      <li>A polished <code>DEPLOY.md</code> is frequently the difference between a project a teammate actually picks up and one that quietly gets abandoned the moment its original author is on vacation.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>"Deployable" is five properties of the code, not a specific host:</strong> one-command startup, environment-based configuration, request logging, graceful degradation via fallback, and a passing regression check.</li>
+      <li><strong>Local-and-demoed-live and free-tier-hosted satisfy the lab equally</strong> &mdash; the artifact that matters is a working service plus a <code>DEPLOY.md</code> a stranger can follow in under 5 minutes.</li>
+      <li><strong>A startup-time regression gate catches what a CI-only gate structurally can't:</strong> bad configuration introduced outside the normal PR pipeline &mdash; a manual deploy, a stale env var, a wrong dataset file.</li>
+      <li><strong>Failing loudly beats failing quietly.</strong> Refusing to start (non-zero exit, no open port) is safer for anything customer-facing than starting anyway with a logged warning.</li>
+      <li><strong>Everything from Week 6 is meant to compose.</strong> None of Sessions 6.1&ndash;6.5 were designed to be used in isolation on a real project &mdash; today is proof they actually do fit together.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; it's lighter than
+    usual, since today was mostly building.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

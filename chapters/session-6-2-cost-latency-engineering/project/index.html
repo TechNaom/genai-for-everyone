@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.2 Project: The Routing Strategy — GenAI for Everyone</title>
+<meta name="description" content="Design and measure a model-routing strategy against a realistic mixed workload — the Pro path build for Session 6.2, comparing blended cost to an all-expensive-model baseline.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.2 Project</span>
+    <span class="reading-time">25 min build</span>
+  </div>
+  <h1>The Routing Strategy</h1>
+  <p>The Pro path build for this session &mdash; a routing exercise built directly on Sub-topic 3 of the lesson: given a realistic mixed workload, design a routing strategy that sends simple requests to a cheap model and complex requests to an expensive model, then measure exactly how much it saves against the "everything goes to the expensive model" baseline.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>=== ROUTING STRATEGY: threshold = 500 input tokens ===
+Routing threshold: requests under 500 avg input tokens go to 'cheap'; everything else stays on 'expensive'.
+
+Request type                             Share   Avg in   Routed to
+simple_faq                                 55%      150       cheap
+order_status_lookup                        20%      300       cheap
+billing_dispute                            15%      900   expensive
+multistep_technical_troubleshooting        10%     2200   expensive
+
+                               Daily       Monthly (x30)
+Baseline (all expensive)         $900.00          $27,000.00
+Routed                       $610.68          $18,320.25
+
+Monthly savings from routing: $8,679.75 (32.1% reduction)</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Download <code>starter.py</code> below and run <code>python starter.py</code>.
+    No API key, no internet access, and no external libraries needed &mdash;
+    this is pure arithmetic on token counts and traffic shares.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>
+    <code>REQUEST_TYPES</code> models a support chatbot's traffic as four
+    representative request patterns, each with a share of total daily volume
+    and an average input/output token profile &mdash; the way real teams
+    actually model production traffic, not one row per request:
+  </p>
+
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">workload.txt</span>
+    </div>
+    <pre><code>simple_faq                             55% of traffic   150 in /  60 out
+order_status_lookup                    20% of traffic   300 in / 100 out
+billing_dispute                        15% of traffic   900 in / 250 out
+multistep_technical_troubleshooting    10% of traffic  2200 in / 500 out</code></pre>
+  </div>
+
+  <p>Fill in six pieces in <code>starter.py</code>:</p>
+  <ul>
+    <li><strong>requests_per_day_for_type</strong> &mdash; a type's share of the 50,000 total daily requests.</li>
+    <li><strong>daily_cost_for_type</strong> &mdash; dollar cost of serving all of a type's traffic on a given model tier.</li>
+    <li><strong>baseline_cost</strong> &mdash; the "everything to the expensive model" total.</li>
+    <li><strong>route_tier</strong> &mdash; the routing rule itself: below a token threshold, route to the cheap tier; otherwise, the expensive one.</li>
+    <li><strong>routed_cost</strong> &mdash; total daily cost when every type is routed by that rule.</li>
+    <li><strong>print_comparison</strong> &mdash; the report: which types routed where, baseline vs. routed cost, and the dollar/percent savings.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">The habit this trains</span>
+    A threshold of 500 input tokens is a design <em>decision</em>, not a fact
+    &mdash; it's the line you draw between "simple enough for the cheap
+    model" and "needs the expensive model." In the example run, 75% of
+    traffic routes to the cheap tier while the remaining 25% (the two harder
+    types) still accounts for a large share of the leftover cost, because
+    those requests also have the longest outputs. That's the real shape of a
+    production routing decision: most traffic is simple, but the hard slice
+    is disproportionately expensive &mdash; so routing the easy majority away
+    is what actually moves the bill, and being able to put a real dollar
+    figure on that decision (not just "routing sounds like a good idea") is
+    the skill this project trains.
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Add a fifth request type from a workload you've actually seen (at work, in a side project, or a realistic hypothetical) and see how it shifts the optimal threshold.</li>
+    <li>Try several thresholds (<code>solution.py</code> already compares 500 vs. 350 tokens) and look for the point of diminishing returns &mdash; where a lower threshold barely improves savings but risks sending genuinely complex requests to the cheap model.</li>
+    <li>Replace the single-number token threshold with a two-signal rule (token count <em>and</em> a boolean like <code>requires_account_lookup</code>) and think through why a length-only threshold is a reasonable first pass but an imperfect proxy for "actually simple."</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>Model routing is usually the single biggest cost lever in a production GenAI system precisely because real traffic is skewed: most requests are simple, and a cheap model handles them exactly as well as an expensive one would. The engineering skill isn't just knowing routing exists &mdash; it's being able to put a real number on it: given your actual traffic mix, exactly how much does a specific threshold save, and is the trade-off (a small share of borderline requests possibly under-served by the cheap model) worth the dollars it saves? That's the calculation this project makes you actually run instead of estimate.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

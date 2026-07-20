@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.6 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Scenario-based interview prep synthesizing all of Week 6: deployment, cost economics, provider fallback, monitoring, and CI/CD regression gates for GenAI services.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.6 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Synthesizing Week 6</h1>
+  <p>
+    These are scenario-based questions that pull together everything from Week 6
+    &mdash; deployment, cost economics, provider fallback, monitoring, and CI/CD
+    regression gates &mdash; the kind an interviewer uses to check whether you can
+    reason about a GenAI service <em>as a system that has to stay up</em>, not just
+    describe each technique in isolation. Each question below includes what a
+    strong answer sounds like, common red flags, and a natural follow-up. Click any
+    question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> A support chatbot handled 500 conversations in week one with no cost concerns. By month two, at 50,000 conversations, finance is asking about a $12,000 bill. What should have been modeled before launch, and why didn't the problem show up in week one?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Cost modeling at expected production scale &mdash; not just pilot scale &mdash; should have happened before launch. The per-request inefficiencies (an oversized prompt, no model routing, no caching) were always present; they were just invisible when volume was low enough that the total bill looked negligible. Concrete levers to have modeled and to fix now: model routing (route simple requests to a cheaper model), trimming redundant context, and prompt caching for repeated prefixes. The "surprise" wasn't sudden at all &mdash; it was a pre-existing per-request inefficiency multiplied by a 100x volume increase.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"There's no way to have predicted this" (misses that cost-at-scale modeling is standard practice), or naming only one lever ("just use a cheaper model everywhere") without broader analysis of where the spend is actually going.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Design a cost dashboard you'd want in place from day one to avoid being surprised like this again." (e.g. cost per conversation, token breakdown by request type, alerting on week-over-week spend growth rather than only a monthly total.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Your codebase calls a specific provider's SDK directly in 40 different files. What's the risk, and how would you fix it — and how does that fix make a fallback strategy cheap later?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The risk: switching providers, adding a fallback, or upgrading the SDK requires finding and changing all 40 call sites &mdash; slow, error-prone, and easy to miss one. The fix is an adapter layer: a single function or module wrapping provider calls, so business logic always calls one consistent interface regardless of which provider is actually behind it. Once that abstraction exists, adding a fallback is a small, localized change inside the adapter (try primary, catch its specific failure, retry secondary) instead of a 40-file migration &mdash; the adapter is exactly what makes Session 6.3's fallback design cheap to introduce.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Proposing "rewrite all 40 files" as the fix instead of introducing an abstraction, or not connecting the adapter layer to how it later enables a fallback strategy.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Design the function signature for that adapter layer." (Strong answers keep it provider-agnostic: a question/context in, a plain string or structured answer out, with provider-specific details fully hidden inside.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> You've built a fallback: if the primary provider times out, retry against a secondary model. In production, the primary is experiencing intermittent slowness (not full outages), and 15% of requests are triggering the fallback unnecessarily. What's wrong, and how would you fix it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The fallback's trigger condition &mdash; a per-request timeout &mdash; is too sensitive to transient slowness that isn't a genuine failure. A fix: use a more tolerant timeout, or better, a circuit-breaker pattern that only engages the fallback after a sustained run of failures rather than reacting to every single slow request independently. The trade-off to name explicitly: falling back too eagerly means serving users a weaker model far more often than necessary, which has its own quality cost.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"The fallback is working as designed, no issue here" (misses that 15% is clearly excessive for intermittent slowness), or no concrete fix proposed beyond "increase the timeout" with no mention of a circuit breaker as the more robust option.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would a circuit breaker specifically prevent this compared to a per-request timeout retry?" (It tracks failure rate over a window and trips once, instead of re-deciding independently on every single request.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> What's the difference between a regression check that runs in CI and one that runs at service startup? What does the startup check catch that CI alone would miss?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A CI-time check only fires when a change goes through the normal pull-request pipeline. A startup-time check re-runs the same check every time the service process boots, regardless of how it got into that state. Concrete example a CI check would miss entirely: a manual deploy that skips CI, or an environment variable/prompt version set incorrectly at the infrastructure level &mdash; both invisible to CI, both caught the moment the process tries to boot with a startup gate in place.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating the two as redundant or equivalent, or being unable to give a concrete scenario where only the startup check would actually catch the problem.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What should the service do if the startup regression check fails — and why is refusing to start better than starting anyway with a warning?" (Refusing to start fails loudly and gets noticed immediately; starting anyway risks silently serving degraded answers for days before anyone notices.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Your service passes its regression gate, but then a red-team-style failure appears in production that the golden dataset never covered. Is this a failure of the Week 6 deployment pipeline? Explain.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Not strictly a Week 6 pipeline failure. A regression gate can only catch what's represented in the golden dataset, and by definition a genuinely new failure mode wasn't in it yet &mdash; that's not a bug in the gate, it's an inherent coverage limit of any fixed test set. This is exactly why the Session 6.4 monitoring and feedback loop exists: to catch failures the golden dataset didn't anticipate, and feed them back in as new golden dataset examples, so the regression gate catches this specific failure mode the next time a related prompt change is proposed. The gate and the monitoring loop are two different layers of the same defense, not one system that should have caught everything alone.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>A flat "yes, the pipeline failed" or "no, nothing's wrong" without explaining the golden-dataset coverage limitation, or not mentioning the feedback loop as the mechanism that should close this gap going forward.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Who owns the process of turning a real production failure into a new golden dataset entry, and how often should that happen?" (Strong answers propose a recurring cadence, not an ad hoc "whenever someone remembers.")</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check spanning Sessions 6.1&ndash;6.5 &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Turning a script into a service
+      changes its entry point and configuration &mdash; the underlying GenAI logic
+      itself stays <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="the same,unchanged,same" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Output tokens are usually priced
+      higher than input tokens because generating each one requires a full
+      <code>____</code> pass.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="forward" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> An adapter layer decouples
+      business logic from any single provider's specific <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="sdk,SDK,api,API" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> "Drift" in one phrase: quality
+      degradation caused by the real world changing, with no <code>____</code>
+      change at all.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="code" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A CI regression gate should
+      compare a new prompt version's score to a <code>____</code>, not just a fixed
+      absolute threshold.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="baseline" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you can talk about Week 6 as a connected system, not five separate facts.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Listen for provider-independence in your own answers: describe "production-ready" as a set of properties, not a specific cloud host.</li>
+    <li>For cost questions, reach for concrete levers &mdash; routing, trimming, caching &mdash; rather than a vague "optimize it."</li>
+    <li>For gate-design questions, narrate the sequence out loud ("first I'd check whether this is a chunking-style coverage gap or a genuine regression") &mdash; interviewers are listening for the reasoning path, not just the eventual right answer.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="../../assessments/written-exams/week-06-exam.md">Week 6 Written Exam &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

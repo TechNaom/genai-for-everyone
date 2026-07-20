@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.1 From Notebook to Application — GenAI for Everyone</title>
+<meta name="description" content="Turn a script that calls an LLM into a real HTTP service: an entry point that handles requests, environment-based configuration, and secrets that never touch source control.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.1</span>
+    <span class="badge-difficulty">Advanced</span>
+    <span class="reading-time">20&ndash;25 min read</span>
+  </div>
+  <h1>From Notebook to Application</h1>
+  <p><em>Every project so far has run the same way: a script, executed top to bottom, printing a result. This session closes the gap between "it works on my machine" and "other people can actually call it."</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#gap">1. The Gap Between a Script and a Service</a>
+    <a href="#three-changes">2. The Three Changes That Make It Real</a>
+    <a href="#why-env-vars">3. Why Environment Variables, Specifically</a>
+    <a href="#worked-scenario">4. A Real-World Scenario, Worked Through</a>
+  </nav>
+
+  <div class="hook">
+    Nobody using your product is ever going to type <code>python my_script.py</code>.
+    They're going to hit a URL from a browser, tap a button in an app, or have
+    another service call yours behind the scenes &mdash; and something has to be
+    sitting there, running continuously, ready to handle that request the moment
+    it arrives. Every GenAI idea you've built in this program so far &mdash; the
+    policy Q&amp;A bot, the research agent, the multi-agent workflow &mdash; is a
+    script that runs once and exits. This session is about the specific,
+    surprisingly small set of changes that turn that script into something a
+    hiring manager, a teammate, or a real user can actually call. None of it is
+    new AI knowledge. It's the plain software engineering that most GenAI courses
+    skip &mdash; and exactly why it matters when you're the one who has to ship it.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="gap">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. The Gap Between a Script and a Service</h2>
+
+    <p>
+      Think about how every exercise in this program has actually run. You open a
+      terminal, type <code>python build_rag_pipeline.py</code>, the script loads,
+      calls an LLM once or a few times, prints a result, and the process ends.
+      That's a completely reasonable way to learn and prototype &mdash; it's how
+      most GenAI ideas are first proven out, even inside real companies. But it has
+      one property that makes it unusable as a product: <strong>it only runs when
+      a human is sitting there to start it, and it stops the moment it's
+      done.</strong>
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a service, as opposed to a script?</span>
+      A script runs once, top to bottom, and exits. A service is a process that
+      starts once and then <em>stays running</em>, listening for requests, and
+      handling each one as it arrives &mdash; the tenth request gets treated
+      exactly like the first, with no human re-launching anything in between. The
+      GenAI logic inside doesn't have to change at all; what changes is how and
+      when that logic gets invoked.
+    </div>
+
+    <p>
+      This is the exact gap between a working prototype and something you can put
+      behind a URL. A hiring manager, a teammate on another team, or a real user
+      doesn't have your terminal, your Python environment, or the patience to run
+      a script for you. They need to send a request and get a response &mdash;
+      which means something on a server has to already be running, waiting, the
+      whole time.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Where this shows up</span>
+      <ul>
+        <li>A demo that only works as "let me share my screen and run this in my terminal" reads as a prototype, not a product.</li>
+        <li>A teammate on the frontend can't import your Python function into their JavaScript app &mdash; but they <em>can</em> call a URL from anywhere.</li>
+        <li>The moment more than one person needs to use something at the same time, "run the script" stops being an option entirely.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A script runs once and exits; a service starts once and keeps running, handling requests as they arrive.</li>
+        <li>The GenAI logic itself doesn't need to change &mdash; only how it gets invoked, from "run at the bottom of a file" to "run inside a request handler."</li>
+        <li>"It works on my machine" and "other people can call it" are two different engineering problems, and closing that gap is this session's whole job.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="three-changes">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. The Three Changes That Make It Real</h2>
+
+    <p>
+      The gap between "script" and "service" comes down to exactly three changes.
+      None of them touch the AI logic itself &mdash; they wrap around it.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Change 1: an entry point that accepts requests, not just runs once</span>
+      Instead of <code>if __name__ == "__main__":</code> running your logic a
+      single time and exiting, you wrap that logic in a function that a web
+      framework calls <em>every time a request comes in</em>. The process itself
+      stays alive between calls &mdash; it's the framework's job to keep listening
+      and route each incoming request to the right function.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Change 2: configuration that isn't hard-coded</span>
+      Your model name, temperature, and any other tunable value should be read
+      from environment variables or a config file &mdash; not typed directly into
+      the code &mdash; so you can change behavior without redeploying anything.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Change 3: secrets that live outside the code</span>
+      Your API key was probably sitting in a variable, or loaded from a
+      <code>.env</code> file, while you were prototyping locally. In a real
+      service, that same pattern extends to how the <em>deployed</em> service gets
+      its secrets: read from the environment, never committed to source control,
+      never printed in logs.
+    </div>
+
+    <p>
+      Here's the shape of a minimal service that applies all three changes to a
+      GenAI function you've already written. Notice what's <em>not</em> here:
+      there's no rewrite of the model-calling logic at all.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">minimal_service.py</span>
+      </div>
+      <pre><code>from flask import Flask, request, jsonify
+import os
+
+app = Flask(__name__)
+MODEL_NAME = os.environ.get("MODEL_NAME", "claude-3-5-haiku-20241022")
+
+@app.route("/ask", methods=["POST"])
+def ask():
+    data = request.get_json()
+    question = data.get("question", "")
+    if not question:
+        return jsonify({"error": "question is required"}), 400
+    answer = call_llm(question)  # your existing logic, unchanged
+    return jsonify({"answer": answer})
+
+if __name__ == "__main__":
+    app.run(port=int(os.environ.get("PORT", 5000)))</code></pre>
+    </div>
+
+    <p>
+      <code>call_llm()</code> is exactly the function you already wrote in Weeks
+      1&ndash;5. Wrapping it in a route doesn't touch the GenAI logic at all
+      &mdash; it just gives the outside world a way to reach it. Notice too that
+      the <code>if not question:</code> check returns a proper error response
+      instead of letting a missing field crash the process with a raw stack
+      trace &mdash; a small habit that matters a lot more once real, imperfect
+      clients start calling your service (more on this in Sub-topic 4).
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Change 1 &mdash; an entry point that handles a request each time it's called, not run-once-and-exit.</li>
+        <li>Change 2 &mdash; configuration (model name, tunable values) read from the environment, not hard-coded.</li>
+        <li>Change 3 &mdash; secrets read from the environment, never committed, never logged.</li>
+        <li>The GenAI logic (<code>call_llm()</code>) stays exactly the same &mdash; only the invocation changes.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="why-env-vars">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Why Environment Variables, Specifically</h2>
+
+    <p>
+      It's worth being precise about <em>why</em> this one habit matters so much,
+      because it's easy to wave it off as a style preference. It isn't &mdash;
+      it's the single change that separates "a prototype that works for me" from
+      "an operable service."
+    </p>
+
+    <div class="what-is">
+      <span class="label">The problem with hard-coding</span>
+      A hard-coded API key or model name means every change requires editing
+      code and redeploying. Want to test a cheaper model in staging before
+      rolling it out to production? Edit the file, commit, redeploy. Need to
+      rotate a leaked key at 2am? Edit the file, commit, redeploy. Every one of
+      those should be a config change, not a code change.
+    </div>
+
+    <div class="what-is">
+      <span class="label">The fix: read it from the environment</span>
+      An environment variable means the exact same code can point at a different
+      model, a different rate limit, or a staging vs. production API key just by
+      changing how the process is <em>started</em> &mdash; no code change, no
+      redeploy. <code>os.environ.get("MODEL_NAME", "claude-3-5-haiku-20241022")</code>
+      reads the variable if it's set, and falls back to a sensible default if it
+      isn't &mdash; so local development, staging, and production can all run the
+      identical codebase with different behavior.
+    </div>
+
+    <p>
+      Try this yourself. The snippet below simulates three different
+      "environments" by setting <code>os.environ</code> directly (in a real
+      deployment, these would already be set by whoever starts the process) and
+      shows how the same lookup line resolves differently in each one:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">env_config.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="18">import os
+
+def load_config():
+    # Same lookup, every environment -- only the process's environment differs.
+    model = os.environ.get("MODEL_NAME", "claude-3-5-haiku-20241022")
+    port = int(os.environ.get("PORT", 5000))
+    return model, port
+
+# Simulate "local dev": nothing set, so defaults kick in.
+os.environ.clear()
+print("local (no env vars set):", load_config())
+
+# Simulate "staging": a cheaper/faster model, different port.
+os.environ["MODEL_NAME"] = "claude-3-5-haiku-20241022"
+os.environ["PORT"] = "5001"
+print("staging:                ", load_config())
+
+# Simulate "production": a stronger model, standard port.
+os.environ["MODEL_NAME"] = "claude-sonnet-4-5"
+os.environ["PORT"] = "8080"
+print("production:              ", load_config())
+
+print("\nSame code, same load_config() call -- three different behaviors,")
+print("driven entirely by how the process was started. Zero lines changed.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then edit the values and re-run to see how the exact same lookup line adapts.</div>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> before asking an AI assistant to scaffold a service like this, an experienced engineer decides the requirements first &mdash; which values must come from the environment (model name, API key, port), what the safe defaults should be for local development, and what should happen if a <em>required</em> value is missing entirely (Sub-topic 4 covers failing fast on that last one). Handing an assistant a vague "wrap this in Flask" invites it to hard-code the first model name it sees.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Wrap this call_llm() function in a Flask /ask endpoint that reads MODEL_NAME from an environment variable..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's example &mdash; does it read the model name from an environment variable with a sensible default, and does it validate the request body instead of trusting it blindly? That comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Wrap this existing call_llm(question) function in a minimal Flask service with a single POST /ask endpoint. Requirements: read the model name from an environment variable called MODEL_NAME with a sensible default if it's unset; read the port from a PORT environment variable defaulting to 5000; validate that the request JSON body includes a non-empty "question" field and return a 400 with a JSON error body if it's missing, instead of letting it crash; return the answer as JSON. Do not hard-code the model name or any secret anywhere in the code.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Hard-coded config means every change requires editing code and redeploying.</li>
+        <li>An environment variable lets the same code run correctly across local, staging, and production with different values, with zero code changes.</li>
+        <li><code>os.environ.get(name, default)</code> is the pattern: read if set, fall back to a safe default if not.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="worked-scenario">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. A Real-World Scenario, Worked Through</h2>
+
+    <p>
+      <strong>The setup:</strong> A hiring manager asks you to demo your Week 3
+      RAG project live, over a video call, from your own laptop. You could just
+      run <code>python build_rag_pipeline.py</code> in a terminal and read them
+      the printed output &mdash; that's a fine demo of the AI logic. But it reads
+      as a prototype. If instead you can say <em>"here's the same thing running
+      as a service &mdash; let me <code>curl</code> it from my phone,"</em> you've
+      just demonstrated a materially different, more hireable skill: the same
+      GenAI knowledge, packaged the way it's actually used at a company.
+    </p>
+
+    <p>
+      Getting there cleanly means thinking past the happy path. Two failure modes
+      are worth designing for up front, because they're exactly what separates a
+      demo that survives a live audience from one that doesn't:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">failure-modes.txt</span>
+      </div>
+      <pre><code>Bad request at runtime
+  Client sends {} instead of {"question": "..."}
+  Without a check      -> raw Python stack trace, 500 error, leaks internals
+  With a check          -> 400 Bad Request, {"error": "question is required"}
+
+Missing config at startup
+  ANTHROPIC_API_KEY isn't set on the deploy server
+  Without a startup check -> works fine... until request #1, then a confusing
+                              KeyError deep inside call_llm()
+  With a startup check     -> process refuses to start, prints exactly which
+                              env var is missing, exits immediately</code></pre>
+    </div>
+
+    <p>
+      That second failure mode is worth sitting with. A service that crashes
+      confusingly on its <em>first real request</em> is strictly worse than one
+      that refuses to start at all with a clear message &mdash; because the
+      confusing crash happens in front of a real user (or a hiring manager),
+      while the startup failure happens in front of whoever is deploying,
+      immediately and unambiguously. <strong>Fail fast and fail clearly</strong>
+      is the operating principle: check for required environment variables the
+      moment the process boots, and exit with a specific error message
+      (<code>"Missing required env var: ANTHROPIC_API_KEY"</code>) rather than
+      letting the gap surface as a mysterious error three layers deep, minutes or
+      days later.
+    </p>
+
+    <p>
+      There's a third piece that becomes relevant the moment this service is
+      actually deployed somewhere: infrastructure &mdash; a load balancer, an
+      uptime monitor, a container orchestrator &mdash; needs a fast, cheap way to
+      ask "is this process alive at all?" without triggering an expensive LLM
+      call every few seconds. That's what a dedicated <code>/health</code>
+      endpoint is for, separate from your functional <code>/ask</code> endpoint:
+      it answers "is the process up" without depending on whether a downstream
+      API happens to be having a bad day. This is exactly what the Pro path
+      project builds.
+    </p>
+
+    <div class="real-world">
+      <span class="label">In the Real World</span>
+      <ul>
+        <li>The AI logic doesn't change when you deploy it &mdash; only how it's <em>invoked</em> changes, from a script running once to a service handling requests.</li>
+        <li>Printing a "debug" API key to server logs is nearly as risky as committing it to source control &mdash; logs get stored, searched, and shared far more widely than people expect.</li>
+        <li>A confusing crash on request #1 is a worse failure mode than a clear, immediate error at startup &mdash; because of <em>who</em> sees each one and <em>when</em>.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Validate incoming requests and return proper 4xx errors &mdash; never let a malformed request crash the process with a stack trace.</li>
+        <li>Fail fast at startup on missing required configuration, rather than failing confusingly on the first real request.</li>
+        <li>A separate <code>/health</code> endpoint lets infrastructure check "is this alive" without exercising the full, expensive LLM logic.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>A script runs once and exits; a service stays running</strong> and handles each incoming request as it arrives &mdash; that's the entire gap between a prototype and something other people can call.</li>
+      <li><strong>Three changes close the gap</strong>, and none of them touch the AI logic: an entry point that handles requests instead of running once, configuration read from the environment instead of hard-coded, and secrets that live outside the code.</li>
+      <li><strong>Environment variables are what let identical code behave differently</strong> across local, staging, and production &mdash; different models, different secrets, zero code changes.</li>
+      <li><strong>Fail fast and clearly on missing configuration.</strong> A confusing crash on request #1 is worse than a clear startup error that surfaces the problem to whoever is deploying.</li>
+      <li><strong>Validate every request and return proper 4xx errors</strong> &mdash; never let a malformed request reach the client as a raw stack trace.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the exercises
+    put the entry-point/config/secrets pattern into a real, running Flask
+    service.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

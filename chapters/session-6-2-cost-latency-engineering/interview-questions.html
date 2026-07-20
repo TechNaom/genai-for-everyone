@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.2 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 6.2: Cost & Latency Engineering — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.2 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Cost &amp; Latency Engineering</h1>
+  <p>
+    Cost and latency questions show up constantly in mid-to-senior GenAI interviews
+    &mdash; interviewers use them to separate people who've shipped something real
+    from people who've only prototyped against a free tier. They're listening for
+    concrete levers (routing, caching, trimming) and a measurement habit, not vague
+    "just optimize it" answers. Each question below includes what a strong answer
+    sounds like, common red flags, and a natural follow-up. Click any question to
+    expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Why are output tokens usually priced higher than input tokens, and how does that change how you'd prompt a model when cost matters?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Generating output requires a full forward pass per token, which is more compute-intensive than processing tokens the model was already given as input. The practical implication: constraining requested output length (e.g., "answer in 2 sentences") is a direct, high-leverage cost lever. Bonus points for mentioning model routing (cheap model for simple requests) and prompt caching (for repeated large prefixes) as the other major levers.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Not knowing that input and output are priced differently at all, offering no concrete prompting implication, or suggesting "just use a cheaper model everywhere" with no nuance about quality trade-offs.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"When would prompt caching not actually help reduce cost?" (e.g. when requests don't actually share a stable prefix, or when the prefix is short enough that caching overhead isn't worth it.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Your prompt includes a 2,000-token system prompt on every single request, and you make 10,000 requests/day. What technique specifically targets this kind of repeated cost, and how does it help?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Prompt caching. If the same 2,000-token prefix appears in every request, caching lets you pay full price for it once and a much smaller fraction on every subsequent request that reuses that exact prefix &mdash; turning a cost that scales with request volume into something close to a one-time cost, with zero quality trade-off since the model still sees identical content.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Proposing to simply shorten or remove the system prompt (loses functionality) instead of recognizing caching solves this without any content change, or not recognizing this as a caching problem at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What has to stay true about your prompt structure for caching to actually kick in?" (e.g. the cached portion needs to be identical and typically needs to come first, before the variable per-request content.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> A support chatbot routes every request &mdash; from "yes/no" simple questions to complex multi-part troubleshooting &mdash; to your most expensive model. What's the first optimization you'd investigate, and why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Model routing &mdash; send simple requests (yes/no, short lookups) to a cheaper/smaller model and reserve the expensive model for genuinely complex requests. This is usually the single biggest lever because most real traffic in a support context skews toward simple questions, so most of the expensive-model spend is unnecessary and quality-neutral to redirect.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumping straight to "switch everything to a cheaper model" without the routing nuance, or not recognizing that traffic distribution (mostly simple requests) is what makes this lever so effective.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you decide the threshold for what counts as 'simple enough' to route to the cheap model?" (e.g. request length, presence of multiple sub-questions, a lightweight classifier, or a confidence/complexity heuristic.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> True or false, and why: batch APIs are a good fit for a live customer-facing chat interface.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>False. Batch APIs trade turnaround time (minutes to hours) for a steep discount, which is only acceptable for workloads that don't need an instant response &mdash; nightly processing, bulk classification, report generation. A live chat interface needs real-time responses, so the latency trade-off batching makes is unacceptable there regardless of the cost savings.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Saying "true" or hedging without committing to an answer, or not being able to name a workload where batching <em>would</em> actually make sense.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Name a real workload in a typical GenAI product where batching would be the right call." (e.g. nightly summarization of the day's support tickets, or re-scoring a golden dataset for a regression check.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> A support chatbot handled 500 conversations in week one with no cost concerns. By month two, at 50,000 conversations, finance is asking about a $12,000 bill. What should have been modeled before launch, and why didn't the problem show up in week one?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Cost modeling at expected production scale (not just pilot scale) should have happened before launch &mdash; the per-request inefficiencies (oversized prompts, no model routing, no caching) were always present, just invisible at low volume where the total dollar figure looked trivial. Concrete levers to have modeled: model routing, prompt/context trimming, and prompt caching for repeated prefixes. The "surprise" wasn't really sudden; it was a pre-existing inefficiency multiplied by volume.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"There's no way to have predicted this" (misses that cost modeling at scale is a standard practice), or naming only one lever without a broader cost analysis.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Design a cost dashboard you'd want in place from day one to avoid being surprised like this again." (e.g. per-request cost and token counts logged continuously, alerting on daily spend crossing a threshold, broken down by model tier.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Output tokens usually cost <code>____</code>x more per token than input tokens.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="3-5,3,4,5,3 to 5" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Prompt <code>____</code> lets you pay full price once for a repeated prefix, and a fraction of the price on every reuse.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="caching" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Batch APIs trade <code>____</code> for a steep discount, only right for deferrable workloads.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="latency,turnaround time,speed" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Model <code>____</code> sends simple requests to a cheap model and reserves the expensive model for genuinely hard ones.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="routing" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Before optimizing anything, measure tokens, cost, and <code>____</code> per request.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="latency" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about cost and latency levers in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for concrete levers and a measurement habit, not textbook recall. Anchor every answer to a specific number or scenario when you can.</li>
+    <li>If you don't know an exact figure (like the 3&ndash;5x output multiplier), say the direction confidently and note you'd verify the exact number against current provider pricing &mdash; that's what a working engineer actually does.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-6-3-choosing-switching-models/lesson.html">Next Session: Choosing &amp; Switching Models &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

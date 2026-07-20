@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.5 Project: Prompt Version History &amp; Rollback — GenAI for Everyone</title>
+<meta name="description" content="Build a small version-history system for prompts — score trends, rollback, and a changelog that answers 'when did this start getting worse?' — the Pro path build for Session 6.5.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.5 Project</span>
+    <span class="reading-time">25 min build</span>
+  </div>
+  <h1>Prompt Version History &amp; Rollback</h1>
+  <p>The Pro path build for this session &mdash; extend the single pass/fail regression gate from the exercise into a small version-history system that stores every version's score over time, supports rolling back to the previous version, and produces a changelog report that answers the question that actually matters during an incident: <em>when did this start getting worse, and what changed?</em></p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>=== PROMPT VERSION CHANGELOG ===
+v1_baseline             92%  2026-01-05  -- Initial support bot prompt
+v2_friendlier_tone      78%  2026-01-12  (-14%)  &lt;-- regression started here  -- Reworded for a friendlier tone
+v3_friendlier_fixed     90%  2026-01-14  (+12%)  -- Kept tone, restored refund-policy precision
+v4_shorter_answers      91%  2026-01-20  (+1%)  (current)  -- Trimmed answers to cut cost
+
+First regression detected at: v2_friendlier_tone (2026-01-12) -- Reworded for a friendlier tone
+
+Current version: v4_shorter_answers
+A production issue just came in -- rolling back...
+Now on: v3_friendlier_fixed (90%)</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Download <code>starter.py</code> below and run <code>python starter.py</code>.
+    No API key, no internet access, and no external libraries needed &mdash;
+    this is a pure data/scoring-logic exercise, fully offline, built on top
+    of the exercise's <code>check_regression</code> gate.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>
+    A <code>PromptVersionHistory</code> class that tracks a sequence of
+    <code>PromptVersion</code> entries (name, score, timestamp, and an
+    optional note describing what changed). Fill in the four methods marked
+    <code>raise NotImplementedError</code> in <code>starter.py</code>:
+  </p>
+  <ul>
+    <li><strong>add_version</strong> &mdash; append a new version and move the "current" pointer to it, the way a new deploy becomes the live version.</li>
+    <li><strong>rollback</strong> &mdash; move the "current" pointer back one version and return it, raising <code>IndexError</code> if there's nothing earlier to roll back to.</li>
+    <li><strong>first_regression</strong> &mdash; scan the history in order and return the first version whose score dropped by more than <code>regression_threshold</code> compared to the version right before it &mdash; the version that actually introduced the problem.</li>
+    <li><strong>changelog</strong> &mdash; render the full history as a readable report: each version's score, timestamp, and change vs. the previous version, with the regressing version and the current version both clearly flagged.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">The habit this trains</span>
+    Notice that <code>first_regression</code> isn't just "the lowest-scoring
+    version" &mdash; it's the first version where the score <em>dropped</em>
+    relative to what came right before it. A later version could have an
+    even lower score without being the regression's origin (or a version
+    could recover and dip again). Reporting <em>when</em> the drop first
+    happened, not just <em>which</em> version currently scores lowest, is
+    exactly the diagnostic question a real incident review asks: not "what's
+    bad right now" but "what changed, and when."
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Add a <code>rollback_to(name)</code> method that jumps directly to a named version instead of only stepping back one at a time &mdash; useful when you already know exactly which version was last good.</li>
+    <li>Extend <code>changelog()</code> to also print the total number of versions since the last regression, as a rough "time since last incident" counter.</li>
+    <li>Swap the mocked scores for a real call into your Session 6.5 exercise's <code>check_regression</code> gate, so every <code>add_version</code> call runs an actual regression check against the previous version automatically.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>A single pass/fail check answers "is this one change safe to merge?" &mdash; useful, but narrow. A version history answers the questions that actually come up during an incident review: which version introduced the problem, how long has it been live, what changed in the versions since, and what's the fastest safe version to roll back to right now. Real prompt-ops systems (and real code deploy systems) keep exactly this kind of history for exactly this reason &mdash; not for the day everything goes right, but for the ten minutes when something has gone wrong and someone is asking "when did this start?"</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

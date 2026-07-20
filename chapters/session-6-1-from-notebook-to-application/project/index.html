@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.1 Project: Health, Validation &amp; Fail-Fast Startup — GenAI for Everyone</title>
+<meta name="description" content="Harden the /ask service with a /health endpoint, proper 4xx validation, and a startup check that fails fast on missing config — the Pro path build for Session 6.1.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.1 Project</span>
+    <span class="reading-time">30 min build</span>
+  </div>
+  <h1>Health, Validation &amp; Fail-Fast Startup</h1>
+  <p>The Pro path build for this session &mdash; take the <code>/ask</code> service from the exercises and make it operable: a <code>/health</code> endpoint for uptime checks, input validation that always returns a proper 4xx instead of a stack trace, and a startup check that refuses to boot with a clear error if a required environment variable is missing.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>$ REQUIRE_API_KEY=true python3 starter.py
+FATAL: REQUIRE_API_KEY is set but ANTHROPIC_API_KEY is missing from the environment.
+$ echo $?
+1
+
+$ REQUIRE_API_KEY=true ANTHROPIC_API_KEY=sk-test-key python3 starter.py
+ * Running on http://127.0.0.1:5000
+
+$ curl http://localhost:5000/health
+{"model": "claude-3-5-haiku-20241022", "status": "ok"}
+
+$ curl -X POST http://localhost:5000/ask -H "Content-Type: application/json" -d '{}'
+{"error": "question is required"}
+   (HTTP 400 -- not a stack trace)
+
+$ curl -X POST http://localhost:5000/ask -H "Content-Type: application/json" -d '{"question": 42}'
+{"error": "question must be a non-empty string"}
+   (HTTP 400)</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Install Flask with <code>pip install flask</code>, then download
+    <code>starter.py</code> below and run <code>python3 starter.py</code>. No
+    real API key is required to exercise the validation, health check, or
+    startup logic &mdash; <code>call_llm()</code> stays mocked, exactly like
+    the Core path exercise. The startup check and the API key are only
+    connected through the <code>REQUIRE_API_KEY</code> flag, which you can
+    toggle on to see the fail-fast behavior without ever making a real call.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>
+    Starting from the working <code>/ask</code> endpoint from the exercises,
+    add three things. Each is marked with a <code>&#35; TODO</code> in
+    <code>starter.py</code>:
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> A <code>/health</code> endpoint</h3>
+    <p>Add a <code>GET /health</code> route that returns <code>{"status": "ok", "model": MODEL_NAME}</code> with a <code>200</code>. It should never call <code>call_llm()</code> or do anything expensive &mdash; the whole point is that infrastructure can hit it constantly and cheaply to check "is this process alive," completely independent of whether the LLM logic works.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Real input validation, not just "is it missing"</h3>
+    <p>Harden the <code>/ask</code> validation beyond "is <code>question</code> present." Reject a missing body, a missing <code>question</code> field, an empty string, and a <code>question</code> that isn't a string at all (e.g. a client accidentally sends <code>{"question": 42}</code>) &mdash; each case should return a <code>400</code> with a specific, useful <code>error</code> message, never an unhandled exception.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> A startup check that fails fast</h3>
+    <p>At module load time (before <code>app.run()</code>), check whether <code>REQUIRE_API_KEY</code> is set to <code>"true"</code> and, if so, whether <code>ANTHROPIC_API_KEY</code> is present in the environment. If it's required but missing, print a clear <code>FATAL:</code> message naming the exact missing variable to <code>stderr</code> and exit with a non-zero status &mdash; <em>before</em> the server ever starts listening. Compare that to letting the first real request hit a bare <code>KeyError</code> three layers deep.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Why fail fast matters here specifically</span>
+    <code>REQUIRE_API_KEY</code> defaults to <code>false</code>, so by default
+    the mocked <code>call_llm()</code> never actually needs a real key
+    &mdash; this project is designed to be fully testable with zero API cost.
+    Flip it on and you can watch the exact failure mode the lesson describes:
+    the process refuses to boot at all, with a message that tells whoever is
+    deploying <em>precisely</em> what's missing, instead of surfacing as a
+    confusing crash the moment a real user's request reaches the code path
+    that needed the key.
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Add a request size limit (e.g. reject a <code>question</code> longer than 4,000 characters with a <code>400</code>) &mdash; a real, cheap guard against a client accidentally sending an entire document.</li>
+    <li>Extend the startup check to validate more than one required variable at once, and report all of the missing ones in a single message instead of stopping at the first.</li>
+    <li>Swap the mocked <code>call_llm()</code> for a real Anthropic call (commented out in the starter) and confirm your validation still rejects bad input <em>before</em> a single token is spent calling the model.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>The gap between "a service that works when I test it" and "a service that's actually safe to deploy" is almost entirely about how it behaves at the edges: what happens when a client sends garbage, and what happens when the environment it's deployed into isn't fully configured yet. Neither of those is an AI problem &mdash; they're the plain operability habits that separate a take-home project from something a real team would trust in production. A hiring manager who sees a <code>/health</code> endpoint, clean 4xx errors, and a fail-fast startup check is seeing evidence you've shipped something real before, even if this is the first time.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

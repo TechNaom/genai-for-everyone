@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.3 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercises for Session 6.3: Choosing & Switching Models — build a provider adapter layer and compare cost, latency, and quality across two mocked model providers.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-3" data-chapter-id="session-6-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.3 Exercises</span>
+    <span class="reading-time">20 min, hands-on</span>
+  </div>
+  <h1>Exercises: The Model Adapter</h1>
+  <p>
+    Build a thin adapter layer over two mocked model providers, then run the same
+    task across both and compare cost, latency, and quality &mdash; the exact habit
+    that makes switching providers (or adding a fallback) cheap later instead of a
+    codebase-wide rewrite. This is a fully offline exercise: no API key, no
+    internet access, no external libraries needed.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python --version</code>).
+    Download <code>starter.py</code> below, then run it from a terminal with
+    <code>python starter.py</code>. It compares the two mocked providers directly,
+    then runs the fallback wrapper several times so you can watch it trigger.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. Two mocked providers are already defined:
+    <code>provider_a</code> (strong, but simulates a 30% outage rate) and
+    <code>provider_b</code> (faster, cheaper, and always available). Both return a
+    dictionary with the same shape &mdash; <code>text</code>, <code>cost</code>, and
+    <code>latency_ms</code> &mdash; which is exactly the consistent-return-shape
+    contract the lesson's adapter section calls out. Your job is to finish the
+    adapter functions.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Implement <code>call_model</code></h3>
+    <p>Look up the requested provider name in the <code>PROVIDERS</code> dictionary and call it. If the name isn't recognized, raise a <code>ValueError</code> that names the unknown provider &mdash; don't let it fail silently or return <code>None</code>.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Run the same task across both providers</h3>
+    <p>With <code>call_model</code> working, the starter's <code>__main__</code> block already calls both <code>provider_a</code> and <code>provider_b</code> with the same prompt. Run it a few times &mdash; because <code>provider_a</code> has a simulated 30% outage rate, some runs will show it failing while <code>provider_b</code> keeps succeeding.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Build the comparison table</h3>
+    <p>Fill in <code>build_comparison_table()</code>: call each provider once, and for each one, record its <code>cost</code>, <code>latency_ms</code>, and a one-line subjective <code>quality_note</code> (a short, honest opinion &mdash; e.g. "solid, slightly slower" or "fast, terser answers"). Print the three side by side so a real cost/latency/quality trade-off is visible at a glance, not just individual print statements.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Code</h3>
+    <p>A teammate wrote this version of the provider lookup. It never raises an error for an unknown provider name &mdash; it just silently returns <code>None</code>, which then crashes two functions later with a confusing <code>AttributeError</code> instead of a clear message. Find the bug and fix it so an unknown provider fails loudly and immediately.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_lookup.py</span>
+      </div>
+      <pre><code>def call_model(prompt, provider="provider_a"):
+    fn = PROVIDERS.get(provider)   &#35; .get() returns None for a missing key
+    return fn(prompt)              &#35; crashes later with AttributeError, not here</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>def _call_provider_a(prompt: str) -> Dict:
+    """Mock 'strong but occasionally unavailable' provider."""
+    if random.random() &lt; 0.3:  &#35; simulate a 30% outage rate for the exercise
+        raise ConnectionError("provider_a: simulated outage")
+    time.sleep(0.05)
+    return {"text": f"[provider_a] answer to: {prompt}", "cost": 0.02, "latency_ms": 50}
+
+def _call_provider_b(prompt: str) -> Dict:
+    """Mock 'faster, cheaper, slightly weaker' provider."""
+    time.sleep(0.02)
+    return {"text": f"[provider_b] answer to: {prompt}", "cost": 0.005, "latency_ms": 20}
+
+PROVIDERS = {"provider_a": _call_provider_a, "provider_b": _call_provider_b}
+
+def call_model(prompt: str, provider: str = "provider_a") -> Dict:
+    &#35; TODO: look up the provider and call it; raise ValueError if unknown
+    raise NotImplementedError</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. Run
+    <code>python starter.py</code> a handful of times: because
+    <code>provider_a</code>'s outage is randomized, you should see it succeed most
+    runs and fail roughly 3 times out of 10. Compare your comparison table's
+    numbers and your quality notes against <code>solution.py</code> (run it with
+    <code>python solution.py</code>) once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.1 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 6.1: deploying a GenAI service — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.1 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Deploying a GenAI Service</h1>
+  <p>
+    These mirror how deployment-readiness questions actually come up in
+    entry-level and early-career GenAI interviews: interviewers are checking
+    whether you understand the difference between "a project that runs" and
+    "a service someone else can safely depend on." Each question below
+    includes what a strong answer sounds like, common red flags, and a
+    natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Walk me through what actually changes when you take a working GenAI script and turn it into a deployable service. Does the AI logic itself change?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>No, the underlying GenAI logic (the function that calls the model) stays the same. What changes: an entry point that handles requests as they arrive instead of running once and exiting, configuration read from environment variables instead of hard-coded, and secrets read from the environment and never logged or committed. The practical payoff: the same code runs in local, staging, and production environments with different config and secrets, with zero code changes.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Thinking deployment requires rewriting the GenAI logic itself, no mention of environment-based configuration, or not distinguishing "runs once" from "handles ongoing requests."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What's the risk of hard-coding an API key directly in the script, beyond it being visible in source control?" (e.g. it also can't be rotated without a redeploy, and it tends to get accidentally logged or pasted into a bug report.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Your service works fine locally but crashes on the deployed server with <code>KeyError: 'ANTHROPIC_API_KEY'</code> on the very first request. What's the better failure mode, and why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Fail fast and clearly at startup: check for required environment variables the moment the process boots, and exit immediately with a message like <code>"Missing required env var: ANTHROPIC_API_KEY"</code> rather than letting the first real user request hit an unhandled <code>KeyError</code> deep in the code. A startup check surfaces the problem to whoever is deploying, immediately and unambiguously, instead of surfacing it as a confusing production error in front of a real user.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Suggesting a broad <code>try/except</code> around the whole request handler as the fix (that hides the problem, it doesn't surface it), or not distinguishing between "who sees the error" in each failure mode.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What would you do if there were five required environment variables instead of one?" (e.g. check all of them at startup and report every missing one in a single message, not just the first.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Why is a dedicated <code>/health</code> endpoint useful for a deployed service, separate from the actual functional endpoint(s)?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A <code>/health</code> endpoint gives infrastructure (load balancers, uptime monitors, container orchestrators) a fast, cheap way to check "is this process alive and able to respond" without exercising the full, often expensive LLM-calling logic. Functional endpoints can be down for reasons unrelated to basic process health (e.g. a downstream API outage), so keeping the two checks separate gives a clearer signal about what's actually broken.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Suggesting <code>/health</code> should call the real LLM to "really" verify things work &mdash; that makes the health check expensive, slow, and dependent on a third party, defeating its purpose.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Should <code>/health</code> ever return anything other than a flat 'ok'?" (e.g. it can be useful to include the loaded model name or version for debugging, as long as it stays cheap and fast.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> A client sends a POST to your <code>/ask</code> endpoint with no body at all. What should happen, and what's the risk if you get this wrong?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The endpoint should return a proper 4xx response (e.g. <code>400 Bad Request</code>) with a clear, specific error message like <code>{"error": "question is required"}</code> &mdash; not crash with an unhandled exception. The risk of getting it wrong is twofold: a raw stack trace is a poor experience for any real client, and it can leak internal implementation details (file paths, library versions, variable names) to whoever sent the request, which is a real information-disclosure concern for a public-facing service.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Assuming clients will always send well-formed requests, or treating validation as optional "nice to have" rather than a baseline requirement for anything reachable over a network.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What other malformed inputs would you want to guard against besides a missing field?" (e.g. wrong data type for a field, an empty string, or a field that's absurdly long.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> What's the risk of printing the value of an API key to the server logs for debugging, and what should you do instead?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Logs are often stored, searched, and shared far more widely than people expect &mdash; monitoring dashboards, third-party log aggregators, support tickets that include log snippets. A printed API key can leak to anyone with log access, which is effectively as bad as committing it to source control. Instead, log that a key was loaded and is non-empty (a boolean, or its last few characters at most), never the key's actual value.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating logs as inherently private or low-risk, or not having a concrete alternative for what to log instead.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you rotate a leaked key without downtime?" (e.g. support reading the key from the environment so a redeploy with a new value is all that's needed, no code change.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Deploying a GenAI script doesn't change the AI logic &mdash; only how it's <code>____</code> changes.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="invoked,called" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> The better failure mode for missing config is to fail <code>____</code> at startup, not on the first real request.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="fast" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A <code>/health</code> endpoint should stay <code>____</code> and fast, never exercising the full LLM-calling logic.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="cheap,lightweight" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> A malformed request should return a proper <code>____</code> response, never a raw stack trace.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="4xx,400" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Log that an API key was loaded, never the key's actual <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="value" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about shipping a GenAI service in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers in this area are checking for operability instincts, not AI trivia &mdash; anchor every answer to what happens when a real client sends something unexpected, or when the environment isn't fully configured.</li>
+    <li>It's fine to think out loud ("a missing field should never crash the process, so that needs a 400...") &mdash; the reasoning is what's being evaluated, not just the final word.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-6-2-cost-latency-engineering/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

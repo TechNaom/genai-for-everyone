@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.4 Monitoring & Observability — GenAI for Everyone</title>
+<meta name="description" content="Ship isn't done: structured logging, drift detection, and the feedback loop that make a live GenAI service's failures visible instead of invisible.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.4</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">20&ndash;25 min read</span>
+  </div>
+  <h1>Monitoring &amp; Observability</h1>
+  <p><em>Session 5.1&ndash;5.2 taught you to evaluate before shipping. This session is the same discipline, continued after shipping &mdash; because a system that scored 95% in testing can quietly get worse in production without a single alert firing, unless you built the visibility in.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#minimum-bar">1. The Minimum Bar: What to Log, and Why "Feels Worse" Isn't a Fact</a>
+    <a href="#drift">2. Drift: Why a System That Never Changed Can Still Get Worse</a>
+    <a href="#feedback-loop">3. The Feedback Loop: Your Cheapest Source of Real Labels</a>
+    <a href="#worked-scenario">4. A Real-World Scenario, Worked Through</a>
+  </nav>
+
+  <div class="hook">
+    Three weeks ago, a support chatbot started giving worse answers. Nobody built
+    it wrong &mdash; the code hasn't changed since launch. What changed is the
+    world around it: the company updated its return policy, and nobody rebuilt
+    the retrieval index behind the bot. Customers noticed before anyone on the
+    team did. That gap &mdash; between "something broke" and "someone on the team
+    knew" &mdash; is exactly what this session closes. Shipping a GenAI feature
+    isn't the finish line; it's the point where a different kind of work starts,
+    the kind where you can no longer see the system directly and have to build
+    instruments that tell you what's actually happening to real users, in real
+    time, without you standing there watching every request.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="minimum-bar">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. The Minimum Bar: What to Log, and Why "Feels Worse" Isn't a Fact</h2>
+
+    <p>
+      Imagine someone on your team says, in a stand-up, "I think the bot got worse
+      last week." Without logs, that sentence is a vibe &mdash; unfalsifiable,
+      un-investigatable, and impossible to act on with any confidence. With logs,
+      it's a question you can actually answer: pull last week's requests, compare
+      latency and error rate against the week before, look at what users actually
+      asked. The entire value of monitoring comes down to this one shift: turning
+      "I think" into "I checked."
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... structured logging?</span>
+      Structured logging means every request produces a log entry in a
+      <em>consistent, machine-readable shape</em> &mdash; the same fields, every
+      time &mdash; rather than free-form text messages that a human has to parse
+      by eye. A consistent shape is what lets you aggregate: compute an average,
+      count errors, filter by date, without writing a fragile text parser first.
+    </div>
+
+    <p>For every request to a GenAI feature, logging the following is the minimum bar:</p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">minimum-log-fields.txt</span>
+      </div>
+      <pre><code>input          the prompt/user input  (redact anything sensitive -- see 5.3-5.5;
+                                        a log file is still a data-leak surface)
+output         the model's response
+model/version  which model + version actually served this request
+tokens         input_tokens, output_tokens (feeds directly into cost tracking)
+latency        how long the request took, end to end
+cost           token counts x pricing, or your platform's reported cost
+signal         any downstream feedback you have: thumbs up/down, retry, abandon</code></pre>
+    </div>
+
+    <p>
+      Notice what this list is <em>not</em>: it isn't "log everything you can
+      think of." It's a deliberately minimal set, chosen because each field
+      answers a specific investigation question later &mdash; "was this slow?"
+      (latency), "was this expensive?" (tokens/cost), "did the model change
+      underneath us?" (model/version), "did the user actually like this?"
+      (signal). Skip a field and you lose the ability to answer that one
+      question, permanently, for every request logged before you added it back.
+    </p>
+
+    <p>
+      Here's the shape in code &mdash; a small, dependency-free version of the
+      pattern you'll build in the exercise: wrap the call that actually talks to
+      your service, append one consistent record per request, then compute
+      aggregates from the log instead of guessing.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">structured_log_demo.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="20">import random
+
+REQUEST_LOG = []
+
+def mock_service_call(user_input):
+    # Stand-in for a real model call: returns output + timing/token info.
+    output = f"Answer to: {user_input}"
+    return {
+        "output": output,
+        "latency_ms": random.randint(100, 900),
+        "input_tokens": len(user_input.split()) * 2,
+        "output_tokens": len(output.split()) * 2,
+    }
+
+def logged_call(user_input):
+    result = mock_service_call(user_input)
+    REQUEST_LOG.append({
+        "input": user_input,
+        "output": result["output"],
+        "latency_ms": result["latency_ms"],
+        "input_tokens": result["input_tokens"],
+        "output_tokens": result["output_tokens"],
+    })
+    return result
+
+for q in ["vacation days after 2 years", "parental leave policy"]:
+    logged_call(q)
+
+total = len(REQUEST_LOG)
+avg_latency = sum(r["latency_ms"] for r in REQUEST_LOG) / total
+print(f"Total requests: {total}")
+print(f"Average latency: {avg_latency:.0f}ms")
+print("Notice: 'average latency' is a FACT now, not a guess.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then add a third call to the loop and watch the average recompute from real logged data.</div>
+    </div>
+
+    <div class="real-world">
+      <span class="label">The Week 5 concern that follows you here</span>
+      <ul>
+        <li>Logs are a data-leak surface, not a neutral debugging tool &mdash; the same sensitive-data risks from Session 5.3 apply directly to whatever you write to disk.</li>
+        <li>Redact or hash sensitive fields before logging, restrict who can read log storage, and never log anything you wouldn't want exposed if that storage were compromised.</li>
+        <li>"We need visibility" is not a license to log raw, unredacted user input forever &mdash; the two goals (observability and data minimization) have to be designed together, not traded off by accident.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Minimum log fields per request: input (redacted), output, model/version, tokens, latency, cost, and any downstream signal.</li>
+        <li>Structured logging means a consistent, machine-readable shape every time &mdash; that consistency is what makes aggregation possible.</li>
+        <li>Without logs, "it got worse" is a feeling. With logs, it's a question you can actually answer.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="drift">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Drift: Why a System That Never Changed Can Still Get Worse</h2>
+
+    <p>
+      Here's the counterintuitive part: your code doesn't have to change for
+      quality to degrade in production. Nobody touched a line of the retrieval
+      logic, nobody redeployed the prompt, and the golden dataset from Session
+      5.1 still scores exactly the way it did on launch day &mdash; and the system
+      can still be quietly getting worse for real users, right now. This is
+      <strong>drift</strong>, and it's one of the least intuitive ideas in this
+      whole program precisely because "nothing changed" and "it broke" feel like
+      they should be contradictory.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... drift?</span>
+      Drift is quality degradation that happens because the <em>world around your
+      system changed</em>, not because your system did. A golden dataset score is
+      a snapshot &mdash; accurate the day you measured it, not a permanent
+      guarantee. Three flavors show up constantly in GenAI systems:
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">three-flavors-of-drift.txt</span>
+      </div>
+      <pre><code>Input drift        the questions users actually ask shift over time
+                    (new product launch, new policy, new slang) -- your
+                    golden dataset from launch day never anticipated them
+
+Silent upstream     your provider updates a model version behind an alias
+change              you're already using, and its behavior shifts slightly
+                    -- you didn't request the change, it just happened
+
+Retrieval drift     (RAG systems) the underlying documents get updated or
+                    removed, and retrieval that used to work now returns
+                    stale or missing chunks -- the index is the thing that
+                    went stale, not the retrieval code</code></pre>
+    </div>
+
+    <p>
+      Notice the common thread across all three: in every case, <strong>the code
+      you wrote still runs exactly as designed.</strong> There's no exception,
+      no stack trace, no failed test. The retrieval function still returns the
+      top-k most similar chunks &mdash; it's just that "most similar" among
+      stale documents isn't "most correct" anymore. This is exactly why drift is
+      dangerous: it produces no error signal at all. A crash gets noticed in
+      minutes. Drift gets noticed in weeks, because everything downstream
+      <em>looks</em> like it's working.
+    </p>
+
+    <div class="what-is">
+      <span class="label">The fix: treat your golden dataset as a recurring check, not a one-time gate</span>
+      Monitoring for drift means periodically re-running your golden dataset in
+      production &mdash; or a representative sample of real traffic scored the
+      same way &mdash; and watching the <em>trend line</em>, not just checking it
+      once at launch. A single re-score tells you today's number. A trend line
+      tells you whether today's number is the start of a slide.
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why can't you just re-run the golden dataset once a year and call it done?</summary>
+      <p>
+        Because the interval matters as much as the check itself. A RAG index
+        backing a fast-moving policy area (pricing, compliance, product specs)
+        can go stale in days, not months &mdash; re-checking annually would let
+        three or four full drift cycles pass unnoticed. The right cadence is a
+        judgment call based on how fast the underlying world actually changes for
+        <em>your</em> system: a slow-moving reference bot might genuinely be fine
+        checked monthly, while a bot fielding questions about an active incident
+        or a just-launched product needs something closer to daily, or
+        event-triggered (re-check whenever the source documents change at all).
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Drift = quality degradation caused by the world changing, not your code &mdash; input patterns shift, models update silently, retrieved documents go stale.</li>
+        <li>Drift produces no error signal by design &mdash; the code runs fine, which is exactly why it goes unnoticed for so long.</li>
+        <li>The fix is a recurring re-score of your golden dataset against a trend line, not a single check-once-and-forget at launch.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="feedback-loop">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. The Feedback Loop: Your Cheapest Source of Real Labels</h2>
+
+    <p>
+      Your golden dataset is built from examples <em>you</em> thought to include.
+      Real users will always ask things you didn't anticipate &mdash; that's not
+      a failure of imagination, it's just what happens once a system meets an
+      open-ended population of people with their own goals. The question is how
+      you find out which of those unanticipated questions are getting bad
+      answers, cheaply and continuously, instead of waiting for a support ticket
+      to escalate.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... the feedback loop?</span>
+      A simple thumbs-up/thumbs-down button on every response, logged alongside
+      the input/output pair, is disproportionately valuable relative to how
+      little it costs to build. It's the cheapest mechanism available for
+      generating a continuous stream of <em>real, labeled examples</em> of what's
+      actually failing for actual users &mdash; not synthetic test cases, not
+      your best guess at edge cases, but genuine production failures with a human
+      judgment already attached.
+    </div>
+
+    <div class="real-world">
+      <span class="label">Why this closes the loop back to Session 5.1</span>
+      <ul>
+        <li>A thumbs-down, logged with its input/output pair, is a candidate for next month's golden dataset &mdash; the exact failure mode a real user hit, not a hypothetical one.</li>
+        <li>This is how a golden dataset stays alive instead of going stale itself: it grows from production reality, not just from the team's imagination at launch time.</li>
+        <li>One button, wired to one log entry, turns every user interaction into a potential training signal for your evaluation suite &mdash; without asking users to do anything more than a single click.</li>
+      </ul>
+    </div>
+
+    <p>
+      It's worth being honest about the limits, too: thumbs-down tells you
+      <em>that</em> something failed, not always precisely <em>why</em> &mdash;
+      a user might downvote a technically correct answer because it was too
+      long, or upvote a subtly wrong one because it sounded confident. Feedback
+      is a signal to investigate, not a ground-truth label to trust blindly. The
+      Pro path in this session's exercise builds exactly this mechanism: a
+      feedback endpoint that logs a request ID alongside a thumbs up/down, ready
+      to feed a future eval dataset.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Thumbs-up/thumbs-down, logged with the input/output pair, is the cheapest continuous source of real, labeled production failures.</li>
+        <li>It closes the loop back to Session 5.1: today's feedback becomes next month's golden dataset additions.</li>
+        <li>Feedback is a signal to investigate, not a ground-truth label &mdash; treat a downvote as a lead, not a verdict.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="worked-scenario">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. A Real-World Scenario, Worked Through</h2>
+
+    <p>
+      <strong>The setup:</strong> a support chatbot answers employee questions
+      about company policy, grounded via RAG over a set of internal documents.
+      It launched with a 95% pass rate on its golden dataset and shipped without
+      incident. Two months later, the company updates its return policy. The
+      document that describes the new policy gets uploaded to the internal wiki
+      &mdash; but nobody rebuilds the vector index the chatbot retrieves from.
+      The chatbot keeps confidently answering with the <em>old</em> policy,
+      word for word, because that's still what's in its index.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">timeline-of-a-silent-failure.txt</span>
+      </div>
+      <pre><code>Week 0   Policy updated on the wiki. Vector index NOT rebuilt.
+         Code: unchanged. Retrieval logic: unchanged. Golden dataset score: still 95%
+         (it was never re-run against the new policy).
+
+Week 1   A handful of employees get the old answer. No alerts fire --
+         there's no exception, no failed request, nothing a normal
+         health check would catch.
+
+Week 3   Complaints reach a manager. Someone finally manually tests the
+         bot against the new policy and finds it confidently wrong.
+
+Week 3   Root cause found: retrieval drift. The index is the thing that
+(fix)    went stale, not the code. Rebuilding it fixes the bot immediately.</code></pre>
+    </div>
+
+    <p>
+      Two mechanisms from this session would have caught this on day one instead
+      of week three. First, a scheduled re-score of the golden dataset
+      (including a new case built from the updated policy) against the live
+      index &mdash; a re-run the same week the policy changed would have shown
+      the pass rate drop immediately, long before any employee got a wrong
+      answer. Second, a feedback button: the very first employee to get the
+      stale answer could have flagged it with one click, surfacing the problem
+      in hours instead of weeks &mdash; and it would have arrived as a concrete,
+      labeled example your eval suite could immediately absorb.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the instinct to reach for first, before any code, is deciding what the drift-check function actually needs to report: a pass rate against a threshold, compared to the <em>previous</em> run, not just a single absolute number. A drift check that only says "73% pass rate" tells you less than one that says "73%, down from 95% last week" &mdash; the trend is the signal, not the snapshot. Before asking an AI assistant to build this, decide that comparison is the point.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python function that re-scores a golden dataset against a live service and flags a drop in pass rate..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's example &mdash; does it compare against the previous run, or just against a fixed threshold? That comparison is the real test.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python function check_drift(score_fn, threshold=0.8) that re-scores a fixed GOLDEN_DATASET (a list of {"input", "expected"} dicts) using score_fn(input, expected) -> bool for each item. Compute the pass rate as passed/total. Print the pass rate alongside the threshold, and return True if pass_rate >= threshold else False, printing a clear warning if it's below threshold. Keep it dependency-free and easy to call on a schedule (e.g. from a cron job or a manual command) without needing a real API key to test.</pre></div>
+      </details>
+    </div>
+
+    <p>
+      <strong>The single highest-leverage decision in this scenario</strong>
+      wasn't a code fix &mdash; it was deciding, months earlier, that "re-run the
+      golden dataset periodically" and "add a one-click feedback button" were
+      both worth building <em>before</em> launch, not after the first
+      embarrassing complaint. Observability isn't something you bolt on once
+      something breaks; the projects that get it right treat it as part of
+      "done," the same way tests are part of "done" for regular software.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Retrieval drift produces zero errors &mdash; the code runs perfectly, the index is just stale relative to a world that moved on.</li>
+        <li>A scheduled golden-dataset re-score and a one-click feedback button both would have caught this on day one instead of week three.</li>
+        <li>A drift check should report a trend (vs. the last run), not just a snapshot against a fixed threshold.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>"The bot got worse last week" is a sentence engineering teams hear constantly &mdash; and without logs, it's genuinely un-investigatable, which is why structured logging is treated as table stakes, not a nice-to-have.</li>
+      <li>Real incident postmortems for GenAI systems disproportionately trace back to drift, not bugs: a model alias update, a stale document, a shift in what users actually ask &mdash; none of which show up as a failing test.</li>
+      <li>Teams that ship a feedback button on day one consistently build stronger eval datasets six months later than teams that only rely on the golden set they wrote at launch.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Log input, output, model/version, tokens, latency, and cost for every request</strong> &mdash; this is the minimum bar for turning "I think it got worse" into a fact you can investigate.</li>
+      <li><strong>Logs are a data-leak surface</strong> &mdash; redact sensitive fields before writing them, the same discipline as Session 5.3.</li>
+      <li><strong>Drift is quality degradation with no code change:</strong> input patterns shift, providers silently update models, retrieved documents go stale &mdash; and none of it triggers an error.</li>
+      <li><strong>Re-run your golden dataset periodically in production</strong> and watch the trend line, not just a single pass/fail snapshot at launch.</li>
+      <li><strong>A cheap thumbs-up/thumbs-down feedback loop</strong> is one of the highest-value additions to a shipped GenAI feature &mdash; it directly feeds your next eval dataset, closing the loop back to Week 5.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the exercise
+    puts structured logging into practice on a small, self-contained service.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

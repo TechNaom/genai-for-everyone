@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.6 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Guided build of the Week 6 capstone lab for Session 6.6 — combine a Flask service, request logging, a health endpoint, a provider fallback adapter, and a startup-time regression gate into one deployable project.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.6 Exercises</span>
+    <span class="reading-time">45&ndash;60 min, hands-on</span>
+  </div>
+  <h1>Exercises: Build the Week 6 Lab Service</h1>
+  <p>
+    Combine everything from Week 6 into <strong>one deployable Flask project</strong>:
+    a service wrapper, request logging, a <code>/health</code> endpoint, a
+    provider-fallback adapter, and a startup-time regression gate. The scaffold
+    marks every place that integrates this week's concepts with a
+    <code>&#35; TODO</code> &mdash; and everything mocks the underlying model calls,
+    so the whole lab runs and is gradeable with no API key or hosting account.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3.10+ installed (check with <code>python3 --version</code>),
+    plus <code>pip install flask</code>. Download <code>starter.py</code> below and
+    run it with <code>python3 starter.py</code>. Once the two Pro-path functions are
+    implemented, the service starts on port 5000 (override with
+    <code>PORT=8080</code>) &mdash; call it with <code>curl</code> or a browser form.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What each Week 6 session hands you here</h2>
+  <p>
+    This lab was chosen specifically because building it well touches almost
+    everything from the week. Each earlier session shows up as a concrete piece
+    of the same running process:
+  </p>
+
+  <div class="code-breakdown">
+    <dl>
+      <dt>Session 6.1 &mdash; service wrapper</dt>
+      <dd>The Flask app itself &mdash; already scaffolded for you &mdash; with an
+      <code>/ask</code> endpoint that handles ongoing requests and reads
+      <code>PORT</code> from the environment rather than hard-coding it.</dd>
+
+      <dt>Session 6.2 &mdash; cost and latency awareness</dt>
+      <dd>The <code>/ask</code> endpoint times every call and returns
+      <code>latency_ms</code> in its response, the same measurement discipline
+      from 6.2 applied per-request.</dd>
+
+      <dt>Session 6.3 &mdash; provider adapter with fallback</dt>
+      <dd><code>call_model_with_fallback()</code> &mdash; yours to implement in
+      Task 1: call the primary, retry the secondary only on a genuine connection
+      failure.</dd>
+
+      <dt>Session 6.4 &mdash; logging, stats, and feedback</dt>
+      <dd><code>REQUEST_LOG</code> and <code>/health</code> &mdash; every
+      request's input, output, and latency captured; a cheap liveness check that
+      doesn't exercise the full model-calling path.</dd>
+
+      <dt>Session 6.5 &mdash; CI/CD and regression gates</dt>
+      <dd><code>run_regression_check()</code> against <code>GOLDEN_DATASET</code>
+      &mdash; yours to implement in Task 2, then wired into the startup sequence
+      itself for the Pro path.</dd>
+    </dl>
+  </div>
+
+  <h2>The tasks</h2>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Core path &mdash; the fallback adapter</h3>
+    <p>Find <code>call_model_with_fallback()</code> and its <code>&#35; TODO</code>.
+    Call <code>_call_primary(question)</code>; if it raises <code>ConnectionError</code>,
+    call <code>_call_fallback(question)</code> instead and return that result. The
+    caller (and the eventual end user) should never know or care which provider
+    actually answered.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Core path &mdash; wire up <code>/ask</code></h3>
+    <p>Find the <code>&#35; TODO</code> inside the <code>ask()</code> view function.
+    Validate that the incoming JSON body has a non-empty <code>"question"</code>
+    field (return a 400 with a clear error if not), call
+    <code>call_model_with_fallback()</code>, time the call, append
+    <code>{"input", "output", "latency_ms"}</code> to <code>REQUEST_LOG</code>, and
+    return the answer and latency as JSON. <code>/health</code> is already
+    implemented for you &mdash; it reports the count of requests served, without
+    ever calling the model.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Core path &mdash; write <code>DEPLOY.md</code></h3>
+    <p>Write a <code>DEPLOY.md</code> that a stranger could follow in under 5
+    minutes: required environment variables (there are none for the mocked
+    version &mdash; say so explicitly), the exact start command, and how to verify
+    the service is healthy (the <code>/health</code> curl call). This file is
+    itself part of the deliverable, not an afterthought &mdash; see
+    <code>README.md</code> in this folder for what a strong one looks like.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Pro path &mdash; the regression check</h3>
+    <p>Find <code>run_regression_check()</code> and its <code>&#35; TODO</code>. Run
+    every example in <code>GOLDEN_DATASET</code> through
+    <code>call_model_with_fallback()</code>, score each one (a simple substring
+    check &mdash; does the expected fragment appear in the output &mdash; is fine
+    for this mocked lab), compute the pass rate, print it, and return
+    <code>True</code> only if the pass rate is at or above
+    <code>REGRESSION_THRESHOLD</code>.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">5</span> Pro path &mdash; make it a startup gate</h3>
+    <p>The <code>&#35;&#35;__main__&#35;&#35;</code> block already calls
+    <code>run_regression_check()</code> before <code>app.run()</code> and exits
+    non-zero if it fails &mdash; that part is done for you. Your job is to prove
+    it actually works: temporarily lower <code>REGRESSION_THRESHOLD</code> past
+    what your implementation can hit (or make <code>_call_primary</code> always
+    raise), run the service, and confirm it refuses to start with a clear
+    <code>FATAL</code> message instead of opening a port anyway. Then restore the
+    threshold and confirm it starts normally.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 6 &mdash; Debug the Code</h3>
+    <p>A teammate's fallback silently swallows every failure, not just connection
+    problems &mdash; which means a real bug inside <code>_call_primary</code> gets
+    hidden behind a fallback answer instead of surfacing. Find the bug and fix it
+    so only <code>ConnectionError</code> triggers the fallback; anything else
+    should still raise.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_fallback.py</span>
+      </div>
+      <pre><code>def call_model_with_fallback(question):
+    try:
+        return _call_primary(question)
+    except Exception:               &#35; too broad -- hides real bugs, not just outages
+        return _call_fallback(question)</code></pre>
+    </div>
+    <p><em>Hint:</em> the fallback should only trigger on the specific,
+    known-recoverable failure &mdash; a network-level <code>ConnectionError</code>
+    &mdash; not on every possible exception <code>_call_primary</code> could ever
+    raise.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. Run
+    <code>python3 starter.py</code> and confirm the service starts, that
+    <code>curl http://localhost:5000/health</code> reports <code>"status": "ok"</code>,
+    and that <code>curl -X POST http://localhost:5000/ask -d '{"question": "vacation days after 2 years"}' -H "Content-Type: application/json"</code>
+    returns an answer with a latency. Compare your implementation against
+    <code>solution.py</code> once you've given every task a genuine attempt &mdash;
+    proving the startup gate actually refuses to start on a failing score (Task 5)
+    is the part most worth doing yourself, not reading about.
+  </div>
+
+  <div class="what-is">
+    <span class="label">Pro path: extend it</span>
+    Once everything passes with the mocked providers, swap
+    <code>_call_primary</code> for a real API call (see Session 6.1's example) and
+    set <code>ANTHROPIC_API_KEY</code>. Then, optionally, deploy the service to a
+    free tier of Render, Railway, Fly.io, or PythonAnywhere for a real public URL
+    &mdash; and update your <code>DEPLOY.md</code> to reflect the real deployment
+    steps you actually followed, not the ones you assumed would work.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

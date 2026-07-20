@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.2 Cost & Latency Engineering — GenAI for Everyone</title>
+<meta name="description" content="Estimate and reduce the real dollar cost and response time of a GenAI feature: token economics, prompt caching, batching, model routing, and measuring before you optimize.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.2</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">20&ndash;25 min read</span>
+  </div>
+  <h1>Cost &amp; Latency Engineering</h1>
+  <p><em>Estimate and reduce the real dollar cost and response time of a GenAI feature &mdash; before a surprise bill or a slow demo forces the issue.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#token-economics">1. Token Economics, in Practice</a>
+    <a href="#caching-batching">2. Caching and Batching: Paying Once Instead of Every Time</a>
+    <a href="#model-routing">3. Model Routing: Not Every Request Needs Your Best Model</a>
+    <a href="#measure-first">4. The Core Discipline: Measure Before You Optimize</a>
+  </nav>
+
+  <div class="hook">
+    Week 1 you handled 500 conversations and everyone was thrilled. Month 2, you're
+    at 50,000 conversations, and finance is asking why the API bill is
+    <strong>$12,000</strong>. Nobody modeled cost at scale before shipping &mdash;
+    the inefficiency was there from day one, just invisible at low volume. Every LLM
+    API call has two costs that matter in production: <strong>money</strong> (you
+    pay per token, in and out) and <strong>time</strong> (the user waits for tokens
+    to stream back). Both are controllable. Both are usually ignored until they
+    become a problem. This session gives you the four levers that turn "we'll figure
+    it out later" into a number you can defend in a budget meeting <em>before</em>
+    launch, not after.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="token-economics">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Token Economics, in Practice</h2>
+
+    <p>
+      Providers price per million tokens, and input and output are priced
+      <em>separately</em>. Output is usually 3&ndash;5x more expensive than input,
+      because generating a token requires the model to run a full forward pass,
+      while reading a token you've already supplied is comparatively cheap compute.
+      That asymmetry isn't a footnote &mdash; it should change how you write prompts
+      the moment cost matters.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a token, cost-wise?</span>
+      A token is roughly a sub-word chunk of text (not a whole word, not a single
+      letter). Every provider charges per token, input and output tracked and priced
+      separately. The practical upshot: two prompts of the same "word count" can cost
+      very different amounts depending on how many tokens they actually tokenize
+      into, and a short input that produces a long, unconstrained answer can cost
+      far more than a long input that produces a tight, constrained one.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">three-cost-levers.txt</span>
+      </div>
+      <pre><code>1. INPUT SIZE     A RAG pipeline stuffing 10 retrieved chunks into every
+                   prompt when 3 would do pays for 7 chunks of pure waste,
+                   on every single request.
+
+2. OUTPUT LENGTH   "Summarize this" (unconstrained) vs. "Summarize this in
+                   one paragraph" can be a 5-10x difference in OUTPUT
+                   tokens -- and output tokens are the expensive ones.
+
+3. MODEL CHOICE    A smaller/cheaper model correctly handles a large share
+                   of real traffic (simple classification, short replies).
+                   Routing only the genuinely hard cases to an expensive
+                   model cuts cost with no quality loss on the easy ones.</code></pre>
+    </div>
+
+    <p>
+      Here's the arithmetic that makes those levers concrete. This is the same
+      calculation your Core path exercise builds into a reusable tool &mdash; try
+      changing the token counts or the price-per-million numbers and watch the
+      monthly figure move:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">quick_cost_math.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="18"># Illustrative pricing (USD per MILLION tokens) -- not live provider rates.
+PRICE = {"input_per_million": 3.00, "output_per_million": 15.00}
+
+requests_per_day = 50_000
+input_tokens = 1500
+output_tokens = 300
+
+input_cost = (input_tokens / 1_000_000) * PRICE["input_per_million"]
+output_cost = (output_tokens / 1_000_000) * PRICE["output_per_million"]
+cost_per_request = input_cost + output_cost
+
+daily_cost = cost_per_request * requests_per_day
+monthly_cost = daily_cost * 30
+
+print(f"Cost per request: ${cost_per_request:.5f}")
+print(f"Daily cost:        ${daily_cost:,.2f}")
+print(f"Monthly cost:       ${monthly_cost:,.2f}")
+print("Notice: output tokens are 1/5th the count but a much bigger share of cost.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then try dropping input_tokens from 1500 to 600 and see how much smaller the swing is than trimming output_tokens by the same ratio.</div>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Why this surprises people</span>
+      <ul>
+        <li>Teams instinctively optimize the prompt they can see (the input) and forget the answer they asked for (the output) is priced 3&ndash;5x higher per token.</li>
+        <li>"Just give me a summary" with no length constraint is one of the most common silent cost leaks in production GenAI features &mdash; the model isn't being wasteful, it's doing exactly what it was asked (nothing).</li>
+        <li>Model choice is the biggest single lever precisely because most real-world traffic skews toward requests a cheap model handles perfectly well.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Input and output tokens are priced separately; output usually costs 3&ndash;5x more per token because generating is more compute-intensive than reading.</li>
+        <li>Three levers: trim input size (stop over-stuffing context), constrain output length explicitly, and route by model choice.</li>
+        <li>An unconstrained "summarize this" is a cost bug hiding as a phrasing habit.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="caching-batching">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Caching and Batching: Paying Once Instead of Every Time</h2>
+
+    <p>
+      Two more levers don't touch what you're asking the model &mdash; they change
+      <em>when</em> and <em>how often</em> you pay full price for the same work.
+      They're easy to miss because neither requires rewriting a single prompt.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... prompt caching?</span>
+      If many requests share the same prefix &mdash; a long system prompt, a large
+      retrieved document, a big set of tool definitions &mdash; prompt caching lets
+      you pay full price for that prefix <em>once</em>, then a fraction of the price
+      on every subsequent call that reuses it. This is a pure latency <em>and</em>
+      cost win with no quality trade-off: the model still sees the exact same
+      content, it's just billed and processed more cheaply the second time onward.
+      Always worth checking whether your provider supports it and whether your
+      prompt structure (stable prefix first, variable content last) actually takes
+      advantage of it.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">caching-payoff.txt</span>
+      </div>
+      <pre><code>2,000-token system prompt, reused on every one of 10,000 requests/day:
+
+  WITHOUT caching:  10,000 x 2,000 tokens billed at full input price
+  WITH caching:      2,000 tokens billed once (full price) + 10,000 x 2,000
+                      tokens billed at the much cheaper cached-input rate
+
+The prefix didn't get smaller. What changed is how many times you pay
+FULL price for content that never changes between requests.</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... batching?</span>
+      If a workload doesn't need an instant response &mdash; nightly report
+      generation, bulk classification of a backlog, re-scoring a golden dataset
+      &mdash; batch APIs process requests asynchronously at a steep discount (often
+      around 50%) in exchange for turnaround measured in minutes-to-hours instead of
+      seconds. It's a direct trade: you give up latency to buy a lower price.
+    </div>
+
+    <div class="real-world">
+      <span class="label">The one rule that matters here</span>
+      <ul>
+        <li><strong>Never</strong> use batch processing for a live chat interface &mdash; a user waiting minutes for "hello" is a broken product, not a cost optimization.</li>
+        <li><strong>Always</strong> consider it for anything that already runs on a schedule or doesn't have a human staring at a loading spinner: nightly summaries, bulk tagging, backlog re-processing.</li>
+        <li>Caching and batching solve different problems &mdash; caching helps a <em>repeated prefix</em>, batching helps a <em>deferrable workload</em>. Most production systems eventually use both, for different parts of the traffic.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Prompt caching: pay full price once for a repeated prefix, a fraction of the price on every reuse &mdash; a pure win, no quality trade-off.</li>
+        <li>Batching: trade turnaround time (minutes-to-hours) for a steep discount &mdash; only for workloads that don't need an instant response.</li>
+        <li>Rule of thumb: caching for repeated prefixes, batching for deferrable workloads, never batching for live chat.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="model-routing">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Model Routing: Not Every Request Needs Your Best Model</h2>
+
+    <p>
+      Picture a support chatbot that routes every request &mdash; from a one-word
+      "yes/no" question to a genuinely complex multi-part troubleshooting thread
+      &mdash; to your most expensive, highest-quality model. It works. It's also
+      almost always the single biggest unexamined cost lever in a production GenAI
+      system, because most real traffic in a support context skews toward requests
+      a cheaper model handles just as well.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... model routing?</span>
+      Model routing means classifying each request by difficulty (length, apparent
+      complexity, task type) and sending it to the cheapest model tier that can
+      handle it correctly &mdash; reserving your most expensive model for the
+      genuinely hard cases. It's not "use a worse model everywhere to save money";
+      it's "use the right-sized model for each request," which is a quality-neutral
+      way to cut spend on the large share of traffic that never needed the expensive
+      model in the first place.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">routing-example.txt</span>
+      </div>
+      <pre><code>"What are your support hours?"              -> short, simple lookup -> CHEAP model
+"Yes, please cancel my subscription."       -> short, simple intent -> CHEAP model
+"My API integration started failing after   -> long, multi-part,    -> EXPENSIVE model
+ your last deploy, here are three stack        needs real reasoning
+ traces and my config, can you help debug
+ which of these is the root cause?"
+
+A simple length/complexity threshold routes the first two away from your
+most expensive model entirely -- and in a typical support workload, that's
+the majority of traffic.</code></pre>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Why this is usually the biggest lever</span>
+      <ul>
+        <li>Model choice affects <em>both</em> the input price-per-token and the output price-per-token simultaneously &mdash; unlike trimming input, which only touches one side of the bill.</li>
+        <li>Real traffic distributions are usually skewed: most requests are simple, a minority are genuinely hard. Routing exploits that skew directly.</li>
+        <li>This is exactly the strategy the Pro path project in this session asks you to design and measure &mdash; a routing threshold, applied to a realistic mixed workload, compared against an "everything to the expensive model" baseline.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Model routing sends simple requests to a cheap model and reserves the expensive model for genuinely hard ones &mdash; it's quality-neutral, not quality-cutting.</li>
+        <li>It's usually the single biggest cost lever because real traffic skews toward the simple end.</li>
+        <li>The lever works because it affects both input and output pricing at once, for the requests it redirects.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="measure-first">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. The Core Discipline: Measure Before You Optimize</h2>
+
+    <p>
+      Every lever above is genuinely useful &mdash; and every one of them can backfire
+      if you apply it without a baseline. The single biggest mistake in cost/latency
+      work isn't picking the wrong lever; it's pulling <em>any</em> lever before you
+      know what your system actually costs and where its time actually goes.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... measuring before you optimize?</span>
+      Before changing anything, know three numbers per request: <strong>tokens in
+      and out</strong>, <strong>dollar cost</strong>, and <strong>latency</strong>
+      &mdash; ideally broken down by <em>where the time goes</em> (network, model
+      inference, your own processing). Without that baseline, "switch to a cheaper
+      model" or "aggressively truncate the prompt" can quietly break quality or
+      correctness in ways nobody notices until a user complains &mdash; and you have
+      no way to tell afterward whether your change actually helped, hurt, or did
+      nothing at all.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">measure-first.txt</span>
+      </div>
+      <pre><code>WITHOUT a baseline:
+  "This feels slow, let's switch models."       -> guessing
+  "Let's truncate prompts to save money."        -> guessing
+  Six weeks later: is it actually cheaper? Faster? Nobody can say for sure.
+
+WITH a baseline (tokens in/out, $/request, latency by stage):
+  "Model inference is 80% of latency, not network -- switching models is
+   the right lever, not adding a CDN."
+  "Medium-tier daily cost is $X; after trimming input tokens it's $Y --
+   here's the exact monthly savings, measured, not estimated."</code></pre>
+    </div>
+
+    <p>
+      This is also why "optimize before you measure" is a risky habit for
+      <em>experienced</em> engineers specifically &mdash; not just beginners. The
+      "obvious" fix (switch to a cheaper model everywhere, truncate aggressively)
+      often looks correct on its face, and experience makes it tempting to skip the
+      measurement step. But skipping it means you're optimizing a guess about where
+      the problem is, and you lose the ability to prove &mdash; to yourself, or to
+      finance &mdash; that the change actually worked.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> before asking an AI assistant to help instrument a service for cost/latency measurement, decide the schema first: what gets logged per request (tokens in, tokens out, model used, dollar cost, latency broken into stages), so the assistant builds a measurement tool rather than a vague "add some logging" pass that misses the numbers you actually need for a budget conversation.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python decorator that wraps an LLM call and logs tokens in/out, cost, and latency broken down by stage..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's checklist &mdash; does it capture all three numbers (tokens, cost, latency-by-stage), or just one?
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python decorator called measure_llm_call that wraps a function making an LLM API call. It should record: input tokens, output tokens, the model name used, the dollar cost of the call (using a provided per-million-token pricing dict), and latency split into three stages -- time to first token, total generation time, and any pre/post-processing time outside the model call. Print a one-line summary per call and append the full record to a list for later reporting. Do not call any real API -- accept the token counts and timing as arguments so this is testable without network access.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Measure three numbers per request before touching anything: tokens in/out, dollar cost, and latency broken down by stage.</li>
+        <li>Without a baseline, you can't tell afterward whether an "optimization" actually helped, hurt, or did nothing.</li>
+        <li>This discipline matters most for experienced engineers &mdash; the "obvious" fix is exactly the one worth measuring before applying.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>A support chatbot handling 500 conversations in week one and 50,000 by month two isn't a success story with a side effect &mdash; the per-request inefficiencies were there from day one, just invisible at low volume until they multiplied into a $12,000 bill.</li>
+      <li>Cost engineering isn't a nice-to-have optimization pass done after launch; it's the difference between a project that survives its first real month of traffic and one that gets pulled by finance.</li>
+      <li>Teams that model cost and latency at expected production scale <em>before</em> shipping catch the same problems in a spreadsheet instead of in an incident channel.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Output tokens are the expensive ones</strong> &mdash; usually 3&ndash;5x the price of input tokens &mdash; so constrain requested output length deliberately instead of hoping the model is terse.</li>
+      <li><strong>Prompt caching turns a repeated large prefix</strong> (system prompt, long context) from a recurring per-request cost into a one-time cost, with zero quality trade-off.</li>
+      <li><strong>Batching trades latency for a steep discount</strong> &mdash; right for deferrable workloads, never right for a live chat interface.</li>
+      <li><strong>Model routing is usually the single biggest cost lever</strong>: most real traffic is simple enough for a cheap model, so reserve the expensive model for genuinely hard requests.</li>
+      <li><strong>Measure tokens, cost, and latency per request before optimizing anything</strong> &mdash; guessing wastes effort on the wrong fix and leaves you unable to prove a change actually helped.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a Check
+    button, so you'll know instantly if you've got it. Then the cost calculator
+    exercise puts the token-economics math into a reusable tool.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

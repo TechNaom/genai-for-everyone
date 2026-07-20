@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6.2 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercises for Session 6.2: Cost & Latency Engineering — build a cost calculator comparing model tiers and one concrete optimization, side by side.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-6-2" data-chapter-id="session-6-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 6.2 Exercises</span>
+    <span class="reading-time">15 min, hands-on</span>
+  </div>
+  <h1>Exercises: The Cost Calculator</h1>
+  <p>
+    Build a reusable tool that turns "requests per day, average tokens in and
+    out" into a real dollar figure across model tiers &mdash; then use it to
+    quantify one concrete optimization instead of eyeballing it. This is a pure
+    arithmetic exercise: no API calls, no paid keys, just plain Python that runs
+    anywhere.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python --version</code>).
+    Download <code>starter.py</code> below, then run it from a terminal with
+    <code>python starter.py</code>. Once complete, it prints a baseline cost
+    report across three model tiers, then a second report showing the
+    optimized workload side by side.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. It defines three illustrative model tiers in
+    <code>MODEL_PRICING</code> &mdash; small, medium, large &mdash; each priced
+    per million tokens, input and output separately (matching Sub-topic 1 of
+    the lesson). Fill in four functions, then a fifth optimization comparison.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Cost of a single request</h3>
+    <p>Complete <code>cost_per_request(model, input_tokens, output_tokens)</code>. Look up the tier's pricing, divide each token count by 1,000,000, multiply by the matching per-million rate, and add input cost to output cost.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Cost of a full day's workload</h3>
+    <p>Complete <code>daily_cost(model, requests_per_day, avg_input_tokens, avg_output_tokens)</code>. It's just <code>cost_per_request(...)</code> multiplied by how many requests happen in a day.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Compare every tier at once</h3>
+    <p>Complete <code>compare_models(...)</code> to return a dictionary mapping each tier name to its daily cost, so the report can show small vs. medium vs. large side by side.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Print the report</h3>
+    <p>Complete <code>print_report(...)</code> to print one line per model tier: the daily cost and the monthly cost (daily &times; 30). This is the number you'd actually bring to a budget conversation.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 5 &mdash; Fix the Optimization Comparison</h3>
+    <p>
+      The <code>__main__</code> block at the bottom of <code>starter.py</code>
+      prints a baseline report, then is supposed to print a second report for
+      the same workload with <code>avg_input_tokens</code> trimmed from 1500
+      down to 600 (representing a tighter, less wasteful prompt) &mdash; and
+      finally print the exact monthly dollar savings that trim produces on the
+      <code>"medium"</code> tier. Right now it just raises
+      <code>NotImplementedError</code>. Replace that with a second call to
+      <code>print_report(...)</code> using the trimmed input token count, then
+      compute <code>baseline_medium</code> and <code>optimized_medium</code>
+      with <code>daily_cost(...)</code> and print the difference &times; 30.
+    </p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">what-to-add.txt</span>
+      </div>
+      <pre><code>print_report(requests_per_day=50_000, avg_input_tokens=600, avg_output_tokens=300)
+
+baseline_medium = daily_cost("medium", 50_000, 1500, 300)
+optimized_medium = daily_cost("medium", 50_000, 600, 300)
+monthly_savings = (baseline_medium - optimized_medium) * 30
+print(f"Medium-tier monthly savings from prompt trimming: ${monthly_savings:,.2f}")</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>MODEL_PRICING = {
+    "small":  {"input_per_million": 0.80,  "output_per_million": 4.00},
+    "medium": {"input_per_million": 3.00,  "output_per_million": 15.00},
+    "large":  {"input_per_million": 15.00, "output_per_million": 75.00},
+}
+
+def cost_per_request(model, input_tokens, output_tokens) -> float:
+    &#35; TODO 1: input_cost + output_cost, using the per-million rates above
+    raise NotImplementedError
+
+def daily_cost(model, requests_per_day, avg_input_tokens, avg_output_tokens) -> float:
+    &#35; TODO 2: cost_per_request(...) * requests_per_day
+    raise NotImplementedError</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    This one has a clean right answer &mdash; it's arithmetic, not judgment.
+    Run <code>python solution.py</code> and compare the printed numbers
+    exactly. If your baseline medium-tier daily cost isn't
+    <strong>$450.00</strong> (50,000 requests &times; ((1500/1,000,000
+    &times; $3.00) + (300/1,000,000 &times; $15.00))), work backward through
+    <code>cost_per_request</code> first &mdash; that's almost always where the
+    bug lives.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

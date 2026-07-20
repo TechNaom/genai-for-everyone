@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.4 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 2.4: Structured Outputs — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.4 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Structured Outputs</h1>
+  <p>
+    Prompt engineering is consistently described by hiring managers as the
+    single most "immediately testable" GenAI skill &mdash; interviewers
+    often ask candidates to write or critique an actual prompt live, not
+    just describe techniques abstractly. Structured-output questions are
+    where that shows up hardest, because there's a concrete, checkable right
+    answer: did your approach actually survive a model returning something
+    imperfect? Each question below includes what a strong answer sounds
+    like, common red flags, and a natural follow-up. Click any question to
+    expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Why is getting reliable JSON output from an LLM harder than it sounds, and how do you make it more reliable?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Naming the actual failure modes: models can add explanatory text around the JSON, use inconsistent field names, or produce malformed syntax under certain prompts. Then naming the mitigations as a set, not just one: explicit schema definition in the prompt, asking for JSON-only output with no preamble, using a model's structured-output/JSON mode if available, and &mdash; the one that matters most &mdash; validating and parsing defensively in code rather than trusting the output blindly.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Naming only one technique (usually "just ask for JSON"), or treating prompt wording alone as a complete solution with no mention of code-side handling.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Which of those techniques would you keep if you could only pick one, and why?" (Defensive parsing &mdash; it's the only one that doesn't depend on the model behaving correctly.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> You're building a resume parser that returns structured JSON. What happens if the LLM returns a field with the wrong data type, and how do you guard against that breaking your application?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Recognizing that a wrong type (e.g. <code>"years_experience": "8 years"</code> instead of <code>8</code>) is invisible to <code>json.loads()</code> &mdash; the JSON is syntactically valid, so a parse-only check passes it straight through. The guard is a separate schema/type validation step run on the parsed dict before the data is used downstream, with a defined fallback or error-handling path when validation fails &mdash; and an acknowledgment that even a well-tested prompt won't guarantee 100% type compliance.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Assuming "it parsed successfully" is the same as "it's correct," or having no answer for what happens after validation fails (crash, silently use the bad value, etc.).</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Where in the pipeline would you put that validation step, and what would you do on failure?" (Right after parsing, before the data reaches any business logic; on failure, log it, use a safe default, or flag the record for human review rather than crashing or silently proceeding.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> What's the difference between a prompt that "successfully produces parseable JSON" and one that's "production-reliable"?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>"Parseable" only means it worked in your testing &mdash; <code>json.loads()</code> didn't throw. "Production-reliable" means the surrounding system has defensive parsing for when output isn't perfect, type validation beyond JSON syntax, explicit handling for missing data, and has been tested against a genuinely broad and messy range of inputs, not just a handful of convenient examples used during development.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating "it worked when I tried it" as equivalent to "it's reliable," with no mention of testing breadth or code-side safeguards.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you go about finding the inputs your prompt hasn't been tested on yet?" (Deliberately generate edge cases &mdash; missing fields, unusual formats, adversarial or malformed text &mdash; rather than only reusing convenient dev examples; this previews Week 5's evaluation practices.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Why would you instruct a model to return null for missing fields instead of letting it guess?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A guess risks a confidently invented value being mistaken for verified data &mdash; directly connecting back to Session 1.5's hallucination warning, since the model has no internal signal distinguishing a fluent guess from a fluent fact. <code>null</code> is an honest, checkable signal that the information wasn't found in the source text; a plausible-looking guess is not, and it's far more dangerous precisely because it doesn't look wrong.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating a guessed value as harmless because "it's usually close enough," or not connecting the risk back to hallucination.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Does instructing null actually guarantee the model won't guess anyway?" (No &mdash; it's a real, documented failure mode that models can still fill in a value despite the instruction, which is why this alone isn't a complete guarantee and a human review step matters for high-stakes extraction.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> You've tested your extraction prompt on 10 examples and it works perfectly every time. Should you consider it production-ready? Why or why not?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Not necessarily &mdash; 10 examples, especially if they're the convenient ones used during initial development, may not represent the full range of real-world inputs the prompt will eventually face. Genuine production-readiness requires testing against a broader, more representative, and intentionally messier set of inputs. The candidate should also flag that "worked every time" on a small set doesn't rule out schema drift on unusual inputs later.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Answering "yes, if it passed all my tests" with no interrogation of what those tests actually covered.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What formal process exists for this later in the program?" (Week 5's evaluation practices &mdash; testing against representative, adversarial, and edge-case inputs as a discipline, not an informal spot-check.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Models can wrap JSON output in <code>____</code> text, which breaks code expecting pure JSON to parse.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="conversational,wrapper,conversational wrapper" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Explicit <code>____</code> definition with field types reduces ambiguity about what shape the model should return.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="schema" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> The most important technique for reliability is <code>____</code> parsing in your own code, since it doesn't depend on the model behaving.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="defensive" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> For missing data, instruct the model to return <code>____</code> rather than guessing, connecting to Session 1.5's lesson on hallucination.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="null,empty,none" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Successfully parsed JSON can still have the wrong shape or <code>____</code>, so validation should go beyond syntax checking.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="type,types" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about structured outputs in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for the two-layer answer &mdash; prompt-side mitigations <em>and</em> code-side defenses &mdash; not just "I'd write a good prompt."</li>
+    <li>If you can, describe a specific type-validation bug you'd guard against (like a numeric field coming back as a string) &mdash; concrete beats abstract every time.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-2-5-prompt-systems-not-just-prompts/lesson.html">Next Session: Prompt Systems, Not Just Prompts &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

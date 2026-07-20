@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.5 Prompt Systems, Not Just Prompts — GenAI for Everyone</title>
+<meta name="description" content="Move from one-off prompts to a real prompt system: reusable templates with variables, organizing a prompt library, lightweight testing, and chaining prompts together.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.5</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>Prompt Systems, Not Just Prompts</h1>
+  <p><em>Every technique so far lived in one prompt at a time. This chapter is about what changes the moment you have several prompts, more than one person touching them, and months instead of minutes for them to survive.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#prompt-vs-system">1. A Prompt vs. A Prompt System</a>
+    <a href="#templates-and-variables">2. Prompt Templates and Variables</a>
+    <a href="#organizing-a-library">3. Organizing a Prompt Library</a>
+    <a href="#chaining-prompts">4. Chaining Prompts Together</a>
+  </nav>
+
+  <div class="hook">
+    Every prompt you've built so far in this program has lived in one place at a
+    time &mdash; a script, an exercise, a single use case. That's exactly right for
+    learning the techniques. But the moment you're building something real &mdash; a
+    product with several AI-powered features, a team with more than one person
+    touching prompts, a feature that needs to evolve over months &mdash; a
+    collection of one-off prompts scattered across files stops being a minor
+    inconvenience and starts being a genuine liability. This chapter is about making
+    that transition deliberately: from individual prompts to a <strong>prompt
+    system</strong> &mdash; reusable templates, named variables, and some structure
+    around how prompts are stored, versioned, and tested. It's also a direct preview
+    of Week 6's CI/CD-for-prompts content; the habits you build today are the
+    foundation later, more formal tooling builds on.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="prompt-vs-system">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. A Prompt vs. A Prompt System</h2>
+
+    <p>
+      A single good prompt solves one specific case, written for one specific
+      moment. A <strong>prompt system</strong> is something different in kind, not
+      just in scale.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a prompt system?</span>
+      A prompt system involves <strong>reusable templates with variables</strong>
+      (the same structure, filled in differently each time), <strong>some notion of
+      versioning</strong> (so you can tell what changed and roll back if a change
+      makes things worse), <strong>consistent testing across a representative range
+      of inputs</strong> (not just the one example you happened to try first), and
+      often <strong>chaining multiple prompts together</strong> into a multi-step
+      pipeline.
+    </div>
+
+    <p>
+      Here's why the distinction has real consequences. Imagine two engineers
+      building the same feature &mdash; a customer support reply generator. Engineer
+      A writes a great prompt, hardcodes it directly into the function that calls
+      the API, and ships it. Engineer B writes the same quality prompt, but stores
+      it as a template with named variables (<code>{customer_name}</code>,
+      <code>{issue_description}</code>, <code>{tone}</code>), in a separate file from
+      the application logic, with a version number and a few test cases attached.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">six-months-later.txt</span>
+      </div>
+      <pre><code>Engineer A's approach (hardcoded prompt in app logic):
+  - New tone option requested   -> dig through application code to find the string
+  - PM wants to see the live prompt -> has to be walked through the codebase
+  - Bug report comes in          -> no history of what the prompt used to say
+
+Engineer B's approach (template + version + tests):
+  - New tone option requested   -> open one well-organized file, add a variable
+  - PM wants to see the live prompt -> hand them the file directly
+  - Bug report comes in          -> check the version history for what changed</code></pre>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Same starting quality, wildly different outcome</span>
+      <ul>
+        <li>Both engineers started with an equally good prompt &mdash; the six-month gap comes entirely from <em>structure</em>, not from writing skill.</li>
+        <li>This is the same lesson as software engineering generally: the code that's easy to change six months later usually looked slightly more "boring" and organized on day one.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A prompt system differs from a single prompt <strong>in kind, not just scale</strong>: templates with variables, versioning, consistent testing, and often chaining.</li>
+        <li>Two engineers can write equally good prompts and end up with wildly different maintainability, purely based on whether the prompt was treated as a hardcoded string or a managed artifact.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="templates-and-variables">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Prompt Templates and Variables</h2>
+
+    <div class="what-is">
+      <span class="label">What is... a prompt template?</span>
+      A prompt template is a prompt with placeholders for the parts that change
+      between uses, written once and reused with different values substituted in.
+      You've actually already been doing a simplified version of this in earlier
+      exercises &mdash; using Python's <code>.format()</code> or f-strings to
+      substitute values into a prompt string. A prompt system formalizes this
+      practice deliberately, rather than leaving it as an incidental implementation
+      detail.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">not_a_template.py</span>
+      </div>
+      <pre><code># Hardcoded, one-off -- has to be re-written by hand for every customer:
+prompt = ("Write a polite follow-up email to Sarah Chen about her unpaid "
+          "invoice from March 15th, mentioning a 5% late fee.")</code></pre>
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">a_template.py</span>
+      </div>
+      <pre><code>FOLLOW_UP_TEMPLATE = """Write a polite follow-up email to {customer_name} about
+their unpaid invoice from {invoice_date}, mentioning a {late_fee_pct}% late fee."""
+
+prompt = FOLLOW_UP_TEMPLATE.format(
+    customer_name="Sarah Chen",
+    invoice_date="March 15th",
+    late_fee_pct=5,
+)</code></pre>
+    </div>
+
+    <p>
+      The template version separates the <em>reusable structure</em> from the
+      <em>specific data</em>, meaning the exact same well-tested prompt structure
+      gets used for every customer, every invoice &mdash; rather than someone
+      re-writing a slightly different version of this prompt by hand each time,
+      with all the inconsistency and untested-edge-case risk that implies.
+    </p>
+
+    <p>
+      Try it yourself: change the variables below and re-run to see the same
+      template produce a different, consistently-shaped prompt every time.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">template_demo.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="16">FOLLOW_UP_TEMPLATE = """Write a polite follow-up email to {customer_name} about
+their unpaid invoice from {invoice_date}, mentioning a {late_fee_pct}% late fee."""
+
+customers = [
+    {"customer_name": "Sarah Chen", "invoice_date": "March 15th", "late_fee_pct": 5},
+    {"customer_name": "Wei Zhang", "invoice_date": "April 2nd", "late_fee_pct": 3},
+]
+
+for values in customers:
+    prompt = FOLLOW_UP_TEMPLATE.format(**values)
+    print(prompt)
+    print("---")
+
+print("Same structure, different data -- that's the whole idea of a template.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then edit a customer's values and re-run.</div>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Why this matters for quality, not just convenience</span>
+      A template that's been tested against a representative range of inputs
+      (different customer name formats, different fee percentages, different date
+      formats) is far more reliable than re-deriving a similar prompt from scratch
+      each time you need it. This connects directly to Session 2.4's lesson about
+      testing structured-output prompts against a range of inputs, not just
+      convenient examples &mdash; a template gives you <em>one</em> well-tested
+      artifact to maintain, instead of many slightly-different, individually-untested
+      variants scattered throughout a codebase.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A template separates <strong>reusable structure</strong> from <strong>specific data</strong> using named placeholders.</li>
+        <li>You've already been doing a lightweight version of this with <code>.format()</code>/f-strings &mdash; a prompt system just makes it deliberate and reused.</li>
+        <li>One well-tested template beats many untested, slightly-different one-off variants.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="organizing-a-library">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Organizing a Prompt Library</h2>
+
+    <p>
+      A meaningful practice, even for a solo developer: don't bury prompt strings
+      directly inside the application logic that calls the API. Keep them in a
+      dedicated location &mdash; a separate module, a folder of template files
+      &mdash; so anyone (including future you) can find and review every prompt the
+      application uses without having to read through unrelated business logic.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Naming and documentation conventions</span>
+      Each template benefits from a clear name describing its purpose, and a short
+      comment or docstring describing exactly what variables it expects and what
+      each one means. This sounds like a small thing, but it's the difference
+      between a six-month-old prompt library being genuinely usable versus being an
+      archaeology project every time someone needs to touch it.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">prompts/customer_communications.py</span>
+      </div>
+      <pre><code>FOLLOW_UP_TEMPLATE = """..."""  # expects: customer_name, invoice_date, late_fee_pct
+
+REFUND_APOLOGY_TEMPLATE = """..."""  # expects: customer_name, product_name, refund_amount
+
+# prompts/data_extraction.py
+
+RESUME_PARSER_TEMPLATE = """..."""  # expects: resume_text</code></pre>
+    </div>
+
+    <p>
+      This is genuinely simple &mdash; there's no special framework required to get
+      real value from this practice. The discipline of <em>separating, naming, and
+      documenting</em> templates is what creates the value, not any particular tool.
+    </p>
+
+    <div class="what-is">
+      <span class="label">A note on testing</span>
+      Even a lightweight test &mdash; a small set of representative example inputs
+      with expected characteristics in the output (not necessarily an exact string
+      match, since LLM output naturally varies, but checks like "does it include the
+      customer's name," "is it under the specified length," "does it avoid
+      mentioning competitors") &mdash; catches a meaningful fraction of regressions
+      before they reach production. This is a preview of what Week 5 formalizes into
+      a complete evaluation discipline; for now, the habit of having <em>any</em>
+      repeatable check beyond "I tried it once and it looked fine" is the valuable
+      starting point.
+    </div>
+
+    <p>
+      The exercise for this session has you build exactly this: a small library of
+      templates, each documented, each with at least one lightweight, non-exact-match
+      test. Before you open the starter file, it's worth writing the prompt you'd
+      hand an AI assistant to help you scaffold that structure &mdash; the design
+      decisions (what counts as a good check, what "documented" means) are the part
+      that actually matters.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill here isn't asking an assistant to "write some prompt templates" &mdash; it's specifying the <em>contract</em> each template must satisfy: a docstring naming every variable, and at least one check function that verifies a property of the formatted output rather than an exact string. A vague request gets you templates with no documentation and tests that only work with the one example you gave it.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python module with 5 prompt templates for customer emails, each documented with expected variables, plus lightweight test checks..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you
+          use, and compare what it builds against this session's exercise &mdash;
+          does every template get a documented variable list, and does every test
+          check a verifiable property instead of an exact string? That comparison is
+          the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python module for a customer-communications prompt library with 5 template strings as module-level constants, each using {variable_name} placeholders. Above each template, add a one-line comment listing every variable it expects and its type. Then write a TEST_CASES list where each entry pairs one template with sample variable values and a list of small check functions -- each check function takes the FORMATTED prompt string and returns True/False for one verifiable property (e.g. "contains the customer's name", "contains a specific dollar amount"), not an exact-match comparison. Finish with a run_tests() function that formats each template, runs its checks, and prints a pass/fail count. No API calls -- this only needs to test template structure.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Keep prompts in a dedicated location, separate from application logic &mdash; even as a solo developer.</li>
+        <li>Every template needs a clear name and a documented list of the variables it expects.</li>
+        <li>Lightweight, characteristic-based tests (not exact-match) catch a real fraction of regressions before production.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="chaining-prompts">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. Chaining Prompts Together</h2>
+
+    <div class="what-is">
+      <span class="label">What is... prompt chaining?</span>
+      Sometimes a task is genuinely better solved as a sequence of separate
+      prompts, each handling one well-defined sub-task, with the output of one
+      feeding into the input of the next &mdash; rather than one enormous prompt
+      trying to do everything at once.
+    </div>
+
+    <p>
+      Consider building a tool that processes an incoming customer email: it needs
+      to (1) classify the email's category, (2) extract any specific order numbers
+      or dates mentioned, and (3) draft an appropriate reply. You could attempt all
+      three in one giant prompt, or you could chain three focused prompts:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">three_step_chain.txt</span>
+      </div>
+      <pre><code>Step 1: Classify the email (few-shot, from 2.2)                 -> category
+Step 2: Extract structured data (from 2.4)                       -> order numbers, dates as JSON
+Step 3: Draft a reply, with category + extracted data as context -> final reply text</code></pre>
+    </div>
+
+    <p>
+      Each step is simpler, more testable in isolation, and easier to debug than
+      one combined mega-prompt &mdash; if the final reply is wrong, you can check
+      each step's output independently to find exactly where things went wrong,
+      rather than trying to diagnose a failure buried inside one large, opaque
+      request.
+    </p>
+
+    <div class="real-world">
+      <span class="label">The honest trade-off</span>
+      <ul>
+        <li>Chaining adds <strong>latency</strong> &mdash; multiple API calls instead of one.</li>
+        <li>Chaining adds <strong>complexity</strong> &mdash; more code to manage the handoffs between steps.</li>
+        <li>It's the right choice when a task genuinely has distinct sub-problems that benefit from focused, separately-testable prompts &mdash; not a default to apply to every task regardless of whether it actually has that structure.</li>
+        <li>A simple task that doesn't need decomposition shouldn't be artificially split into a chain just because chaining is available as a technique.</li>
+      </ul>
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: how do you decide where to draw the chain's boundaries?</summary>
+      <p>
+        A useful test: could you describe each step's job in one sentence without
+        using the word "and"? "Classify the email" is one job. "Classify the email
+        and pull out the dates and draft a reply" is three jobs wearing one prompt's
+        clothing. If you find yourself writing a prompt with several unrelated
+        instructions stacked on top of each other, that's usually the signal that
+        it wants to be a chain &mdash; especially if you'd want to know, when
+        something goes wrong, <em>which</em> of those instructions the model failed
+        to follow.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Chaining breaks one task into a sequence of focused prompts, each feeding its output to the next.</li>
+        <li>Benefit: each step is independently testable and debuggable.</li>
+        <li>Cost: more latency and more code to manage &mdash; use it when the task has genuinely distinct sub-problems, not as a default.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Teams that ship several AI features almost always converge on some version of a prompt library, whether or not they call it that &mdash; the alternative (strings scattered through the codebase) becomes unmanageable well before six months pass.</li>
+      <li>"Prompt versioning" is a direct preview of Week 6's CI/CD-for-prompts content: once prompts are treated as artifacts with history, you can diff, review, and roll them back exactly like code.</li>
+      <li>Chaining is the same instinct that shows up in good software design generally &mdash; single-responsibility functions are easier to test and debug than one function doing five things, and prompts are no different.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>A prompt system differs from a single prompt in kind, not just scale:</strong> reusable templates with variables, versioning, consistent testing, and often chaining multiple prompts together.</li>
+      <li><strong>Templates separate reusable structure from specific data,</strong> meaning one well-tested prompt structure serves every use case rather than many untested, slightly-different one-off variants.</li>
+      <li><strong>Separate prompts from application code,</strong> with clear naming and documentation of expected variables &mdash; this is what makes a prompt library maintainable six months later, not any particular framework.</li>
+      <li><strong>Even lightweight testing</strong> (checking for specific characteristics in output, not exact string matches) catches a meaningful fraction of regressions before production, previewing Week 5's evaluation discipline.</li>
+      <li><strong>Chaining prompts is for tasks with genuinely distinct sub-problems</strong> &mdash; it adds latency and complexity, so it's a deliberate choice, not a default.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a Check
+    button, so you'll know instantly if you've got it. Then the Reusable Prompt
+    Template Library exercise puts the templates-and-testing habit into practice.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

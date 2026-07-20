@@ -63,12 +63,43 @@ window.GFE_MODULES = [
     title: "Week 2 — Prompt Engineering & Application Design",
     examPath: "assessments/written-exams/week-02-exam.md",
     chapters: [
-      { id: "session-2-1", num: "2.1", title: "Anatomy of a Great Prompt", path: null, subtopics: [] },
-      { id: "session-2-2", num: "2.2", title: "Prompting Techniques I — Few-Shot, Zero-Shot, Role", path: null, subtopics: [] },
-      { id: "session-2-3", num: "2.3", title: "Prompting Techniques II — Chain-of-Thought, Step-Back, Self-Consistency", path: null, subtopics: [] },
-      { id: "session-2-4", num: "2.4", title: "Structured Outputs", path: null, subtopics: [] },
-      { id: "session-2-5", num: "2.5", title: "Prompt Systems, Not Just Prompts", path: null, subtopics: [] },
-      { id: "session-2-6", num: "2.6", title: "Week 2 Lab — Mini Build Day", path: null, subtopics: [] }
+      { id: "session-2-1", num: "2.1", title: "Anatomy of a Great Prompt", path: "chapters/session-2-1-anatomy-of-a-great-prompt/lesson.html", subtopics: [
+        { id: "just-ask-nicely", title: "Why \"Just Ask Nicely\" Isn't a Strategy" },
+        { id: "four-pillars", title: "The Four Pillars of a Great Prompt" },
+        { id: "worked-rewrite", title: "A Worked Rewrite, Pillar by Pillar" },
+        { id: "when-to-stop", title: "When More Detail Stops Helping" }
+      ] },
+      { id: "session-2-2", num: "2.2", title: "Prompting Techniques I — Few-Shot, Zero-Shot, Role", path: "chapters/session-2-2-prompting-techniques-i/lesson.html", subtopics: [
+        { id: "zero-shot", title: "Zero-Shot Prompting — Just the Instruction" },
+        { id: "few-shot", title: "Few-Shot Prompting — Show, Don't Just Tell" },
+        { id: "role-prompting", title: "Role Prompting — Assigning a Persona or Expertise Frame" },
+        { id: "combining", title: "Combining the Techniques" }
+      ] },
+      { id: "session-2-3", num: "2.3", title: "Prompting Techniques II — Chain-of-Thought, Step-Back, Self-Consistency", path: "chapters/session-2-3-prompting-techniques-ii/lesson.html", subtopics: [
+        { id: "chain-of-thought", title: "Chain-of-Thought Prompting" },
+        { id: "step-back", title: "Step-Back Prompting" },
+        { id: "self-consistency", title: "Self-Consistency" },
+        { id: "choosing-the-right-tool", title: "Choosing the Right Tool for the Job" }
+      ] },
+      { id: "session-2-4", num: "2.4", title: "Structured Outputs", path: "chapters/session-2-4-structured-outputs/lesson.html", subtopics: [
+        { id: "harder-than-it-sounds", title: "Why Reliable JSON Is Harder Than It Sounds" },
+        { id: "techniques", title: "Four Techniques That Actually Improve Reliability" },
+        { id: "worked-example", title: "A Worked Example: The Resume Parser" },
+        { id: "still-goes-wrong", title: "When Structured Output Still Goes Wrong" }
+      ] },
+      { id: "session-2-5", num: "2.5", title: "Prompt Systems, Not Just Prompts", path: "chapters/session-2-5-prompt-systems-not-just-prompts/lesson.html", subtopics: [
+        { id: "prompt-vs-system", title: "A Prompt vs. A Prompt System" },
+        { id: "templates-and-variables", title: "Prompt Templates and Variables" },
+        { id: "organizing-a-library", title: "Organizing a Prompt Library" },
+        { id: "chaining-prompts", title: "Chaining Prompts Together" }
+      ] },
+      { id: "session-2-6", num: "2.6", title: "Week 2 Lab — Mini Build Day", path: "chapters/session-2-6-week-2-lab-mini-build-day/lesson.html", subtopics: [
+        { id: "the-build", title: "The build: a support reply generator with tone control" },
+        { id: "why-this-tool", title: "Why this build needs every technique from the week" },
+        { id: "steps", title: "The build, step by step" },
+        { id: "done-well", title: "\"Done well\" vs. \"done technically\"" },
+        { id: "reflection", title: "Reflection: what clicked, what's fuzzy" }
+      ] }
     ]
   },
   {

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.5 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 2.5: prompt systems and application design — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.5 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Prompt Systems &amp; Application Design</h1>
+  <p>
+    Prompt engineering is consistently described by hiring managers as the single
+    most "immediately testable" GenAI skill &mdash; interviewers often ask
+    candidates to write or critique an actual prompt live, not just describe
+    techniques abstractly. These questions probe the step past that: can you talk
+    about prompts as something a <em>team</em> maintains, not just something one
+    person writes once. Each question below includes what a strong answer sounds
+    like, common red flags, and a natural follow-up. Click any question to expand
+    it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> What's the difference between "a good prompt" and "a good prompt system," and why does that distinction matter for a real product?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A single good prompt solves one specific case; a prompt system involves reusable templates with variables, version control, consistent testing across many real-world inputs, and often chaining multiple prompts together &mdash; the difference between a one-off script and something you'd actually ship and maintain. A strong candidate frames it as a difference "in kind, not just scale," and can point to a concrete consequence (e.g. a hardcoded prompt buried in application code becomes hard to find, review, or roll back six months later, even if it was well-written on day one).</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating "prompt system" as just "a longer or more complicated prompt," or being unable to name a single concrete maintainability consequence of skipping structure.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"At what point does a project actually need this structure &mdash; is it worth it for a single prototype script?" (A good answer notes it's a judgment call tied to team size, lifespan, and number of prompts &mdash; not something every five-line script needs on day one.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> How would you organize a library of prompt templates for a team building several different AI features?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Separate prompts from application code (not hardcoding strings everywhere), a naming convention that describes each template's purpose, a docstring or comment documenting exactly what variables each template expects and what they mean, and ideally some lightweight testing so a prompt edit doesn't silently break a feature. Bonus points for connecting this forward to versioning ("so we can tell what changed and roll back") &mdash; this previews Week 6's prompt CI/versioning topic.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Insisting a heavyweight framework or specific vendor tool is required &mdash; the discipline (separating, naming, documenting, testing) is what creates the value, not any particular tool.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Two templates look almost identical except for tone. Do you keep them separate or merge them into one with a tone variable?" (A strong answer reasons about it as a template-design trade-off: a shared template with a tone variable if the structure is truly identical; separate templates if they'll likely diverge in structure over time.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> When would you chain multiple prompts together instead of using one larger prompt?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>When a task has genuinely distinct sub-problems that benefit from being handled and tested separately &mdash; e.g. classify, then extract structured data, then draft a reply, following the worked example from this session. A strong candidate explicitly names the trade-off: chaining adds latency (multiple API calls) and complexity (managing handoffs between steps), in exchange for each step being simpler, more testable in isolation, and easier to debug independently.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating chaining as strictly "more advanced, therefore always better," or being unable to name the latency/complexity cost at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The final output of a 3-step chain is wrong. How do you find out which step caused it?" (Strong answer: log or inspect each intermediate step's output independently to isolate exactly where the failure happened, rather than re-prompting the whole chain and guessing.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> What's a lightweight way to test a prompt template without requiring an exact-match output check?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Since LLM output naturally varies, exact-match testing is unrealistic. Instead, check for specific, verifiable characteristics the output should have &mdash; does it contain the customer's name, does it stay under a specified length, does it avoid mentioning a competitor. A strong answer connects this to catching a meaningful fraction of regressions before production, and notes it's a lightweight preview of the fuller evaluation discipline Week 5 formalizes.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Claiming LLM output "can't really be tested," or proposing an exact-string-match test as the primary check.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me a check that would catch a real regression, not just a trivial one." (e.g. a check that a required disclosure sentence is present, or that the output doesn't exceed a hard length limit a downstream system depends on.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> A team has 15 different prompts scattered across files with no naming convention and no documentation of what variables each expects. What problems will this cause as the team grows?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Duplicate or near-duplicate prompts get written because nobody can find the existing one; nobody knows a given prompt's expected inputs without reading through the calling code; there's no way to tell what changed if a prompt's behavior shifts; and onboarding a new team member becomes much slower since there's no organized place to learn what prompts the system actually uses. A strong candidate frames this as the same problem undocumented, unorganized code causes generally &mdash; prompts just haven't been treated with the same discipline yet on most teams.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Only naming one problem (e.g. just "it's messy") without the concrete, specific consequences &mdash; duplication, undocumented inputs, no change history, slow onboarding.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If you joined this team today, what's the first thing you'd do about it?" (A pragmatic answer: don't rewrite everything at once &mdash; start by cataloging what exists, then apply naming/documentation conventions going forward and migrate the highest-traffic prompts first.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A prompt system differs from a single prompt in <code>____</code>, not just scale.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="kind" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> A prompt template uses named <code>____</code> for the parts that change between uses.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="variables,placeholders" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Prompt libraries should be kept <code>____</code> from application code, with clear naming and documented variables.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="separate" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Lightweight prompt tests check for output <code>____</code> (like required content or a length limit) instead of an exact match.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="characteristics,properties" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Chaining prompts trades added latency and complexity for steps that are independently <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="testable,debuggable" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about prompt systems in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for concrete consequences and trade-off reasoning, not textbook recall &mdash; always be ready to name what specifically breaks without structure, not just that "it's messy."</li>
+    <li>Pair this set with Week 1's questions for a more realistic mixed-topic mock interview by Week 7.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-2-6-week-2-lab-mini-build-day/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

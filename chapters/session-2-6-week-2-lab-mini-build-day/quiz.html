@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.6 Quiz — GenAI for Everyone</title>
+<meta name="description" content="Interactive fill-in-the-blank quiz for Session 2.6: Week 2 Lab — Mini Build Day. Lighter than usual, since this session is mostly building.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="lesson.html">&larr; Back to the lesson</a></p>
+
+  <span class="chapter-badge">Session 2.6 Quiz</span>
+  <h1>Week 2 Lab &mdash; Mini Build Day</h1>
+  <p>
+    A short quiz &mdash; lighter than usual, since today was mostly building.
+    Fill in each blank, then press its <strong>Check</strong> button (or press
+    Enter) to see instantly if you're right. There's no penalty for guessing
+    again &mdash; try until you get it.
+  </p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="q1"><span class="q-num">1</span> Before writing the support-reply
+      prompt, you should first design the <code>____</code> &mdash; exactly what
+      fields a finished reply needs to contain.</label>
+      <div class="fib-row">
+        <input type="text" id="q1" class="fib-blank" data-answers="output contract,schema,contract,output schema" aria-label="Answer for question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q2"><span class="q-num">2</span> Tone control becomes concrete
+      when backed by <code>____</code> examples, rather than relying on adjectives
+      like "be empathetic" alone.</label>
+      <div class="fib-row">
+        <input type="text" id="q2" class="fib-blank" data-answers="few-shot,few shot" aria-label="Answer for question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q3"><span class="q-num">3</span> Chain-of-thought reasoning about
+      whether to escalate a ticket should generally stay <code>____</code> to the
+      end user, even though the model still benefits from doing it.</label>
+      <div class="fib-row">
+        <input type="text" id="q3" class="fib-blank" data-answers="invisible,hidden" aria-label="Answer for question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q4"><span class="q-num">4</span> An <code>escalate: true</code>
+      response with a missing <code>escalation_reason</code> is an example of a
+      <code>____</code> inconsistent output that schema validation alone won't
+      catch.</label>
+      <div class="fib-row">
+        <input type="text" id="q4" class="fib-blank" data-answers="logically,logical" aria-label="Answer for question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q5"><span class="q-num">5</span> Successfully parsing a model's
+      output as JSON only confirms the <code>____</code> is correct &mdash; it says
+      nothing about whether the content is correct.</label>
+      <div class="fib-row">
+        <input type="text" id="q5" class="fib-blank" data-answers="syntax" aria-label="Answer for question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q6"><span class="q-num">6</span> Naming a prompt template
+      <code>support_reply_v1</code> instead of hardcoding a one-off string lets you
+      ship an improved version later without silently changing
+      <code>____</code> for anyone already depending on the current one.</label>
+      <div class="fib-row">
+        <input type="text" id="q6" class="fib-blank" data-answers="behavior" aria-label="Answer for question 6">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q7"><span class="q-num">7</span> Letting the model interpret
+      "respond in whatever tone seems appropriate" case by case tends to cause
+      tone to <code>____</code> across similar tickets, even though nothing about
+      the instruction changed.</label>
+      <div class="fib-row">
+        <input type="text" id="q7" class="fib-blank" data-answers="drift,be inconsistent,vary" aria-label="Answer for question 7">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q8"><span class="q-num">8</span> The stakes of defensive parsing
+      <code>____</code> as a tool moves from a single test run to something running
+      continuously over real, live data.</label>
+      <div class="fib-row">
+        <input type="text" id="q8" class="fib-blank" data-answers="increase,scale up,rise,go up" aria-label="Answer for question 8">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score! Week 2 is well and truly in the bag &mdash; on to the exercises.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="lesson.html">&larr; Back to Lesson</a>
+    <a href="exercises/index.html">Exercises &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

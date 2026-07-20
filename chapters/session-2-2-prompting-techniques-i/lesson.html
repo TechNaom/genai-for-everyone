@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.2 Prompting Techniques I — GenAI for Everyone</title>
+<meta name="description" content="Zero-shot, few-shot, and role prompting explained and demonstrated: three named techniques for shaping how a model approaches a task, and when to reach for each.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.2</span>
+    <span class="badge-difficulty">Beginner</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>Prompting Techniques I &mdash; Zero-Shot, Few-Shot, Role Prompting</h1>
+  <p><em>Session 2.1 gave you a framework for diagnosing a weak prompt. This chapter gives you three named tools for actively shaping how the model approaches a task &mdash; the exact vocabulary you'll hear in every real conversation about prompting from here on.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#zero-shot">1. Zero-Shot Prompting &mdash; Just the Instruction</a>
+    <a href="#few-shot">2. Few-Shot Prompting &mdash; Show, Don't Just Tell</a>
+    <a href="#role-prompting">3. Role Prompting &mdash; Assigning a Persona or Expertise Frame</a>
+    <a href="#combining">4. Combining the Techniques</a>
+  </nav>
+
+  <div class="hook">
+    Here's a scene that plays out constantly in real teams: someone writes a prompt,
+    it works fine on the three examples they tried, they ship it &mdash; and then it
+    quietly misclassifies a chunk of real traffic because the model never saw an
+    example of the case that broke it. The fix almost never requires a fancier model
+    or a longer instruction. It requires knowing <em>which of three specific
+    techniques</em> the situation actually calls for. Zero-shot, few-shot, and role
+    prompting aren't competing philosophies you pick a favorite from &mdash;
+    they're distinct tools that solve distinct problems, and knowing which one fits
+    which job is the actual skill this chapter builds.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="zero-shot">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Zero-Shot Prompting &mdash; Just the Instruction</h2>
+
+    <p>
+      Almost every prompt you've written so far in this program &mdash; including
+      the worked rewrite from Session 2.1 &mdash; has been zero-shot, even if
+      nobody called it that. It's the default mode of prompting, and for a lot of
+      tasks, it's also the correct one.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... zero-shot prompting?</span>
+      Zero-shot prompting means giving the model an instruction with
+      <strong>no examples</strong> of what the output should look like &mdash; just
+      the task itself, relying on the model's general training to produce something
+      reasonable. You're trusting that the model's training already encodes a
+      strong enough understanding of the task to apply it correctly, with no
+      demonstration required.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">zero-shot-example.txt</span>
+      </div>
+      <pre><code>Classify this customer review as positive, negative, or neutral:
+"The shipping took forever but the product itself works great."</code></pre>
+    </div>
+
+    <p>
+      Notice what's missing on purpose: not a single example of what a "positive"
+      or "negative" classification looks like. For well-known, common-sense
+      categories like these, that's fine &mdash; the model's training already
+      contains an enormous amount of text where reviews get described exactly this
+      way. Zero-shot works well when the task is conceptually clear from the
+      instruction alone, the categories or format you want are common and
+      unambiguous, and there isn't a subtle, hard-to-describe pattern you need the
+      model to pick up on. Most everyday tasks &mdash; summarization, straightforward
+      classification, translation, simple drafting &mdash; work fine zero-shot,
+      especially once you've applied Session 2.1's four pillars (clarity, context,
+      constraints, format) properly.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Where zero-shot starts to struggle</span>
+      Zero-shot tends to break down in three situations: when the task has a
+      specific, non-obvious format you need followed exactly; when the categories
+      or rules are unusual or company-specific &mdash; not something the model
+      would have a strong default sense of; or when you need consistent edge-case
+      handling that's hard to describe in words but easy to demonstrate. That gap
+      &mdash; "I can't fully describe this pattern, but I can show it" &mdash; is
+      exactly what the next technique exists to fill.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Zero-shot = instruction only, no examples. It's the default and the right first choice.</li>
+        <li>It works best for clear, common-sense tasks with unambiguous categories or formats.</li>
+        <li>It struggles on unusual/company-specific rules and hard-to-describe edge cases &mdash; the gap few-shot fills.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="few-shot">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Few-Shot Prompting &mdash; Show, Don't Just Tell</h2>
+
+    <div class="what-is">
+      <span class="label">What is... few-shot prompting?</span>
+      Few-shot prompting means including a small number of example input/output
+      pairs <em>within the prompt itself</em>, demonstrating the exact pattern you
+      want the model to follow, before giving it the real input to handle. The
+      model isn't being "trained" in any permanent sense &mdash; these examples
+      live only in this one request's context window (recall Session 1.2) &mdash;
+      but they powerfully steer what a good response looks like for
+      <em>this specific call</em>.
+    </div>
+
+    <p>
+      Suppose you're classifying support tickets into categories specific to your
+      company &mdash; categories a general model wouldn't have any standard sense
+      of. Zero-shot might fail here, because "Billing" vs. "Account Access" vs.
+      "Other" isn't a universal concept the model already understands consistently
+      for your exact product.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">few-shot-tickets.txt</span>
+      </div>
+      <pre><code>Classify the following support ticket into one of: Billing, Technical, Account Access, Other.
+
+Ticket: "I was charged twice for my subscription this month."
+Category: Billing
+
+Ticket: "The app crashes every time I try to upload a photo."
+Category: Technical
+
+Ticket: "I can't log in, it says my password is wrong even after I reset it."
+Category: Account Access
+
+Ticket: "Can you tell me when paddle boarding season starts?"
+Category: Other
+
+Ticket: "My invoice shows a fee I don't recognize from last week."
+Category:</code></pre>
+    </div>
+
+    <p>
+      Notice what those four examples accomplish: they don't just state the
+      categories (a zero-shot prompt could do that too) &mdash; they demonstrate
+      the <em>boundary cases</em>. The model can now infer that "Billing" means
+      money/charges-related, "Technical" means app malfunction, "Account Access"
+      means login/credential issues, and crucially, that genuinely unrelated
+      questions get "Other" rather than being forced into one of the real
+      categories. That last example is doing real work: it's teaching the model
+      what <em>doesn't</em> belong, which is often harder to convey through
+      instruction alone.
+    </p>
+
+    <p>
+      Here's the same mechanism as a tiny toy you can actually run. This isn't a
+      real few-shot LLM call &mdash; it's a keyword-matching stand-in &mdash; but
+      it shows the <em>shape</em> of the idea: a handful of worked examples define
+      the boundaries of each category, and a new input gets matched against the
+      pattern those examples established.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">toy_few_shot.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="20"># A toy of the SHAPE of few-shot pattern matching. A real few-shot prompt
+# sent to an LLM works differently -- the model itself infers the pattern
+# from context -- but this shows the underlying idea: examples define
+# category boundaries, and a new input gets matched against them.
+examples = [
+    ("charged twice subscription", "Billing"),
+    ("app crashes upload photo", "Technical"),
+    ("password wrong reset login", "Account Access"),
+    ("paddle boarding season", "Other"),
+]
+
+def classify(ticket):
+    ticket_words = set(ticket.lower().split())
+    best_category, best_score = "Other", 0
+    for example_text, category in examples:
+        overlap = len(ticket_words & set(example_text.split()))
+        if overlap > best_score:
+            best_category, best_score = category, overlap
+    return best_category
+
+new_ticket = "invoice shows a fee I don't recognize"
+print(f"{new_ticket!r}")
+print(f"  -> {classify(new_ticket)}")
+print("\nNotice: no rule ever said 'money words = Billing' explicitly --")
+print("the examples taught that boundary by demonstration.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then try changing the examples list and see how the classification shifts.</div>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Why this works: connecting back to Session 1.2</span>
+      Recall that an LLM predicts the next token based on patterns in everything
+      currently in its context window. Few-shot examples are a direct, powerful
+      way to shape that context &mdash; instead of describing a pattern
+      abstractly, you're handing the model several worked instances of the
+      pattern, and it continues that pattern. It's the same fundamental mechanism
+      from Sessions 1.1 and 1.2, just deliberately engineered.
+    </div>
+
+    <div class="real-world">
+      <span class="label">How many examples is "few"</span>
+      <ul>
+        <li>Typically 2&ndash;5 examples is enough to establish a clear pattern &mdash; more isn't automatically better.</li>
+        <li>Past a certain point you're consuming context window space (Session 1.2's "lost in the middle" risk applies here too) without meaningfully improving pattern recognition.</li>
+        <li>Choose examples that cover the real range of cases you expect, including at least one boundary or edge case if one exists &mdash; examples too similar to each other don't teach the model much beyond the first one.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Few-shot = 2&ndash;5 example input/output pairs embedded directly in the prompt, demonstrating the pattern.</li>
+        <li>It's especially powerful for company-specific categories, unusual formats, and boundary cases hard to describe in words.</li>
+        <li>Redundant, near-duplicate examples waste context without teaching anything new &mdash; diversity of examples matters more than count.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="role-prompting">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Role Prompting &mdash; Assigning a Persona or Expertise Frame</h2>
+
+    <div class="what-is">
+      <span class="label">What is... role prompting?</span>
+      Role prompting means instructing the model to adopt a specific persona,
+      professional identity, or expertise frame &mdash; "You are a senior tax
+      accountant," "You are a patient, encouraging math tutor," "You are a
+      skeptical code reviewer looking for security vulnerabilities." This shapes
+      the <em>style</em>, <em>vocabulary</em>, <em>priorities</em>, and sometimes
+      the <em>focus</em> of the response, without necessarily changing the
+      underlying task instruction.
+    </div>
+
+    <p>
+      Mechanically, a role assignment shifts what's most statistically plausible
+      to generate next, because "tax accountant" language patterns and "math
+      tutor" language patterns look meaningfully different in the training data
+      the model learned from. Assigning a role is, in effect, telling the model
+      which region of its learned patterns to draw from &mdash; similar in spirit
+      to how a system prompt lets you set persistent behavioral instructions, but
+      specifically focused on <em>identity and expertise framing</em> rather than
+      task mechanics.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">before-after-role.txt</span>
+      </div>
+      <pre><code>WITHOUT role prompting:
+"Review this code for issues."
+  -> a generic, broad review touching on style, naming, maybe a few bugs
+
+WITH role prompting:
+"You are a security-focused code reviewer. Review this code specifically
+for injection vulnerabilities, unsafe input handling, and authentication
+weaknesses. Ignore style issues entirely."
+  -> a narrower, more specialized review -- the role plus explicit scope
+     steers attention toward a specific lens rather than a generic pass</code></pre>
+    </div>
+
+    <div class="real-world">
+      <span class="label">The honest limit of role prompting</span>
+      <ul>
+        <li>Role prompting shapes <strong>style and focus</strong> &mdash; it does not grant the model genuinely new capabilities it didn't already have.</li>
+        <li>Telling a model "you are a board-certified cardiologist" doesn't give it medical knowledge it lacked before; it shifts <em>how</em> it presents and frames whatever it already knows.</li>
+        <li>This matters enormously for anything high-stakes: role prompting is genuinely useful for tone, focus, and framing, but it is not a substitute for actual verification, actual domain expertise, or actual grounding in verified facts.</li>
+        <li>Don't mistake a confident expert <em>voice</em> for verified expert <em>accuracy</em> &mdash; the same fluency-vs-correctness lesson from Session 1.5, showing up again in a new costume.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Role prompting assigns a persona or expertise frame, shifting style, vocabulary, and focus.</li>
+        <li>It works by drawing on patterns associated with that expert voice in the training data &mdash; not by adding new knowledge.</li>
+        <li>A confident expert voice is not the same as verified expert accuracy &mdash; treat it as a framing tool, not a fact source.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="combining">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. Combining the Techniques</h2>
+
+    <p>
+      These three techniques aren't mutually exclusive &mdash; real prompts often
+      combine them. A role-prompted, few-shot classification task is entirely
+      reasonable, and often stronger than either technique used alone.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">combined-example.txt</span>
+      </div>
+      <pre><code>You are a meticulous content moderator for a children's education platform.
+
+Classify each comment as Approve or Flag for review.
+
+Comment: "This video really helped me understand fractions!"
+Classification: Approve
+
+Comment: "lol this is so easy a baby could do it, what a waste of time"
+Classification: Flag
+
+Comment: "Can someone explain the third example again?"
+Classification:</code></pre>
+    </div>
+
+    <p>
+      Here, the role ("meticulous content moderator for a children's platform")
+      sets the lens and sensitivity level, while the few-shot examples demonstrate
+      exactly where the line falls between borderline-rude-but-fine and
+      actually-flag-worthy. Neither technique alone would do as much work as the
+      combination: the role alone doesn't tell the model exactly where to draw the
+      line, and the examples alone don't tell it how strict or lenient to be in
+      the gray area.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill here isn't typing out the examples &mdash; it's deciding, before you write a single line, which technique the situation actually calls for. Before asking an AI assistant to help build a classifier like this, an experienced practitioner asks three questions in order: is this task common-sense enough for zero-shot? Does it have company-specific categories or boundary cases that need demonstrating (few-shot)? Does it need a specific lens, tone, or sensitivity level applied on top (role prompting)? The prompt you write should make all three decisions explicit, not leave them implicit.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this classifier:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python function that classifies comments as Approve or Flag, using a role-prompted few-shot prompt template with an Anthropic API call..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's example &mdash; does it include a role, at least 2&ndash;5 examples with a genuine boundary case, and a clear final "Classification:" line for the model to complete? That comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python function called classify_comment(client, comment) that sends a role-prompted, few-shot classification request to an LLM API. The prompt template should: (1) open with a role assignment appropriate to the domain -- "You are a meticulous content moderator for a children's education platform" -- (2) state the task and the exact two allowed labels, Approve or Flag, (3) include 2-4 worked examples as "Comment: ... / Classification: ..." pairs, with at least one clearly-fine example and one clearly-flag-worthy example, and (4) end with the real comment and a bare "Classification:" line for the model to complete. Keep the function's max_tokens small since the output is just one word.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Zero-shot, few-shot, and role prompting stack &mdash; combining them is often stronger than any one alone.</li>
+        <li>The role sets the lens/sensitivity; the examples set the exact boundary; neither substitutes for the other.</li>
+        <li>The real skill is deciding, before writing the prompt, which combination the task actually needs.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Zero-shot, few-shot, and role prompting are the three terms you'll hear most in any real conversation about prompting &mdash; in interviews, in documentation, among practitioners &mdash; precisely because they map onto three genuinely distinct problems.</li>
+      <li>A prompt that "works in testing" but misbehaves in production is very often a few-shot coverage gap: the test examples were too narrow a slice of what real traffic actually looks like.</li>
+      <li>Role prompting is a favorite lever for product teams shaping tone and focus (a "friendly onboarding assistant" vs. a "terse technical support bot") &mdash; but teams that lean on it for accuracy, not just tone, end up shipping confidently-wrong output.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Zero-shot:</strong> instruction only, no examples. The right default for clear, common-sense tasks.</li>
+      <li><strong>Few-shot:</strong> 2&ndash;5 example input/output pairs included in the prompt, demonstrating the exact pattern &mdash; especially powerful for company-specific categories, unusual formats, or conveying boundary cases that are hard to describe in words.</li>
+      <li><strong>Role prompting:</strong> assigning a persona or expertise frame, which shifts style, vocabulary, and focus &mdash; but does NOT grant new capabilities the model didn't already have. A confident expert voice is not the same as verified expert accuracy.</li>
+      <li><strong>These techniques combine.</strong> A role-prompted few-shot prompt is often stronger than either technique used alone.</li>
+      <li><strong>More few-shot examples isn't automatically better</strong> &mdash; 2&ndash;5 well-chosen examples, including boundary cases, typically outperforms a longer list of similar ones.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the Few-Shot
+    Classifier exercise puts these techniques into practice against a real model.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

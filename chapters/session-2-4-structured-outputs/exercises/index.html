@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.4 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 2.4: Structured Outputs — build a resume-parsing prompt with an explicit schema and defensive JSON parsing that never crashes.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-4" data-chapter-id="session-2-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.4 Exercises</span>
+    <span class="reading-time">20 min, hands-on</span>
+  </div>
+  <h1>Exercises: Resume Parser Prompt</h1>
+  <p>
+    Build the structured-extraction prompt from the lesson, test it against
+    real model output on three sample resumes &mdash; including one
+    deliberately missing an email &mdash; and implement defensive parsing
+    around it so imperfect output never crashes the program.
+  </p>
+
+  <div class="what-is">
+    <span class="label">Setup &mdash; API key</span>
+    This exercise genuinely needs <em>some</em> LLM API to call &mdash;
+    there's no way to test a real extraction prompt without one. Install
+    dependencies with <code>pip install anthropic python-dotenv</code>, then
+    copy the repo's <code>.env.example</code> to <code>.env</code> and add
+    <code>ANTHROPIC_API_KEY=your-key-here</code>. The script loads it with
+    <code>python-dotenv</code>; if no key is found it prints a friendly
+    message and exits rather than crashing. Every major provider offers a
+    free tier or trial credits that easily cover the handful of test calls
+    here. No key at all? Read <code>solution.py</code> and trace the prompt
+    and the parsing logic by hand &mdash; the reasoning is the point.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. Fill in two pieces &mdash; the prompt
+    template and the defensive parser &mdash; then run it against the three
+    sample resumes.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Write the extraction prompt</h3>
+    <p>Find <code>EXTRACTION_PROMPT_TEMPLATE</code>. Define an explicit JSON schema with types for <code>name</code>, <code>email</code>, <code>years_experience</code>, and <code>skills</code>. Instruct the model to use <code>null</code>/empty for anything it can't determine rather than guessing, and to return nothing but the JSON object &mdash; no preamble, no closing remark.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Implement defensive parsing</h3>
+    <p>Find <code>parse_model_json</code>. Try <code>json.loads()</code> directly first. If that raises, try extracting the span between the first <code>{</code> and the last <code>}</code> and parse that instead. If everything fails, return <code>None</code> &mdash; never let an exception propagate out of this function.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Verify the null case</h3>
+    <p>Run <code>python starter.py</code> and look at Resume 2, which has no email listed. Check that <code>email</code> comes back as <code>null</code> rather than a plausible-looking guessed address. That single check is the most important thing this exercise tests.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Code</h3>
+    <p>A teammate wrote this defensive parser, but it still crashes the program on wrapper text. Find the bug: it only tries the direct parse, and re-raises on failure instead of falling back to span-extraction.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_parser.py</span>
+      </div>
+      <pre><code>def parse_model_json(raw_text):
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError as e:
+        raise e  &#35; bug: this still crashes the caller on wrapper text</code></pre>
+    </div>
+    <p><em>Hint:</em> instead of re-raising, attempt the first-<code>{</code>-to-last-<code>}</code> fallback from the lesson, and only return <code>None</code> if that also fails.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader for prompt wording &mdash; that's
+    intentional. The goal is being able to defend your schema and your
+    fallback logic, not matching <code>solution.py</code> word-for-word.
+    <code>solution.py</code> also adds a <code>validate_schema</code>
+    type-check step, catching the case where JSON parses successfully but a
+    field has the wrong type (e.g. <code>"years_experience": "8 years"</code>
+    instead of <code>8</code>) &mdash; run it with <code>python solution.py</code>
+    once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

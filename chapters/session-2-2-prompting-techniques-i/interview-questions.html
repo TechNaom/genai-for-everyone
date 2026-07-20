@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.2 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 2.2: zero-shot, few-shot, and role prompting — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.2 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Prompting Techniques I</h1>
+  <p>
+    Prompt engineering is consistently described by hiring managers as the
+    single most "immediately testable" GenAI skill &mdash; interviewers often
+    ask candidates to write or critique an actual prompt live, not just
+    describe techniques abstractly. Expect to be asked to <em>do</em>
+    zero-shot/few-shot/role prompting, not just define it. Each question below
+    includes what a strong answer sounds like, common red flags, and a
+    natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Explain the difference between zero-shot, few-shot, and role prompting, with a one-line example of each.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Zero-shot = no examples given, just the instruction (e.g. "classify this review as positive/negative/neutral"). Few-shot = 2&ndash;5 example input/output pairs included in the prompt to demonstrate the pattern (e.g. worked support-ticket classifications before the real ticket). Role prompting = assigning the model a persona or expertise frame ("You are a senior tax accountant...") that shifts style and focus. A strong answer gives a quick concrete example of each rather than just reciting definitions, and ideally notes they can be combined.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Confusing "role prompting" with "few-shot" (they're independent axes), or being unable to produce a concrete one-line example for at least two of the three on the spot.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Write me a prompt that uses all three at once." (e.g. a role-assigned, few-shot classification prompt for a specific task.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> When would you use few-shot prompting instead of just writing clearer instructions?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Few-shot is especially useful when the desired output format, category scheme, or style is hard to describe precisely in words but easy to demonstrate &mdash; a very specific JSON structure, a particular tone, or a classification scheme with boundary cases that are easier to show than explain (like a company-specific "P0/P1/P2/P3" priority scheme). If the task is common-sense and the categories are unambiguous, clearer instructions alone (zero-shot) are usually enough and cheaper in tokens.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating few-shot as strictly "better" and defaulting to it for every task regardless of whether the categories are already unambiguous &mdash; that just burns context window for no real gain.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How many examples would you start with, and how would you choose them?" (Typically 2&ndash;5, covering the real range of cases including at least one boundary case &mdash; not several near-duplicates of the same case.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Does role prompting actually give a model new expertise? Explain what it does and doesn't change.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>No. Role prompting shifts style, vocabulary, and focus by drawing on patterns associated with that expert framing in the training data &mdash; it does not add new factual knowledge or guarantee accuracy the model didn't already have access to. Telling a model "you are a board-certified cardiologist" changes how it presents whatever it already knows; it doesn't grant medical expertise it lacked before. This matters for high-stakes use cases: role prompting is a real tool for tone and focus, not a substitute for verification or grounding in actual facts.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Claiming a role assignment makes outputs "more accurate" or "more reliable" &mdash; that conflates a confident expert voice with verified expert accuracy, which is exactly the trap this question is testing for.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If role prompting doesn't add knowledge, why use it at all?" (e.g. it's genuinely useful for shaping tone, vocabulary, and which aspects of a response get emphasized &mdash; a security-focused code review vs. a style-focused one.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> How would you design few-shot examples for a classification task with a tricky "none of the above" category?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Include at least one explicit worked example that lands in the "none of the above" / "Other" bucket &mdash; not just the named categories. Without it, the model has never seen what an unrelated input should map to, and tends to force genuinely off-topic inputs into whichever named category feels closest, simply because no other option was demonstrated. A strong answer also notes that a good "Other" example should be genuinely unrelated to the real categories, not just a weak/ambiguous version of one of them, so it teaches a clean boundary.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Only listing examples for the "real" categories and treating "Other" as something the model should just infer on its own.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you know if your 'Other' example wasn't enough?" (e.g. test against new, genuinely off-topic inputs the examples didn't cover, and see if any get force-fit into a real category.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> A teammate says: "I told the model it's a doctor, so now its medical answers must be accurate." What's the flaw in this reasoning?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The flaw: assigning a role changes the STYLE and FRAMING of the model's answers &mdash; drawing on patterns associated with medical-expert language in training data &mdash; but it does not grant verified medical knowledge or guarantee factual accuracy. A confident, doctor-sounding voice is not the same as verified expert accuracy. This connects directly to the fluency-versus-correctness lesson from earlier in the program: the model's tone was never a reliable signal of whether its content is actually right, and a role assignment only strengthens the tone, not the underlying accuracy.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Agreeing with the teammate, or hedging without clearly stating that role prompting has no effect on factual accuracy.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What would you actually do to increase confidence in a medical answer's accuracy?" (e.g. ground it in retrieved, verified sources rather than relying on persona framing alone &mdash; the seed of retrieval-augmented approaches.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Zero-shot means giving the model
+      <code>____</code> examples of the desired output &mdash; just the instruction.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="no,zero,none" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Few-shot prompting embeds example
+      input/output pairs directly in the <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="prompt" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A role assignment shifts which region of the
+      model's learned <code>____</code> it draws from.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="patterns" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> The honest limit of role prompting: it does not
+      grant the model new <code>____</code> it didn't already have.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="capabilities,knowledge,expertise" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Few-shot examples that are too similar to each
+      other don't teach the model much beyond the <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="first one,first example" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about these techniques in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Practice the live-prompt-rewrite format specifically &mdash; interviewers often hand you a real (or vague) prompt and ask you to improve it out loud, explaining each change. This is the most common live-coding-equivalent for prompt engineering roles.</li>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Anchor every technique to a concrete example you can produce on the spot &mdash; interviewers are listening for trade-off reasoning and real examples, not textbook recall.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-2-3-prompting-techniques-ii/lesson.html">Next Session: Prompting Techniques II &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

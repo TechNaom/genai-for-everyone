@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.1 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercises for Session 2.1: Anatomy of a Great Prompt — the Prompt Rewrite Exercise, diagnosing and fixing five deliberately weak prompts pillar by pillar.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-1" data-chapter-id="session-2-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.1 Exercises</span>
+    <span class="reading-time">15 min, hands-on</span>
+  </div>
+  <h1>Exercises: Prompt Rewrite Exercise (Bad &rarr; Great)</h1>
+  <p>
+    Build the habit of diagnosing exactly which pillar &mdash; clarity, context,
+    constraints, format &mdash; is missing from a weak prompt, then fixing it
+    deliberately, not just making it "sound nicer." This is a pure prompt-design
+    and reasoning exercise: no API calls, no paid keys, just plain Python that
+    runs anywhere.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python --version</code>).
+    Download <code>starter.py</code> below, then run it from a terminal with
+    <code>python starter.py</code>. It prints each weak prompt and flags any
+    entry you haven't filled in yet.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. For each of the 5 weak prompts in
+    <code>WEAK_PROMPTS</code>, fill in three fields. The test for each rewrite:
+    <strong>could a competent person, given ONLY your rewritten prompt, produce
+    something close to what's actually needed, without guessing at anything
+    important?</strong>
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Diagnose the missing pillars</h3>
+    <p>Set <code>missing_pillars</code> to a list containing any of <code>"clarity"</code>, <code>"context"</code>, <code>"constraints"</code>, <code>"format"</code> &mdash; whichever ones this weak prompt is genuinely missing. Some prompts are missing all four.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Rewrite it</h3>
+    <p>Set <code>rewritten_prompt</code> to your improved version. Invent any reasonable specifics you need (an audience, a business, a length) &mdash; the point is that your version closes the gaps you just diagnosed.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Justify the change</h3>
+    <p>Set <code>why_better</code> to one sentence explaining what changed and why it matters. Re-run the script after each edit &mdash; it counts how many prompts remain unrewritten.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Code</h3>
+    <p>A teammate diagnosed this prompt but the script prints <code>WARNING: unrecognized pillar(s)</code> instead of accepting the row. Only four pillar names are valid. Find the bug and fix the <code>missing_pillars</code> list so it validates cleanly.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_entry.py</span>
+      </div>
+      <pre><code>{
+    "weak_prompt": "Give me some marketing ideas.",
+    "missing_pillars": ["context", "boundaries", "format"],  &#35; only "clarity",
+                                                               &#35; "context", "constraints", "format" are valid
+    "rewritten_prompt": "Give me 5 low-budget marketing ideas for a "
+                         "local coffee shop targeting students, each "
+                         "implementable within a week under $200. "
+                         "Format as a numbered list.",
+    "why_better": "Names an audience, a budget, a timeframe, and a shape "
+                   "instead of leaving all of that to guesswork.",
+}</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>WEAK_PROMPTS = [
+    {
+        "weak_prompt": "Write a blog post about productivity.",
+        "missing_pillars": None,     &#35; TODO: e.g. ["context", "constraints", "format"]
+        "rewritten_prompt": None,    &#35; TODO
+        "why_better": None,          &#35; TODO
+    },
+    &#35; ... 4 more weak prompts ...
+]
+
+
+def review():
+    incomplete = 0
+    for i, item in enumerate(WEAK_PROMPTS, 1):
+        if item["missing_pillars"] is None or item["rewritten_prompt"] is None:
+            incomplete += 1
+            continue
+        &#35; ... validate pillar names and print the row ...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. Several of these
+    prompts could reasonably be missing a slightly different combination of
+    pillars depending on how you read them. The goal isn't perfect agreement
+    with <code>solution.py</code>; it's being able to <strong>defend your
+    diagnosis and your rewrite.</strong> Compare your reasoning against
+    <code>solution.py</code> (run it with <code>python solution.py</code>) once
+    you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

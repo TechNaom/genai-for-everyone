@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.1 Anatomy of a Great Prompt — GenAI for Everyone</title>
+<meta name="description" content="The four pillars of a great prompt — clarity, context, constraints, and format — with a worked bad-prompt-to-great-prompt rewrite and the test for when a prompt has enough detail.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.1</span>
+    <span class="badge-difficulty">Beginner</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>Anatomy of a Great Prompt</h1>
+  <p><em>Week 1 gave you the mental model. Week 2 starts turning that model into a repeatable skill &mdash; and this is the single most immediately useful, immediately testable chapter in the whole program.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#just-ask-nicely">1. Why "Just Ask Nicely" Isn't a Strategy</a>
+    <a href="#four-pillars">2. The Four Pillars of a Great Prompt</a>
+    <a href="#worked-rewrite">3. A Worked Rewrite, Pillar by Pillar</a>
+    <a href="#when-to-stop">4. When More Detail Stops Helping</a>
+  </nav>
+
+  <div class="hook">
+    In Week 1's final session you wrote system prompts by feel &mdash; intuition
+    about what a "beginner" explanation versus an "expert" explanation should
+    contain. That intuition got you through, but it doesn't scale, doesn't
+    transfer cleanly to a new task, and is nearly impossible to debug when a
+    prompt goes wrong and you can't say <em>why</em>. This chapter replaces "feel"
+    with a checklist you can run on any prompt, for any task, every single time.
+    It also happens to be exactly what real interviews probe hardest &mdash; you
+    will very likely be handed a bad prompt live and asked to fix it on the spot.
+    By the end of this chapter, that's a routine you can run without flinching.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="just-ask-nicely">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Why "Just Ask Nicely" Isn't a Strategy</h2>
+
+    <p>
+      Here's a common, costly habit: treating an LLM prompt like a Google search
+      query &mdash; a few keywords, minimal structure, trusting that "the AI is
+      smart enough to figure out what I mean." This works <em>sometimes</em>, for
+      simple requests with one obvious interpretation. It fails constantly for
+      anything with real ambiguity &mdash; and the failure is subtle. You don't get
+      an error message. You get a confident, fluent, <em>wrong-for-your-purposes</em>
+      answer, because the model genuinely had no way to know what you actually
+      wanted from the information you gave it.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">prompt-a-vs-prompt-b.txt</span>
+      </div>
+      <pre><code>Prompt A: "Write something about our product."
+
+Prompt B: "Write a 100-word product description for our wireless
+noise-canceling headphones, targeting busy professionals who travel
+frequently. Emphasize battery life and comfort during long flights.
+Tone: confident but not salesy. Format: a single paragraph, no
+bullet points."</code></pre>
+    </div>
+
+    <p>
+      Both are grammatically valid English. Only one gives the model enough to
+      work with to produce something actually useful on the first try. Prompt A
+      isn't <em>wrong</em> &mdash; the model will produce <em>something</em> &mdash;
+      but that something is essentially a guess. Every missing detail (which
+      product? which audience? what tone? what length?) gets filled in with
+      whatever's statistically most generic, because nothing in the prompt steered
+      it elsewhere.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a prompt, really?</span>
+      A prompt is not a question &mdash; it's a <strong>specification</strong>. You
+      are not asking the model what it thinks; you're specifying what you need
+      produced, with enough detail that a competent person reading only that
+      specification could produce something close to what you want. If you
+      wouldn't hand Prompt A to a freelance writer and expect a usable result, you
+      shouldn't expect one from an LLM either &mdash; and for the same reason:
+      critical information is simply <em>missing</em>, not implied.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Treating a prompt like a search query works only for simple, unambiguous requests.</li>
+        <li>Missing detail isn't intelligently inferred &mdash; it's filled in with whatever's statistically generic.</li>
+        <li>A prompt is a specification, not a question: could a competent stranger produce what you need from it alone?</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="four-pillars">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. The Four Pillars of a Great Prompt</h2>
+
+    <p>
+      Every effective prompt, regardless of task, tends to cover four distinct
+      dimensions. Missing any one of them is usually where a "not quite right"
+      output comes from &mdash; and naming which pillar is missing is exactly the
+      diagnostic skill this session builds.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Pillar 1: Clarity</span>
+      Clarity means the <em>core task</em> is unambiguous. Not "write about X" but
+      "write a [specific thing] that does [specific job]." Vague verbs
+      ("discuss," "talk about," "cover") are a warning sign &mdash; they describe
+      an activity, not a deliverable. Specific verbs ("summarize," "compare,"
+      "draft," "classify," "translate") describe an actual output.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">pillar-1-clarity.txt</span>
+      </div>
+      <pre><code>Weak:  "Talk about the meeting."
+Clear: "Summarize the key decisions and action items from this
+        meeting transcript in 5 bullet points."</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Pillar 2: Context</span>
+      Context means giving the model the background information it needs to make
+      good decisions &mdash; information that isn't part of the instruction itself,
+      but shapes what a good answer looks like. This connects directly to Session
+      1.2's context window concept: context is <em>literally</em> what you're
+      choosing to put on the model's "desk."
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">pillar-2-context.txt</span>
+      </div>
+      <pre><code>Without context: "Write a follow-up email."
+  (Follow-up to what? About what? To whom?)
+
+With context: "Write a follow-up email to a client who attended our
+  product demo last week but hasn't responded since. We offered a
+  10% discount during the call that's still on the table."</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Pillar 3: Constraints</span>
+      Constraints define the boundaries of the output &mdash; length, format,
+      tone, what to include, and importantly, what to <em>exclude</em>.
+      Constraints are where most "technically correct but unusable" outputs get
+      fixed. A model given no length constraint might write 50 words or 500; a
+      model given no format constraint might return prose when you needed a
+      table.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">pillar-3-constraints.txt</span>
+      </div>
+      <pre><code>"Keep it under 150 words."
+"Respond only in valid JSON."
+"Don't mention pricing."
+"Write in second person."
+"Use no more than 2 sentences per paragraph."</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Pillar 4: Format Specification</span>
+      Format specification is related to constraints but deserves its own focus,
+      because it's so often the difference between an answer you can <em>use</em>
+      and one you have to <em>rework</em>. If you need structured output (a list,
+      a table, JSON, a specific template), say so explicitly and show the shape
+      if it's not obvious. Don't assume the model will guess the exact structure
+      your downstream code or workflow needs.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">pillar-4-format.txt</span>
+      </div>
+      <pre><code>Vague:     "Give me the pros and cons."
+Specified: "Give me the pros and cons as two separate bulleted
+            lists, with a maximum of 4 points each, under the
+            headers 'Pros' and 'Cons'."</code></pre>
+    </div>
+
+    <div class="real-world">
+      <span class="label">The one-line version</span>
+      <ul>
+        <li><strong>Clarity:</strong> what's the deliverable? <strong>Context:</strong> what does the model need to know? <strong>Constraints:</strong> what are the boundaries? <strong>Format:</strong> what shape does the output need to be?</li>
+        <li>Most disappointing outputs trace back to exactly one of these four being missing &mdash; not a "dumb" model.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Clarity = an unambiguous core task, driven by a specific verb.</li>
+        <li>Context = the background the model needs to make good decisions.</li>
+        <li>Constraints = the boundaries on length, tone, and content.</li>
+        <li>Format = the actual shape the output needs to take.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="worked-rewrite">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. A Worked Rewrite, Pillar by Pillar</h2>
+
+    <p>
+      Let's take a genuinely bad prompt and rebuild it methodically, naming which
+      pillar each addition addresses. This is the exact move you'll be asked to
+      perform live in an interview.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">rewrite_walkthrough.txt</span>
+      </div>
+      <pre><code>Starting prompt: "Help with customer email."
+  -> fails on every pillar at once: no task, no background,
+     no boundaries, no shape.
+
++ Clarity
+  "Draft a reply to a customer email."
+  -> now we know the deliverable is a REPLY, not advice or analysis.
+
++ Context
+  "Draft a reply to a customer who emailed asking for a refund on a
+  product that arrived damaged. They've been a customer for 3 years
+  and this is their first complaint."
+  -> the model now knows the situation and the customer's history,
+     and can calibrate tone: a loyal first-time complainer deserves
+     a different response than a chronic one.
+
++ Constraints
+  "...Approve the refund, apologize for the inconvenience, and offer
+  a 15% discount on their next order as a goodwill gesture. Keep the
+  tone warm and personal, not corporate. Maximum 120 words."
+  -> now the model knows the exact OUTCOME to deliver, not just the
+     situation.
+
++ Format
+  "...Format as a complete email including a subject line."
+  -> the output is immediately usable, not a paragraph you have to
+     manually turn into an email.</code></pre>
+    </div>
+
+    <p>
+      <strong>Final prompt:</strong> "Draft a reply to a customer who emailed
+      asking for a refund on a product that arrived damaged. They've been a
+      customer for 3 years and this is their first complaint. Approve the
+      refund, apologize for the inconvenience, and offer a 15% discount on
+      their next order as a goodwill gesture. Keep the tone warm and personal,
+      not corporate. Maximum 120 words. Format as a complete email including a
+      subject line."
+    </p>
+
+    <p>
+      Notice this isn't a <em>longer</em> prompt for the sake of length &mdash;
+      every addition did real work. That's the difference between padding and
+      precision, and it's the test you should apply to your own prompts before
+      you consider them "done": does this sentence remove a guess, or just add
+      words?
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> before asking an AI assistant to help you build a reusable prompt-rewrite habit into code, an experienced practitioner decides the <em>schema</em> first: for each weak prompt, capture which pillar(s) are missing, the rewritten version, and a one-sentence justification. That schema forces the same diagnostic reasoning you just walked through above, on every row, instead of letting "make it better" stay vague.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python script with a list of weak-prompt dictionaries, each with missing pillars, a rewrite, and a reason..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's example &mdash; does it force an explicit missing-pillar diagnosis for every row, or does it just produce prettier prose? That comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a small Python script that defines a list of dictionaries called WEAK_PROMPTS. Each dictionary has four keys: "weak_prompt" (a genuinely vague real-world prompt), "missing_pillars" (a list containing any of "clarity", "context", "constraints", "format"), "rewritten_prompt" (an improved version that closes those specific gaps), and "why_better" (one sentence explaining what changed and why it matters). Include a function that prints each entry and warns if any missing_pillars value is not one of the four valid pillar names. Do not use any external libraries or API calls -- it's a pure prompt-design reasoning script.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Rebuild a bad prompt one pillar at a time, and be able to say out loud which pillar each addition fixes.</li>
+        <li>Every addition should remove a guess the model would otherwise have to make &mdash; not just add words.</li>
+        <li>This exact "narrate your rewrite" move is the most common live-exercise format in real prompt-engineering interviews.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="when-to-stop">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. When More Detail Stops Helping</h2>
+
+    <p>
+      A reasonable question at this point: doesn't there come a point where
+      you're just over-engineering a prompt for a simple task? Yes &mdash; and
+      recognizing that point is itself part of the skill.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Signal that you've added enough</span>
+      Could a competent person, reading only your prompt, produce something
+      close to what you actually need, without having to guess at anything
+      important? If yes, you're done &mdash; further additions are diminishing
+      returns at best, and at worst can clutter the prompt in ways that actually
+      hurt focus. This is Session 1.2's "lost in the middle" effect showing up
+      again, now inside a single prompt instead of a long document.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Signal that you need more</span>
+      The model's output technically answers the prompt but isn't usable, and
+      when you look back at your prompt, you can identify a specific piece of
+      information you knew but never actually told the model. That gap &mdash;
+      something <em>you</em> knew that <em>the model</em> had no way to know
+      &mdash; is almost always the fix.
+    </div>
+
+    <div class="real-world">
+      <span class="label">Why length lies</span>
+      <ul>
+        <li>A prompt can be long, well-formatted, and detailed-<em>looking</em> while still missing the one piece of context that actually mattered &mdash; length is not the same thing as completeness.</li>
+        <li>This is the trap the Pro path project in this session is built around: a prompt that reads as thorough on first glance, but fails a real business task because of a single missing detail.</li>
+        <li>The practical habit: don't judge a prompt by its word count. Judge it by whether a reader could act on it without guessing.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>"Enough detail" = a competent reader could act on the prompt without guessing at anything important.</li>
+        <li>If output is unusable, look for a specific fact you knew but never told the model &mdash; that's usually the whole fix.</li>
+        <li>A long, polished-looking prompt can still be missing one critical piece of context; length doesn't guarantee completeness.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>A prompt is a specification, not a question.</strong> Missing information doesn't get intelligently inferred &mdash; it gets filled in with whatever's statistically generic, which is usually not what you wanted.</li>
+      <li><strong>Four pillars: clarity (unambiguous core task), context (background the model needs), constraints (boundaries on length/tone/content), and format (the actual shape of the output).</strong> Most disappointing outputs trace back to a missing pillar, not a "dumb" model.</li>
+      <li><strong>Specific verbs over vague verbs.</strong> "Summarize," "compare," "classify" describe a deliverable; "discuss," "cover," "talk about" describe an activity.</li>
+      <li><strong>The test for "is this prompt good enough":</strong> could a competent person, given only this prompt, produce something close to what you need without guessing at anything important?</li>
+      <li><strong>More detail isn't always better.</strong> Once a prompt covers what's genuinely needed, additional padding can clutter focus rather than improve output &mdash; and a long prompt can still be missing the one detail that actually matters.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the Prompt
+    Rewrite exercise puts the four-pillar diagnosis into practice on five
+    genuinely weak prompts.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

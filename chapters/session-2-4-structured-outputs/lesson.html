@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.4 Structured Outputs — GenAI for Everyone</title>
+<meta name="description" content="Why reliable JSON from an LLM is harder than it looks, the four techniques that actually fix it, a worked resume-parser example, and the failure modes that survive even good prompts.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.4</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>Structured Outputs</h1>
+  <p><em>Every technique so far in Week 2 produced output meant for a human to read. This chapter is about output meant for <strong>code</strong> to read &mdash; and code doesn't forgive a stray sentence the way a human does.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#harder-than-it-sounds">1. Why Reliable JSON Is Harder Than It Sounds</a>
+    <a href="#techniques">2. Four Techniques That Actually Improve Reliability</a>
+    <a href="#worked-example">3. A Worked Example: The Resume Parser</a>
+    <a href="#still-goes-wrong">4. When Structured Output Still Goes Wrong</a>
+  </nav>
+
+  <div class="hook">
+    A human reading slightly-off prose barely notices. A parser handed
+    slightly-off JSON <strong>crashes outright.</strong> That one sentence is the
+    entire reason this chapter exists. The moment you build anything beyond a
+    simple chatbot &mdash; a form-filler, a data extractor, an agent calling tools
+    (which you'll formalize in Week 4) &mdash; you need the model's output in a
+    precise, predictable shape your code can rely on. Getting this wrong is one
+    of the most common sources of real production bugs in GenAI applications,
+    and, encouragingly, it's almost always avoidable with a handful of
+    disciplined practices. That's what today is about.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="harder-than-it-sounds">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Why Reliable JSON Is Harder Than It Sounds</h2>
+
+    <p>
+      It's tempting to assume that asking a model "return this as JSON" is
+      enough. Sometimes it is. But models can &mdash; and regularly do &mdash;
+      add explanatory text before or after the JSON ("Sure, here's the JSON
+      you requested:"), use inconsistent field names across calls, produce
+      syntactically malformed JSON (a trailing comma, an unescaped quote
+      inside a string), or simply misunderstand which fields you actually
+      wanted.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Why this happens, mechanically</span>
+      Recall Session 1.1: the model is predicting the most statistically
+      plausible next token. "Sure, here's the JSON you requested:" followed by
+      an explanation is an <em>extremely</em> common pattern in the kind of
+      text models train on &mdash; people explaining what they're about to
+      show you. Without explicit instruction otherwise, that conversational
+      politeness pattern can leak into output specifically meant to be
+      machine-parsed. It's not the model being careless; it's the same
+      next-token mechanism from Session 1.1 doing exactly what it always does,
+      applied to a context where you needed something stricter.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">what_breaks_a_parser.txt</span>
+      </div>
+      <pre><code>"Sure, here's the JSON you requested:\n{...}"    -> extra text before the object
+"{...}\nLet me know if you need anything else!"  -> extra text after the object
+{"full_name": "..."}  vs  {"name": "..."}        -> inconsistent field naming
+{"skills": ["Python", "SQL",]}                   -> trailing comma, invalid JSON
+{"years_experience": "8 years"}                  -> right field, wrong type</code></pre>
+    </div>
+
+    <p>
+      Here's the real-world cost of getting this wrong: if your code does
+      something like <code>json.loads(model_response)</code> and the model
+      prepended "Here's the JSON:" before the actual object, that call throws
+      an exception. In a live application, that's not a cosmetic issue
+      &mdash; it's a crash, or at minimum a swallowed error that silently
+      breaks a feature. This is precisely the gap between "looks like it
+      works in a quick test" and "works reliably in production," and it's one
+      of the most common, most avoidable gaps in real GenAI applications.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Models can wrap JSON in conversational text, use inconsistent field names, or produce malformed syntax &mdash; none of this is a hypothetical edge case.</li>
+        <li>The cause is mechanical: conversational-explanation patterns are extremely common in training data and can leak into machine-parsed output.</li>
+        <li>An unhandled <code>json.loads()</code> failure isn't cosmetic &mdash; it's a crash or a silently broken feature in production.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="techniques">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Four Techniques That Actually Improve Reliability</h2>
+
+    <div class="what-is">
+      <span class="label">Technique 1: Explicit schema definition in the prompt</span>
+      Don't just say "return JSON" &mdash; show the exact shape you want,
+      field by field, ideally with the expected type for each field. The
+      second version below removes ambiguity about field names (is it
+      "name" or "full_name"? "email" or "email_address"?) and explicitly
+      forbids the conversational wrapper text that causes parsing failures.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">weak-vs-strong.txt</span>
+      </div>
+      <pre><code>WEAK:   "Extract the name and email from this text as JSON."
+
+STRONG: "Extract the name and email from this text and return ONLY a JSON
+         object in exactly this format, with no other text before or after:
+         {
+           \"name\": \"string\",
+           \"email\": \"string\"
+         }"</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Technique 2: Explicit "no preamble" instructions</span>
+      Directly instructing the model to return <em>only</em> the JSON, with
+      no introductory or closing text, meaningfully reduces (though doesn't
+      perfectly eliminate) the conversational-wrapper problem from Sub-topic
+      1. Phrases like "Respond with ONLY the JSON object, no other text" or
+      "Do not include any explanation" are doing real, specific work &mdash;
+      they're not just politeness filler.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Technique 3: A provider's structured-output / JSON mode, when available</span>
+      Many model providers offer a dedicated feature &mdash; sometimes called
+      "JSON mode" or "structured outputs" &mdash; that constrains the
+      model's output generation at a mechanical level to guarantee
+      syntactically valid JSON, sometimes even validating against a schema
+      you provide. When available, this is meaningfully more reliable than
+      prompt instructions alone, because it's enforced by the generation
+      process itself rather than relying on the model choosing to follow an
+      instruction. Check your specific provider's documentation &mdash; exact
+      implementation and naming varies.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Technique 4: Defensive parsing in your code &mdash; the most important one</span>
+      Here's the technique that matters most, and the one most often
+      skipped: <strong>never assume the model's output is valid just because
+      you asked nicely.</strong> Always parse defensively &mdash; try a
+      direct parse, then fall back to extracting the span between the first
+      <code>{</code> and last <code>}</code> if that fails, and return a
+      clear failure signal rather than letting an exception propagate.
+    </div>
+
+    <p>
+      This isn't elaborate &mdash; it's a simple, honest acknowledgment that
+      even a well-engineered prompt can occasionally fail, and your code's
+      job is to handle that failure gracefully (log it, retry, fall back to a
+      default) rather than crash the entire application. This connects
+      directly to Session 1.5: even with every mitigation in this chapter
+      applied, you are still working with a system that doesn't guarantee its
+      own output, and good engineering plans for that reality rather than
+      hoping around it. Try the toy version below &mdash; it's the same shape
+      of function you'll build for real in the exercise.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">defensive_parse_demo.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="22">import json
+
+def parse_model_json(raw_text):
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        # Fallback: maybe there's wrapper text around the JSON.
+        # Extract the span between the first { and the last }.
+        start = raw_text.find("{")
+        end = raw_text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            try:
+                return json.loads(raw_text[start:end + 1])
+            except json.JSONDecodeError:
+                pass
+        return None  # signal failure clearly rather than crashing
+
+
+samples = [
+    '{"name": "Jane", "email": null}',
+    'Sure, here is the JSON:\n{"name": "Jane", "email": null}\nLet me know!',
+    'I cannot help with that request.',
+]
+
+for raw in samples:
+    result = parse_model_json(raw)
+    print(f"input:  {raw!r}")
+    print(f"parsed: {result}\n")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; notice the second sample still parses correctly despite the wrapper text, and the third fails cleanly instead of crashing.</div>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Technique 1 &mdash; give an explicit schema with types, not just "return JSON."</li>
+        <li>Technique 2 &mdash; explicitly forbid preamble/closing text.</li>
+        <li>Technique 3 &mdash; use a provider's JSON/structured-output mode when it's available; it's enforced mechanically, not just requested.</li>
+        <li>Technique 4, the most important &mdash; parse defensively in your own code, because it's the only technique that doesn't depend on the model behaving.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="worked-example">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. A Worked Example: The Resume Parser</h2>
+
+    <p>
+      Let's combine every technique from Sub-topic 2 into something realistic:
+      a prompt that extracts structured data from a resume's text.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">resume-extraction-prompt.txt</span>
+      </div>
+      <pre><code>Extract the following information from this resume text and return ONLY
+a JSON object in exactly this format, with no other text before or after:
+
+{
+  "name": "string",
+  "email": "string or null if not found",
+  "years_experience": "number, your best estimate based on listed roles",
+  "skills": ["array", "of", "strings"]
+}
+
+If a field cannot be determined from the text, use null for strings/numbers
+or an empty array for skills. Do not guess at information not present.
+
+Resume text:
+{resume_text}</code></pre>
+    </div>
+
+    <p>
+      Notice several deliberate choices here: the schema is explicit with
+      types (Technique 1); there's explicit handling instruction for missing
+      data &mdash; null, not a guess, connecting straight back to Session
+      1.5's hallucination concerns, since an absent field is far better than
+      a confidently invented one; and the "no other text" instruction guards
+      against the conversational-wrapper problem (Technique 2). Combined with
+      defensive parsing in the surrounding code (Technique 4), this is a
+      realistic, production-reasonable approach &mdash; not a toy example.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill here isn't the Python <code>try/except</code> &mdash; it's deciding, before you ask an AI assistant to write it, exactly which failure modes the function must survive: wrapper text before the JSON, wrapper text after it, a response that isn't JSON at all, and a response that parses but has the wrong field types. A vague request like "write a function to parse JSON safely" gets you a bare <code>try/except</code> that still can't handle wrapper text. Naming the specific failure modes up front is what turns a generic try/except into the fallback-extraction logic this session actually needs.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python function that safely parses JSON from an LLM response, handling..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against <code>parse_model_json</code> above &mdash; does it handle wrapper text on both sides, and does it fail with a clear signal (like <code>None</code>) instead of raising? That comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python function parse_model_json(raw_text: str) that safely parses JSON returned by an LLM. It must handle these cases without ever raising an uncaught exception: (1) raw_text is already valid JSON -- parse and return it directly; (2) raw_text is valid JSON surrounded by conversational wrapper text before and/or after it (e.g. "Sure, here's the JSON:\n{...}\nLet me know!") -- extract just the JSON object and parse that; (3) raw_text contains no valid JSON at all -- return None rather than raising. Do not use any external libraries beyond the standard library's json module.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A production-reasonable extraction prompt combines an explicit typed schema, a "no other text" instruction, and null-for-missing guidance.</li>
+        <li>Deciding the exact failure modes a parsing function must survive is the real design work &mdash; the code itself is straightforward once that's clear.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="still-goes-wrong">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. When Structured Output Still Goes Wrong</h2>
+
+    <p>
+      Even with every technique applied, a few realistic failure modes remain
+      worth knowing about &mdash; because "I told the model what to do"
+      is not the same as "the model always does it."
+    </p>
+
+    <div class="what-is">
+      <span class="label">Type mismatches</span>
+      You asked for <code>years_experience</code> as a number; the model
+      returns the string <code>"5 years"</code> instead of the integer
+      <code>5</code>. Defensive parsing should validate types, not just
+      successfully parse JSON syntax &mdash; <strong>successfully parsed JSON
+      can still have the wrong shape.</strong>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Hallucinated fields, filled in anyway</span>
+      Despite explicit "use null" instructions, a model can still guess at a
+      missing field &mdash; this is a real, documented failure mode, not a
+      hypothetical. It's exactly why a human review step matters for any
+      genuinely high-stakes extraction task, and why you shouldn't treat "I
+      told it not to guess" as a guarantee.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Schema drift across many calls</span>
+      A prompt that reliably returns a consistent shape in your testing might
+      occasionally drift on a particularly unusual input it wasn't tested
+      against. This is part of why Week 5's evaluation practices exist:
+      testing against a representative range of real inputs, not just a few
+      convenient examples.
+    </div>
+
+    <div class="real-world">
+      <span class="label">In the Real World</span>
+      <ul>
+        <li>A resume parser that silently guesses "3 years experience" for a candidate with no dates listed doesn't just produce a wrong number &mdash; it can bias downstream ranking or filtering logic that trusts the field blindly.</li>
+        <li>Teams that ship structured-extraction features without type validation routinely discover the bug only when a downstream calculation (like sorting candidates by experience) throws or silently misbehaves on a string where it expected a number.</li>
+        <li>"It worked on my 10 test resumes" is one of the most common false-confidence traps in real GenAI feature launches &mdash; production input is always messier than development input.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Type mismatches survive syntax-valid JSON &mdash; validate types, not just that <code>json.loads()</code> succeeded.</li>
+        <li>Models can still hallucinate a value into a field you told them to leave null &mdash; instructions reduce but don't eliminate the risk.</li>
+        <li>A prompt that's consistent on your test set can still drift on unusual real-world inputs &mdash; broad testing is part of the fix, not a nice-to-have.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Models can wrap JSON in conversational text, use inconsistent field names, or produce malformed syntax</strong> &mdash; none of this is a hypothetical edge case; it's common enough to plan for by default.</li>
+      <li><strong>Four techniques that help:</strong> explicit schema definition with types, explicit "no preamble" instructions, a provider's structured-output mode when available, and defensive parsing in your own code.</li>
+      <li><strong>Defensive parsing is the most important technique</strong>, because it's the one that doesn't depend on the model behaving &mdash; it's your code's responsibility to handle failure gracefully rather than crash.</li>
+      <li><strong>For missing data, instruct null/empty rather than guessing</strong> &mdash; an absent field is far safer than a confidently hallucinated one, directly connecting to Session 1.5.</li>
+      <li><strong>Successfully parsed JSON can still have the wrong shape or types</strong> &mdash; validate structure and types, not just JSON syntax validity.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the Resume
+    Parser exercise puts defensive parsing into practice against real model
+    output.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

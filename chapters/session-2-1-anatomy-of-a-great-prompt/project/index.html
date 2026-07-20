@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.1 Project: The Thoroughness Trap — GenAI for Everyone</title>
+<meta name="description" content="Diagnose four prompts that LOOK thorough but are each missing one critical piece of context — the Pro path build for Session 2.1.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.1 Project</span>
+    <span class="reading-time">20 min build</span>
+  </div>
+  <h1>The Thoroughness Trap</h1>
+  <p>The Pro path build for this session &mdash; a diagnostic exercise built directly on Part 4 of the lesson: a prompt can be long, well-formatted, and detailed-<em>looking</em> while still missing the one critical piece of context that actually matters.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>1. Outage apology email
+   Missing detail: The prompt never mentions the SLA service credit
+   that Enterprise customers are contractually owed and are already
+   receiving.
+   Why it fails: Without that detail, the generated email apologizes
+   but says nothing about the credit -- Enterprise customers who know
+   their contract will notice the omission and may escalate a support
+   ticket asking where their credit is, creating exactly the confusion
+   the email was supposed to prevent.
+   Fixed prompt: "Write an email to all customers explaining that our
+   service had a 4-hour outage yesterday..."</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Download <code>starter.py</code> below and run <code>python starter.py</code>.
+    No API key, no internet access, and no external libraries needed &mdash;
+    this is a pure diagnostic-reasoning exercise.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>
+    Four <code>CASES</code>, each pairing a <code>thorough_prompt</code> that
+    reads as genuinely reasonable &mdash; clear task, decent length, sensible
+    tone and format guidance &mdash; with a <code>business_situation</code>
+    paragraph that reveals one real fact the prompt writer forgot. Fill in the
+    three <code>None</code> fields for each case:
+  </p>
+  <ul>
+    <li><strong>missing_critical_detail</strong> &mdash; the ONE fact missing from the prompt.</li>
+    <li><strong>why_it_fails</strong> &mdash; one sentence on what breaks downstream without it.</li>
+    <li><strong>fixed_prompt</strong> &mdash; the original prompt, rewritten to actually include that fact.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">The habit this trains</span>
+    Read each <code>thorough_prompt</code> on its own first &mdash; it should
+    look genuinely good, not obviously lazy. Then read the
+    <code>business_situation</code>, which contains the fact a real
+    stakeholder in that scenario would already know. Your job is to spot the
+    gap between what the prompt says and what the situation actually
+    requires &mdash; exactly the way you'd have to on the job when a prompt
+    "looks fine" but the output still causes a real problem.
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Write a fifth case from your own work or coursework &mdash; a prompt that looked thorough to you at the time but was missing something you only noticed later.</li>
+    <li>Run both the original <code>thorough_prompt</code> and your <code>fixed_prompt</code> through a real model (free tier of any provider) and compare how the outputs actually differ.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>The most expensive prompt failures aren't the obviously lazy one-liners &mdash; those get caught immediately because the output is obviously bad. The expensive ones are prompts that look complete: good length, clear tone, solid formatting, and one missing fact that nobody notices until it causes a real support ticket, a compliance problem, or a production bug. Learning to interrogate a "thorough-looking" prompt against the actual business situation, not just against a length or formatting checklist, is the habit this project is built to train.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

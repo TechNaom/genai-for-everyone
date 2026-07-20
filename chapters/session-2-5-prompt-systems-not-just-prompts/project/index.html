@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.5 Project: Three-Step Prompt Chain — GenAI for Everyone</title>
+<meta name="description" content="Build a classify, extract, draft-reply prompt chain where each step's output feeds the next, and every intermediate step can be inspected and logged independently.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.5 Project</span>
+    <span class="reading-time">25 min build</span>
+  </div>
+  <h1>Three-Step Prompt Chain</h1>
+  <p>The Pro-path build for this session &mdash; a small, working demonstration of the classify &rarr; extract &rarr; draft-reply chain from Part 4 of the lesson, where each step's output feeds into the next and every intermediate step can be inspected and logged independently.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>--- Step 1: classify -- prompt ---
+Classify the category of this customer email as exactly
+one of: "shipping", "billing", "returns", "other".
+...
+--- Step 1: classify -- output: shipping ---
+
+--- Step 2: extract -- prompt ---
+...
+--- Step 2: extract -- output: {'order_numbers': ['ORD-77410'], 'dates': []} ---
+
+--- Step 3: draft reply -- prompt ---
+...
+--- Step 3: draft reply -- output ---
+Thanks for reaching out regarding order ORD-77410. We've logged this as a
+shipping request and a member of our team will follow up shortly with an
+update. We appreciate your patience.
+
+=== Chain result ===
+Category:  shipping
+Extracted: {'order_numbers': ['ORD-77410'], 'dates': []}
+Reply:     Thanks for reaching out regarding order ORD-77410. ...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    No installation and no API key needed. Download <code>starter.py</code>
+    below and run <code>python starter.py</code>. A small
+    <code>simulate_model()</code> stand-in lets the whole chain run offline, for
+    free &mdash; the point of this project is the <strong>chain structure</strong>,
+    not live model output.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>Fill in the three <code># TODO</code> functions in <code>starter.py</code>:</p>
+  <ul>
+    <li><strong>TODO 1</strong> &mdash; <code>classify_step</code>: format <code>CLASSIFY_TEMPLATE</code> with the email text, then use the simple keyword rule described in the comment to return a category (<code>"shipping"</code>, <code>"billing"</code>, <code>"returns"</code>, or <code>"other"</code>).</li>
+    <li><strong>TODO 2</strong> &mdash; <code>extract_step</code>: format <code>EXTRACT_TEMPLATE</code>, then pull out any <code>ORD-</code>-prefixed tokens from the email as order numbers.</li>
+    <li><strong>TODO 3</strong> &mdash; <code>draft_step</code>: format <code>DRAFT_REPLY_TEMPLATE</code> with the category and extracted data from steps 1&ndash;2, then build a short reply string.</li>
+  </ul>
+  <p>Each function should print its formatted prompt when <code>verbose=True</code> &mdash; that's what makes the chain's intermediate steps inspectable, which is the entire point of this build.</p>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Swap <code>simulate_model()</code> for a real API call (same client pattern from Week 3) and let the model actually classify, extract, and draft.</li>
+    <li>Add a fourth category and a corresponding keyword rule.</li>
+    <li>Log each step's output to a list instead of just printing it, so you can write an automated check that the chain produced a non-empty reply for every sample email you try.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>A single combined prompt trying to classify, extract, and draft all at once is much harder to debug when something goes wrong &mdash; you'd have no way to tell which part of the instruction the model failed to follow. This chain makes that failure mode visible: every step has one job, one documented prompt, and one inspectable output, which is exactly the shape of a real production pipeline you'd build once a task has genuinely distinct sub-problems.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.5 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercises for Session 2.5: Prompt Systems, Not Just Prompts — build a Reusable Prompt Template Library with named variables, docstrings, and lightweight non-exact-match tests.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-5" data-chapter-id="session-2-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.5 Exercises</span>
+    <span class="reading-time">20 min, hands-on</span>
+  </div>
+  <h1>Exercises: Reusable Prompt Template Library</h1>
+  <p>
+    Build a small library of prompt templates with named variables, clear
+    documentation, and lightweight tests &mdash; not exact-match tests, but checks
+    for specific characteristics the output should have. This is a pure template
+    and test-design exercise: no API calls, no paid keys, just plain Python that
+    runs anywhere.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python --version</code>).
+    Download <code>starter.py</code> below, then run it from a terminal with
+    <code>python starter.py</code>. It formats every finished template, runs its
+    test checks, and prints a pass/fail/incomplete count.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. Three templates are started for you
+    (<code>FOLLOW_UP_TEMPLATE</code>, <code>REFUND_APOLOGY_TEMPLATE</code>, and a
+    blank <code>SHIPPING_DELAY_TEMPLATE</code> for you to write), and two more are
+    left entirely up to you to design.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Finish the shipping delay template</h3>
+    <p>Write <code>SHIPPING_DELAY_TEMPLATE</code> so it accepts at least <code>customer_name</code>, <code>order_number</code>, and <code>new_estimated_date</code>. Above the template, add a one-line comment documenting every variable it expects, matching the style already used for the other templates.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Design two templates of your own</h3>
+    <p>Fill in <code>CUSTOM_TEMPLATE_1</code> and <code>CUSTOM_TEMPLATE_2</code> with any customer-communication theme not already covered (account reactivation, a feature announcement, a subscription-renewal reminder &mdash; your choice). Each needs at least two named variables and a documented variable list.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Write lightweight test checks</h3>
+    <p>Add a <code>TEST_CASES</code> entry for each of the three templates you completed. Each entry needs sample variable values and a list of check functions &mdash; small functions that take the <em>formatted</em> prompt string and return <code>True</code>/<code>False</code> for one verifiable property. <code>contains_customer_name</code> and <code>under_word_limit</code> are provided as examples; write your own for the new templates (e.g. "does it mention the order number," "does it mention the new date").</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Code</h3>
+    <p>A teammate wrote this check function to verify a template stays under a word limit, but it always returns <code>True</code> even when the instruction is missing entirely. Find the bug and explain why the crude "does the number appear anywhere in the text" approach is fragile, then propose a better check.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_check.py</span>
+      </div>
+      <pre><code>def under_word_limit(prompt: str, limit: int) -> bool:
+    &#35; Bug: this checks whether the NUMBER appears anywhere in the prompt --
+    &#35; it doesn't check the prompt's actual word count, and it would also
+    &#35; return True by coincidence if `limit` happens to match an unrelated
+    &#35; number already in the template (e.g. a dollar amount or order number).
+    return str(limit) in prompt</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>FOLLOW_UP_TEMPLATE = """Write a polite follow-up email to {customer_name} about
+their unpaid invoice from {invoice_date}, mentioning a {late_fee_pct}% late fee.
+Keep it under 100 words."""
+&#35; Expects: customer_name (str), invoice_date (str), late_fee_pct (number)
+
+&#35; TODO: design a third provided template -- a "shipping delay notification".
+SHIPPING_DELAY_TEMPLATE = None  &#35; TODO
+
+&#35; TODO: design two templates of your own.
+CUSTOM_TEMPLATE_1 = None  &#35; TODO
+CUSTOM_TEMPLATE_2 = None  &#35; TODO
+
+TEST_CASES = [
+    {
+        "template": FOLLOW_UP_TEMPLATE,
+        "variables": {"customer_name": "Sarah Chen", "invoice_date": "March 15th", "late_fee_pct": 5},
+        "checks": [
+            lambda p: contains_customer_name(p, "Sarah Chen"),
+            lambda p: under_word_limit(p, 100),
+        ],
+    },
+    &#35; ... TODO: add a test case for each of your new templates ...
+]</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader, and your two custom templates are genuinely
+    open-ended &mdash; that's intentional. What matters is that every template has a
+    documented variable list, and every test checks a real, verifiable property of
+    the <em>formatted</em> prompt rather than requiring an exact string match (which
+    is unrealistic for anything an LLM would actually generate). Compare your
+    structure against <code>solution.py</code> (run it with <code>python
+    solution.py</code>) once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

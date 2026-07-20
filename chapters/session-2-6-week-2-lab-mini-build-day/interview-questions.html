@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.6 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Scenario-based interview prep synthesizing all of Week 2: combining prompting techniques into one working system, and diagnosing prompt robustness gaps.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.6 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Synthesizing Week 2</h1>
+  <p>
+    These are scenario-based questions that pull together everything from Week 2
+    &mdash; the kind an interviewer uses to check whether you can actually
+    <em>combine</em> prompting techniques into a working system rather than just
+    define each one in isolation. Prompt engineering is consistently described by
+    hiring managers as the single most "immediately testable" GenAI skill:
+    expect to be asked to critique or improve an actual prompt live, not just
+    describe techniques abstractly. Each question below includes what a strong
+    answer sounds like, common red flags, and a natural follow-up. Click any
+    question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> A teammate writes a customer-support reply generator prompt that works great in testing but produces inconsistent tone in production. What would you investigate?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Check whether the test examples covered a narrow range of inputs while production sees much more variety in ticket phrasing and severity. Check whether the prompt gives explicit tone constraints and few-shot examples, or leaves tone to the model to "figure out" case by case &mdash; the latter is exactly what causes drift once inputs diversify. Also worth checking whether the few-shot examples themselves are diverse enough, or whether they accidentally over-index on one kind of ticket. This is diagnosing a prompt robustness gap, not just rewriting the prompt blindly.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumping straight to "let's switch models" or "let's lower the temperature" without first checking whether the prompt gives the model explicit, example-backed tone guidance at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you build a test set that actually catches this before it reaches production?" (e.g. deliberately including edge-case tickets &mdash; angry, ambiguous, multi-issue &mdash; not just the easy cases that passed in the demo.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Walk me through how you'd combine prompting techniques to handle tone, an escalation decision, and reliable output all at once, for a tool like a support-reply generator.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Name each technique and the specific sub-problem it solves: few-shot examples anchor tone consistency; chain-of-thought reasoning (kept internal, excluded from the final output) drives the escalation judgment; a JSON schema makes the reply machine-checkable so it can be logged, routed, and validated; defensive parsing guards against the model not fully complying with that schema; and a named, versioned prompt template keeps the whole thing maintainable as requirements change. The key insight to state explicitly: no single technique solves the whole problem &mdash; they're solving five different sub-problems that only look unrelated until you build something real.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Describing only one technique in depth (usually just "few-shot examples") and treating the rest of the system as an afterthought, or being unable to say which specific sub-problem each technique addresses.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If you could only keep two of those five techniques, which would you drop first, and what would break?" (Tests whether the candidate understands each piece's actual job, not just its name.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Why might you want a model to reason step-by-step internally but hide that reasoning from the final user-facing output?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Chain-of-thought reasoning improves the quality of a decision &mdash; here, whether to escalate and how confident to be &mdash; without that reasoning needing to be customer-visible. This is a different pattern from "show your work" chain-of-thought used for math or logic problems, where the visible reasoning is the point. Sometimes the value of structured thinking is a better final answer, not a transparent one; a schema can surface just the <em>conclusions</em> of that reasoning (an <code>escalate</code> flag, a <code>confidence</code> level) without exposing the deliberation itself to someone who shouldn't see "the model thinking out loud" in their support reply.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Claiming chain-of-thought only matters when it's shown to the user, or being unable to name a concrete scenario (like a customer-facing reply) where hiding it is clearly the right call.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Can you think of a case where you'd want the reasoning visible instead?" (e.g. an internal analyst-facing tool where a human reviewer wants to see and audit the model's logic before trusting a conclusion.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> What's a logically inconsistent output that a JSON schema alone wouldn't catch, and how would you validate against it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A schema only constrains types and allowed values per field in isolation &mdash; it can't express relationships <em>between</em> fields. A concrete example: <code>escalate: true</code> paired with an empty or missing <code>escalation_reason</code> is schema-valid (both fields individually have the right type) but logically broken, since an escalation with no stated reason isn't actionable for whoever receives it. Catching this requires an explicit cross-field check written in code after parsing &mdash; e.g. "if escalate is true, escalation_reason must be a non-empty string" &mdash; not something a JSON schema validator alone will flag.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Assuming schema validation (or a successful <code>json.loads()</code>) is sufficient on its own, or being unable to give a concrete example of a schema-valid-but-nonsensical output.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Where in the pipeline should that check live, and what should happen when it fails?" (e.g. inside <code>parse_reply()</code>, raising a clear error that triggers a safe fallback rather than passing a broken reply downstream.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> How would you decide which support tickets a tool like this should auto-escalate to a human, versus reply to automatically?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Name concrete signals that should push toward escalation: the ticket involves money (refunds, billing disputes) or data loss, the ticket doesn't give the model enough information to resolve the issue without guessing at policy details it doesn't actually know, or the language suggests a repeated or escalating complaint. The underlying principle: a system that always generates a confident-sounding reply, even without enough information, will eventually produce wrong or unhelpful replies that a confident tone makes people trust more than they should. Being able to say "I don't have enough information, route this to a human" is what makes an automated system safe enough to actually deploy &mdash; not an edge case to handle later, but a basic design requirement from day one.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating escalation as something to bolt on only after the "happy path" is built, or being unable to name specific, concrete signals (money, missing information, repeated complaints) rather than a vague "if it seems complicated."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you measure, after deployment, whether your escalation threshold is set correctly?" (e.g. tracking how often auto-replied tickets get reopened or escalated manually afterward, as a signal the threshold is too permissive.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check across the whole week &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A prompt missing clarity, context, constraints, or format specification tends to produce <code>____</code>, inconsistent results across runs.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="vague,generic,unpredictable" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Role prompting assigns the model a <code>____</code> or expertise framing before it starts generating, e.g. "You are a senior tax accountant."</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="persona,role" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A confident, well-structured chain-of-thought explanation can still arrive at a <code>____</code> conclusion &mdash; the reasoning text isn't proof of correctness.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="wrong,incorrect" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Even with a good schema-constrained prompt, you should always <code>____</code> the model's JSON in code rather than trusting it blindly.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="validate,parse,check" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A prompt <code>____</code> is a reusable, documented template with variables, version control, and consistent testing &mdash; not a one-off string.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="system,template system,library" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you can talk about Week 2 as a connected system, not five separate facts.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Practice the live-prompt-rewrite format specifically: interviewers often hand you a vague prompt and ask you to improve it out loud, narrating each change (context, constraints, format, examples) as you make it &mdash; this exact format shows up often in real interviews, and it's the one most people under-practice.</li>
+    <li>For scenario questions, think out loud and name your assumptions &mdash; scoping and diagnostic reasoning are the skills being tested, not a memorized definition.</li>
+    <li>Pair these with Week 1's questions for a more realistic mixed-topic mock interview as you move further into the program.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="../../assessments/written-exams/week-02-exam.md">Week 2 Written Exam &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

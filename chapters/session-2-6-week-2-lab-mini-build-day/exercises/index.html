@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.6 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Guided build of the Customer-Support Reply Generator for Session 2.6 — fill in the scaffold's few-shot tone examples, reasoning instructions, defensive parsing, and fallback path.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.6 Exercises</span>
+    <span class="reading-time">45&ndash;60 min, hands-on</span>
+  </div>
+  <h1>Exercises: Build the Customer-Support Reply Generator</h1>
+  <p>
+    Integrate everything from Week 2 into one working system: the four pillars of
+    a great prompt (2.1), few-shot tone examples and role framing (2.2), internal
+    chain-of-thought reasoning kept out of the visible output (2.3),
+    schema-constrained JSON with defensive parsing (2.4), and a documented,
+    reusable prompt template (2.5). The scaffold marks every place that
+    integrates this week's concepts with numbered <code>TODO</code> markers.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python3 --version</code>).
+    Download <code>starter.py</code> below (it's a one-line pointer &mdash; the
+    real work happens in the file it imports from) or, better, work directly in
+    a copy of the full scaffold. Run <code>python3 support_reply_generator.py</code>
+    to test your implementation against three sample tickets, using a built-in
+    stub that returns deliberately messy responses so your parsing and
+    validation logic has something realistic to defend against &mdash; no API
+    key required. To test against a real model, set <code>USE_REAL_LLM=1</code>
+    and complete the optional TODO for a live API call.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The tasks</h2>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Write the few-shot tone examples</h3>
+    <p>Find <code>TONE_EXAMPLES</code> and its <code>TODO(1)</code>. Write one short example reply per tone (<code>empathetic</code>, <code>professional</code>, <code>concise</code>) for a sample ticket. These anchor the <em>style</em> the model should match &mdash; not content it should copy verbatim into every reply.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Write the internal-reasoning instructions</h3>
+    <p>Find <code>REASONING_INSTRUCTIONS</code> and its <code>TODO(2)</code>. Ask the model to privately think through what the customer actually needs, whether the ticket gives enough information to resolve it without guessing, and whether it involves money, data loss, or a repeated complaint that should push toward escalation &mdash; explicitly instructing it to keep that reasoning out of the final JSON.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Build and validate the prompt</h3>
+    <p>Find <code>build_prompt()</code> and its <code>TODO(3)</code>. Validate that <code>tone</code> is one of <code>VALID_TONES</code>, raising a clear <code>ValueError</code> immediately if it isn't &mdash; a cheap guard that catches a bug before it ever reaches the model &mdash; then fill in the template's variables.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Implement defensive parsing</h3>
+    <p>Find <code>parse_reply()</code> and its <code>TODO(5)</code>. Strip any wrapper text or markdown code fences around the JSON, parse it, and validate every field: all five keys present, <code>tone_applied</code> in <code>VALID_TONES</code>, <code>confidence</code> in <code>VALID_CONFIDENCE</code>, <code>escalate</code> is a real boolean, and <code>reply_body</code> is a non-empty string. Raise a <code>ValueError</code> describing exactly what's wrong on any failure &mdash; that specificity is what makes debugging a bad prompt change fast.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">5</span> Wire up the safe fallback</h3>
+    <p>Find <code>generate_reply()</code> and its <code>TODO(6)</code>. If <code>parse_reply()</code> raises, return a fallback <code>SupportReply</code> instead of crashing: <code>escalate=True</code>, an <code>escalation_reason</code> that includes the original error for debugging, <code>confidence="low"</code>, and a short, generic holding message as <code>reply_body</code>.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 6 &mdash; Debug the Code</h3>
+    <p>This escalation-consistency checker is supposed to catch an <code>escalate: true</code> reply that's missing its <code>escalation_reason</code>, but a reply with both fields present still gets rejected. Find the bug.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_check.py</span>
+      </div>
+      <pre><code>def check_escalation_consistency(parsed):
+    if parsed["escalate"] or not parsed["escalation_reason"]:
+        raise ValueError("escalate=True requires a non-empty escalation_reason")
+
+reply = {
+    "escalate": False,
+    "escalation_reason": None,
+}
+check_escalation_consistency(reply)   &#35; raises, but this reply is perfectly valid</code></pre>
+    </div>
+    <p><em>Hint:</em> the condition uses <code>or</code>, which fires whenever <em>either</em> half is true &mdash; including a perfectly fine reply where <code>escalate</code> is <code>False</code> and <code>escalation_reason</code> is correctly <code>None</code>. You only want to raise when <code>escalate</code> is <code>True</code> <em>and</em> the reason is missing.</p>
+  </div>
+
+  <h2>Scaffold, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">support_reply_generator.py</span>
+    </div>
+    <pre><code>VALID_TONES = ("empathetic", "professional", "concise")
+VALID_CONFIDENCE = ("high", "medium", "low")
+
+class SupportReply(TypedDict):
+    reply_body: str
+    tone_applied: str
+    confidence: str
+    escalate: bool
+    escalation_reason: Optional[str]
+
+PROMPT_TEMPLATE = """... {tone_examples} ... {reasoning_instructions} ... {schema} ..."""
+
+def build_prompt(ticket_subject, ticket_body, tone):
+    &#35; TODO(3): validate tone, then PROMPT_TEMPLATE.format(...)
+    raise NotImplementedError
+
+def parse_reply(raw_output: str) -&gt; SupportReply:
+    &#35; TODO(5): strip wrapper text, json.loads(), validate every field
+    raise NotImplementedError
+
+def generate_reply(ticket_subject, ticket_body, tone) -&gt; SupportReply:
+    prompt = build_prompt(ticket_subject, ticket_body, tone)
+    raw_output = call_llm(prompt)          &#35; provided -- offline stub by default
+    try:
+        return parse_reply(raw_output)
+    except ValueError as e:
+        &#35; TODO(6): return a safe fallback SupportReply instead of crashing
+        raise NotImplementedError</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. Run
+    <code>python3 support_reply_generator.py</code> and confirm all three
+    sample tickets produce valid, schema-matching JSON; that passing an
+    invalid <code>tone</code> raises a clear error immediately in
+    <code>build_prompt()</code>; and that feeding <code>parse_reply()</code> a
+    broken response (try editing the stub to drop a field, or return plain
+    text) raises a <code>ValueError</code> that tells you exactly what's wrong
+    &mdash; and that <code>generate_reply()</code> still returns a valid,
+    <code>escalate: True</code> reply rather than crashing when that happens.
+    Compare your implementation against <code>solution.py</code> once you've
+    made a genuine attempt &mdash; try to get through the defensive-parsing
+    task on your own first, since it's the part most worth struggling with.
+  </div>
+
+  <div class="what-is">
+    <span class="label">Pro path: extend it</span>
+    Once the core build passes, try logging every generated reply (ticket,
+    tone applied, confidence, escalation decision) to a simple structured log,
+    then write a small script that reports the escalation rate and tone
+    distribution across a batch of tickets &mdash; a first, lightweight taste
+    of the monitoring and observability work Week 6 formalizes.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

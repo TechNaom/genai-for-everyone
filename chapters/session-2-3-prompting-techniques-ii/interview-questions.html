@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.3 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 2.3: chain-of-thought, step-back, and self-consistency prompting — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.3 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Chain-of-Thought, Step-Back, Self-Consistency</h1>
+  <p>
+    Prompt engineering is consistently described by hiring managers as the
+    single most "immediately testable" GenAI skill &mdash; interviewers often
+    ask candidates to write or critique an actual prompt live, not just
+    define techniques abstractly. These questions reflect that pattern.
+    Each one includes what a strong answer sounds like, common red flags, and
+    a natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> What is chain-of-thought prompting, and what's a risk of relying on it too heavily?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Asking the model to reason step-by-step before giving a final answer, which often improves accuracy on multi-step problems because each generated reasoning step becomes part of the context that later steps are predicted from. The risk: a confident, well-structured chain of reasoning can still arrive at a wrong conclusion, so the reasoning text itself is not proof of correctness &mdash; this connects directly back to Week 1's core warning that fluency and accuracy are separate properties.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Describing chain-of-thought as something that "makes the model actually think," or claiming that visible reasoning guarantees a correct answer. Also weak: no mention of the mechanism (why it helps) at all, just "it makes answers better."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you actually verify a chain-of-thought answer before shipping it, rather than just reading it and feeling satisfied?" (e.g. checking intermediate steps against known facts/math, or running self-consistency for a second signal.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> When would step-back prompting help more than just asking the question directly?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>When the question has a real underlying decision framework or general principle worth surfacing first &mdash; comparisons, recommendations, and "should we do X or Y" questions especially. Step-back asks the model to articulate that general framework before applying it to the specific case, which tends to produce a more grounded, better-justified answer than jumping straight to a recommendation. It's not worth the extra step for simple factual lookups, where there's no meaningful "general principle" layer to surface.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Applying step-back to every question regardless of whether a framework actually exists, or being unable to give a concrete example of a question type where it helps versus one where it doesn't.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me an example of a question where step-back would just add noise." (e.g. "what's the capital of France" &mdash; there's no general framework to surface before answering a simple lookup.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> What is self-consistency prompting, and when is it worth the extra cost?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Running the same prompt multiple times, often with sampling randomness enabled, and comparing the results &mdash; taking the most common answer or examining where runs agree and disagree, rather than trusting a single response. It's worth it for genuinely high-stakes or ambiguous cases, where being wrong is costly enough to justify multiplying token cost and latency by the number of runs. It's not a default you'd apply to every request in a production system &mdash; a strong answer explicitly ties this to a cost/speed trade-off, not just "more calls = more confidence."</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating self-consistency as free, or not being able to name what convergence vs. divergence across runs actually signals (uncertainty on the model's part, not a guarantee either way).</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If five runs give you five different answers, what do you actually do next?" (e.g. don't pick one arbitrarily &mdash; treat it as a signal the case needs human review or a different approach, not a tiebreaker to resolve on your own.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> How would you decide which prompting technique to apply to a new task you've never seen before?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Start by identifying the specific failure mode you're worried about, not by reaching for the "fanciest" technique. A simple factual question needs nothing beyond zero-shot. A company-specific format or classification pattern benefits from few-shot. A task with several dependent calculation or logic steps benefits from chain-of-thought. A comparison or recommendation with a real underlying framework benefits from step-back. A genuinely ambiguous, high-stakes decision justifies the added cost of self-consistency. The strongest answers explicitly say techniques should be combined only when each one is solving a distinct problem (e.g. role prompting + few-shot), not stacked reflexively.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"I'd just add chain-of-thought to everything to be safe" &mdash; this ignores the real cost/complexity trade-off and shows no judgment about when a technique is unnecessary overhead.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Walk me through your decision for this task: summarizing a single support ticket into one sentence." (Expected: zero-shot or maybe a light format instruction &mdash; no need for chain-of-thought, step-back, or self-consistency on something this simple and low-stakes.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> A teammate shows you a beautifully formatted, step-by-step chain-of-thought response and says "it must be right, look how thorough it is." How do you respond?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Push back gently but clearly: thoroughness and formatting quality are properties of the presentation, not proof of correctness. A wrong answer can be produced just as confidently and step-by-step as a correct one &mdash; the model doesn't have an internal "I'm not sure about this step" signal that shows up as sloppier formatting. The response should actually recommend verifying the reasoning (checking intermediate steps against known facts or a calculation), especially if the decision is at all consequential, rather than trusting it because it looks rigorous.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Agreeing that thorough formatting is itself evidence of correctness, or not offering any concrete next step (just saying "you should always double check things" with no method).</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What's a fast, practical way to sanity-check a chain-of-thought answer without redoing the whole thing by hand?" (e.g. spot-check just the highest-risk intermediate step, or run self-consistency for a quick convergence signal.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Chain-of-thought works because each generated reasoning step becomes part of the <code>____</code> that later tokens are predicted from.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="context" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Step-back prompting surfaces the general <code>____</code> before addressing the specific question.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="principle,framework" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Self-consistency checks for <code>____</code> across multiple independent runs of the same prompt.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="agreement,convergence" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Self-consistency multiplies token <code>____</code> and latency, so it's reserved for high-stakes or ambiguous cases.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="cost" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> None of this session's techniques eliminate the risk that a fluent, confident response can still be <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="wrong,incorrect" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about these reasoning techniques in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for trade-off reasoning and concrete examples, not textbook recall. When in doubt, anchor every technique to a task where it clearly helps <em>and</em> one where it would be overkill.</li>
+    <li>Practice narrating a live technique-selection decision out loud (question 4's format) &mdash; it's the closest analog to a real live-prompting interview round.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-2-4-structured-outputs/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

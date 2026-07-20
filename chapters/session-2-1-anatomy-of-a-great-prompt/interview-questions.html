@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.1 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 2.1: Anatomy of a Great Prompt — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.1 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Anatomy of a Great Prompt</h1>
+  <p>
+    Prompt engineering is consistently described by hiring managers as the single
+    most "immediately testable" GenAI skill &mdash; interviewers often hand you a
+    bad prompt live and ask you to fix it on the spot, not just describe
+    techniques abstractly. Expect to be asked to <em>do</em> prompt engineering,
+    not just define it. Each question below includes what a strong answer sounds
+    like, common red flags, and a natural follow-up. Click any question to
+    expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Here's a vague prompt: "Write something about our product." What's wrong with it, and how would you fix it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Name the missing elements specifically &mdash; no audience, no format, no length, no tone, no constraints &mdash; rather than a vague "it's not detailed enough." Then actually produce a rewrite live: e.g. "Write a 100-word product description for our wireless noise-canceling headphones, targeting frequent-traveling professionals, emphasizing battery life and comfort, confident but not salesy tone, single paragraph." Interviewers want to see the rewrite, not just the critique.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Stopping at "it's too vague" without naming which specific pillars are missing, or describing the fix in the abstract instead of writing an actual improved prompt.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Which of the four pillars did each part of your rewrite address?" (e.g. "targeting frequent travelers" is context, "100 words" and "single paragraph" are constraints/format.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> What's the difference between giving a model context and giving it constraints? Why do you need both?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Context is background information the model needs to give a <em>relevant</em> answer &mdash; who the audience is, what the business does, what situation this is responding to. Constraints are boundaries on the output itself &mdash; length, format, tone, what to avoid. Missing context produces an answer that's on-topic but generic or wrong for the situation; missing constraints produces an answer that's relevant but the wrong shape or length to actually use. You need both because they solve different failure modes.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating context and constraints as interchangeable, or being unable to give a concrete example of each.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me an example of a prompt with great context but no constraints, and describe what would go wrong." (e.g. full backstory on a refund request but no length limit &mdash; the model might write a 500-word email nobody will read.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> How do you know when a prompt has enough detail versus when it needs more?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The test: could a competent person, given only this prompt, produce something close to what's needed without guessing at anything important? If yes, it's enough &mdash; more detail past that point is diminishing returns and can clutter focus. If the output comes back unusable, look for a specific fact you knew but never told the model; that gap is almost always the actual fix, not "make the whole prompt longer."</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Answering "just add more detail until it works," with no test for knowing when to stop, or assuming a longer prompt is automatically a better one.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Can a prompt be too long and still fail? Why?" (Yes &mdash; it can be missing exactly one critical detail despite being long and well-formatted; length doesn't equal completeness.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Walk me through rewriting a bad prompt live, explaining each change as you make it.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Narrate the process pillar by pillar rather than jumping straight to a polished final version: start from the vague prompt, add clarity (name the exact deliverable), add context (the background the model needs), add constraints (length/tone/boundaries), add format (the output shape) &mdash; saying out loud which pillar each addition fixes as you go. This mirrors the worked "Help with customer email" rewrite from the lesson.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Silently producing a final polished prompt with no narration of the reasoning &mdash; interviewers are evaluating the process, not just the end result.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Which single addition mattered most, and how would you know if you'd skipped it?" (Usually context or constraints &mdash; skipping it produces an answer that's plausible but wrong for the actual situation or unusable in shape.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> A teammate's prompt works great in testing but produces inconsistent output in production. What would you investigate first?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Check whether the test examples covered a narrow range of inputs while production sees far more variety in phrasing, edge cases, and context. Check whether the prompt gives explicit constraints (tone, format, boundaries) or leaves the model to "figure it out" &mdash; ambiguity that a handful of test cases happened not to expose. This is diagnosing a robustness gap in the prompt itself, not assuming the model just "got worse."</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumping straight to "switch models" or "add more examples" without first checking whether the original prompt was ever specific enough to be robust.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What would you change about the prompt itself, not the process around it?" (Tighten context/constraints, or add a couple of representative examples showing the expected tone &mdash; the seed of few-shot prompting, next session.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A prompt should be treated as a
+      <code>____</code>, not a question.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="specification" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> <code>____</code> is the
+      background information the model needs to give a relevant answer, distinct
+      from the boundaries placed on the output.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="context" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Vague verbs like "discuss"
+      describe an activity; specific verbs like "summarize" describe a
+      <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="deliverable,output" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Boundaries on length, tone, and
+      what to exclude are called <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="constraints" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A long, well-formatted prompt
+      can still fail if it's missing one critical piece of <code>____</code>
+      &mdash; length doesn't guarantee completeness.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="context,information" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about prompt anatomy in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Practice the live-prompt-rewrite format specifically (Question 4) &mdash; it's the most common live-coding-equivalent for prompt engineering roles, and the one most people under-practice because it feels less "studyable" than definitions.</li>
+    <li>Interviewers are listening for trade-off reasoning and a real rewrite, not textbook recall. When in doubt, narrate which pillar each change addresses.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-2-2-prompting-techniques-i/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.3 Prompting Techniques II — GenAI for Everyone</title>
+<meta name="description" content="Chain-of-thought, step-back, and self-consistency prompting: techniques that shape how a model reasons on its way to an answer, plus how to pick the right one for the job.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.3</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">25&ndash;30 min read</span>
+  </div>
+  <h1>Prompting Techniques II: Chain-of-Thought, Step-Back, Self-Consistency</h1>
+  <p><em>Session 2.2's techniques shaped <strong>what pattern</strong> the model follows. This session's techniques shape <strong>how the model reasons</strong> on its way to an answer &mdash; which starts to matter enormously the moment a task takes more than one step of thinking.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#chain-of-thought">1. Chain-of-Thought Prompting</a>
+    <a href="#step-back">2. Step-Back Prompting</a>
+    <a href="#self-consistency">3. Self-Consistency</a>
+    <a href="#choosing-the-right-tool">4. Choosing the Right Tool for the Job</a>
+  </nav>
+
+  <div class="hook">
+    A model asked to jump straight to the answer of a multi-step problem will
+    sometimes skip a step, let an early mistake cascade silently through the
+    rest of its reasoning, or simply guess at a plausible-looking final number
+    without genuinely working through the logic. The three techniques in this
+    chapter exist specifically to counteract that. But hold onto Session 1.5's
+    warning while you read: these techniques can dramatically <em>improve</em>
+    reasoning quality, and none of them <em>eliminate</em> the risk that a
+    fluent, well-structured wrong answer is still possible. That's not a
+    contradiction &mdash; it's the honest reality of working with these tools,
+    and it's the tension this whole chapter sits inside.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="chain-of-thought">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. Chain-of-Thought Prompting &mdash; Show the Work</h2>
+
+    <div class="what-is">
+      <span class="label">What is... Chain-of-thought prompting?</span>
+      Explicitly instructing the model to reason step-by-step <em>before</em>
+      giving a final answer, rather than jumping straight to a conclusion. The
+      simplest version is often just appending a phrase like "think step by
+      step" or "explain your reasoning before giving your final answer" to a
+      prompt.
+    </div>
+
+    <p>
+      Recall Session 1.1's core mechanism: the model predicts the next token
+      based on everything currently in its context. If the model's own
+      intermediate reasoning steps become part of that context as they're
+      generated, each subsequent token gets predicted with the benefit of that
+      visible reasoning trail &mdash; instead of having to implicitly do all
+      that work in a single, opaque leap to a final answer. Writing out "Step
+      1: identify the two numbers being compared, Step 2: &hellip;" literally
+      gives the model more relevant context to draw on for predicting Step 3,
+      in exactly the sense established back in Session 1.2.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">direct-vs-cot.txt</span>
+      </div>
+      <pre><code>PROBLEM
+A store had 142 items. They sold 38% on Monday and 25 more on Tuesday.
+How many are left?
+
+WITHOUT chain-of-thought
+  "How many are left?"
+  -> risks jumping to a number that skips or garbles one of the two
+     operations (the 38% step, or the "25 more" step, or both)
+
+WITH chain-of-thought
+  "...Think through this step by step before giving your final answer."
+  -> far more likely to explicitly compute 38% of 142, subtract that,
+     then subtract the additional 25 -- showing each intermediate result,
+     where each correct step makes the next step more likely to be correct</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">The honest limit, restated from Sessions 1.1 and 1.5</span>
+      A beautifully formatted, step-by-step chain of reasoning can still
+      arrive at a wrong conclusion. The <em>presence</em> of visible reasoning
+      is not proof of <em>correct</em> reasoning &mdash; it's a mechanism that
+      tends to improve accuracy on many tasks, not a guarantee. For anything
+      genuinely high-stakes, the chain of reasoning itself is something worth
+      actually reading and checking, not just trusting because it looks
+      thorough.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Chain-of-thought = explicitly asking the model to reason step-by-step before answering.</li>
+        <li>It works because each generated step becomes part of the <strong>context</strong> later steps are predicted from.</li>
+        <li>Visible reasoning improves the odds of a correct answer &mdash; it is not proof the answer is correct.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="step-back">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. Step-Back Prompting &mdash; Zoom Out Before Zooming In</h2>
+
+    <div class="what-is">
+      <span class="label">What is... Step-back prompting?</span>
+      Asking the model to first articulate the general principle, concept, or
+      strategy relevant to a problem, <em>before</em> applying that principle
+      to the specific question at hand. Instead of diving straight into
+      specifics, the model "steps back" to the more abstract level first.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">direct-vs-step-back.txt</span>
+      </div>
+      <pre><code>DIRECT APPROACH
+"Should we use a relational database or a document database for storing
+user session data that expires after 24 hours?"
+-> jumps straight to a recommendation with no stated framework
+
+STEP-BACK APPROACH
+"What are the general factors that determine whether relational or
+document databases are better suited to a given use case? Then, applying
+those factors, should we use a relational database or a document database
+for storing user session data that expires after 24 hours?"
+-> forces the model to lay out the framework FIRST (data structure, query
+   patterns, consistency needs, lifespan/expiry handling) before committing
+   to a specific recommendation</code></pre>
+    </div>
+
+    <p>
+      This connects to the same context-shaping mechanism as chain-of-thought:
+      by generating the general principle first, that principle becomes part
+      of the context the model draws on when it then addresses the specific
+      question &mdash; rather than answering the specific question using
+      whatever generic pattern is statistically closest, with no explicit
+      grounding step in between.
+    </p>
+
+    <div class="real-world">
+      <span class="label">When step-back is worth the extra step</span>
+      <ul>
+        <li>Most valuable for problems with a real underlying decision framework: comparisons, recommendations, and "should we do X or Y" questions.</li>
+        <li>Less necessary for simple factual lookups or straightforward generation tasks, where there isn't really a "general principle" layer worth surfacing first.</li>
+        <li>The tell: if you can't articulate what the "general framework" for this question would even look like, step-back probably isn't buying you anything.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Step-back = surface the general principle first, then apply it to the specific case.</li>
+        <li>Best for comparisons and "X or Y" decisions with a genuine underlying framework.</li>
+        <li>Skip it for simple lookups &mdash; there's no framework layer to gain from surfacing.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="self-consistency">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. Self-Consistency &mdash; Don't Trust Just One Attempt</h2>
+
+    <div class="what-is">
+      <span class="label">What is... Self-consistency?</span>
+      Generating multiple independent responses to the same prompt (often
+      with some randomness enabled) and then comparing them &mdash; taking the
+      most common answer, or otherwise examining where the different attempts
+      agree and disagree &mdash; rather than accepting a single response at
+      face value.
+    </div>
+
+    <p>
+      A single response represents one path through the model's possible
+      outputs for a given prompt. For ambiguous or genuinely difficult
+      problems, that single path might land on a brittle, lucky-or-unlucky
+      answer that wouldn't reproduce reliably. Running the same prompt
+      multiple times and looking for <em>agreement</em> across runs is a
+      practical, simple way to catch cases where the model is genuinely
+      uncertain (and the answers diverge) versus confidently consistent (and
+      the answers converge).
+    </p>
+
+    <p>
+      Imagine asking a model to solve a tricky logic puzzle once, and getting
+      an answer. Now imagine running that same prompt five times. If four out
+      of five runs converge on the same answer, that convergence is
+      meaningful evidence (not proof) that the answer is likely correct. If
+      the five runs produce five different answers, that divergence is a
+      strong signal that this is a genuinely hard case for the model &mdash;
+      exactly the kind of case where you should <strong>not</strong> trust a
+      single confident-sounding response, connecting directly back to Session
+      1.5's warning that confidence and correctness are separate properties.
+    </p>
+
+    <p>
+      Here's a toy version of the pattern you can actually run &mdash; not a
+      real model, just a stand-in that produces "answers" with some
+      randomness, so you can see what convergence and divergence look like
+      side by side:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">self_consistency_toy.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="26">import random
+from collections import Counter
+
+# A toy stand-in for "ask the model, with some randomness enabled."
+# A real self-consistency check calls an actual LLM N times -- this
+# just samples from a fixed pool of plausible "answers" to show the
+# convergence/divergence pattern.
+
+def ask_easy_question():
+    # An easy question: the model gets it right almost every time.
+    return random.choice(["12", "12", "12", "12", "11"])
+
+def ask_ambiguous_question():
+    # A genuinely hard/ambiguous question: answers scatter across runs.
+    return random.choice(["A", "B", "A", "C", "B"])
+
+def run_self_consistency(ask_fn, n=5):
+    answers = [ask_fn() for _ in range(n)]
+    tally = Counter(answers)
+    winner, votes = tally.most_common(1)[0]
+    convergence = votes / n
+    return answers, winner, convergence
+
+for label, fn in [
+    ("Easy question (what is 3 x 4?)", ask_easy_question),
+    ("Ambiguous question", ask_ambiguous_question),
+]:
+    answers, winner, convergence = run_self_consistency(fn)
+    print(label)
+    print(f"  5 runs: {answers}")
+    print(f"  Majority answer: {winner!r}  (convergence: {convergence:.0%})")
+    print()
+
+print("Notice: high convergence is a signal to trust more; low convergence")
+print("is a signal to slow down and verify before trusting either answer.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then click it again a few times and watch the ambiguous question's convergence percentage bounce around while the easy one stays high.</div>
+    </div>
+
+    <div class="real-world">
+      <span class="label">The honest cost</span>
+      <ul>
+        <li>Self-consistency isn't free &mdash; it multiplies your token cost and latency by however many times you run the prompt, directly engaging with Session 1.3's cost/speed trade-off thinking.</li>
+        <li>It's a tool for genuinely high-stakes or ambiguous cases, not a default you'd apply to every single request in a production system.</li>
+        <li>Knowing <em>when</em> the extra cost is justified is as much a part of this skill as knowing the technique exists.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Self-consistency = run the same prompt multiple times and check for agreement across the results.</li>
+        <li>Convergence is meaningful evidence (not proof) of a reliable answer; divergence signals genuine model uncertainty.</li>
+        <li>It costs extra tokens and latency &mdash; reserve it for high-stakes or ambiguous cases, not every request.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="choosing-the-right-tool">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. Choosing the Right Tool for the Job</h2>
+
+    <p>
+      With five techniques now in your toolkit across Sessions 2.2 and 2.3
+      (zero-shot, few-shot, role prompting, chain-of-thought, step-back, and
+      self-consistency &mdash; six, technically), the real skill is
+      <strong>matching technique to situation</strong>, not applying all of
+      them reflexively to every prompt.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">technique-matchup.txt</span>
+      </div>
+      <pre><code>A simple factual question                  -> zero-shot
+  ("what's the capital of France")            (CoT here would be unnecessary overhead)
+
+A company-specific classification task     -> few-shot
+  (2.2)
+
+A multi-step word problem or logic puzzle  -> chain-of-thought
+  (intermediate steps genuinely help)
+
+A "should we do X or Y" recommendation     -> step-back
+  with an underlying framework                (ground the answer in the right principle first)
+
+A genuinely ambiguous, high-stakes         -> self-consistency
+  decision where being wrong is costly        (accept the extra cost for the confidence signal)
+
+A task needing a specific persona AND      -> role prompting + few-shot combined
+  demonstrated pattern                         (2.2's content-moderation example)</code></pre>
+    </div>
+
+    <p>
+      Notice that none of these techniques are about making the prompt
+      "fancier" for its own sake &mdash; each one earns its place by solving a
+      specific failure mode that a plainer prompt would risk. This is exactly
+      the judgment call the Core path exercise for this session trains: given
+      a real multi-step business problem, decide whether a direct prompt is
+      good enough or whether chain-of-thought is worth the extra length, then
+      actually check whether the reasoning trail holds up &mdash; not just
+      whether the final number looks plausible.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill in the Core path exercise isn't calling the API twice &mdash; it's designing two prompts that isolate the variable you're testing. A direct prompt and a chain-of-thought prompt should ask for the <em>exact same problem</em>, differing only in whether reasoning is requested, so any difference in the final answer is attributable to the technique rather than to a rewritten question. An experienced practitioner also decides <em>in advance</em> how they'll independently verify the correct answer (by hand, with a calculator) &mdash; otherwise you're just comparing two guesses against each other instead of against the truth.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this comparison tool:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python script that sends a multi-step word problem to an LLM twice, once directly and once with chain-of-thought instructions, and prints both responses..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this lesson's example &mdash; does it keep the underlying problem identical between the two prompts, and does it print both responses so you can actually compare them side by side? That comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python script using the Anthropic SDK that defines one multi-step word problem as a constant string. Build two prompts from it: a DIRECT_PROMPT that asks only for the final numeric answer, and a COT_PROMPT that appends explicit step-by-step reasoning instructions to the same problem text -- the underlying problem must be identical in both. Send each prompt to the model once, print both responses clearly labeled, and print a reminder to independently verify the correct answer by hand before trusting either response. Do not hardcode an API key -- read it from an environment variable and exit with a clear message if it's missing.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Six techniques so far &mdash; the skill is matching the technique to the specific failure mode you're worried about.</li>
+        <li>Zero-shot for simple lookups, few-shot for pattern-matching, chain-of-thought for multi-step logic, step-back for "X or Y" decisions with a framework, self-consistency for high-stakes ambiguity.</li>
+        <li>None of these are about sounding fancier &mdash; each earns its place by solving a real problem.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Chain-of-thought is the default first move for any multi-step calculation, migration plan, or debugging task where a model's answer needs to be independently checkable, not just plausible-sounding.</li>
+      <li>Step-back prompting shows up constantly in architecture and vendor-selection questions ("build vs. buy," "SQL vs. NoSQL") &mdash; exactly the kind of decision where surfacing the framework first produces a defensible recommendation instead of a guess.</li>
+      <li>Self-consistency is expensive enough that production systems reserve it for genuinely high-stakes calls &mdash; medical, legal, or financial reasoning steps &mdash; rather than running it on every request by default.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Chain-of-thought</strong>: explicitly asking the model to reason step-by-step before answering, which gives each subsequent step more relevant context to draw on. Improves accuracy on multi-step tasks but doesn't guarantee a correct conclusion.</li>
+      <li><strong>Step-back prompting</strong>: asking the model to articulate the general principle before applying it to the specific question &mdash; most valuable for comparisons, recommendations, and "X or Y" decisions with a real underlying framework.</li>
+      <li><strong>Self-consistency</strong>: running the same prompt multiple times and checking for agreement, which is a practical signal (not proof) of reliability &mdash; costs extra tokens and latency, so reserve it for genuinely ambiguous or high-stakes cases.</li>
+      <li><strong>None of these techniques eliminate the core risk from Session 1.5</strong> &mdash; a fluent, well-structured, confident response can still be wrong. These techniques improve odds, not certainty.</li>
+      <li><strong>Match the technique to the failure mode you're actually worried about</strong>, rather than applying every technique to every prompt by default.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the
+    Multi-Step Reasoning exercise puts the direct-vs-chain-of-thought
+    comparison into practice on a real problem.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

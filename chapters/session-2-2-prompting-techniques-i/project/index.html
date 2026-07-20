@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.2 Project: Fix the Zero-Shot Triage Classifier — GenAI for Everyone</title>
+<meta name="description" content="Diagnose a failing zero-shot prompt on a company-specific priority scheme, convert it to few-shot with boundary-case examples, and prove the fix with a real before/after score.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.2 Project</span>
+    <span class="reading-time">30 min build</span>
+  </div>
+  <h1>Fix the Zero-Shot Triage Classifier</h1>
+  <p>The Pro-path build for this session &mdash; a harder, more realistic version of the lesson's central idea. You're handed a zero-shot prompt that fails inconsistently on a company-specific priority scheme; your job is to diagnose why, fix it with few-shot examples, and prove the fix is real with a before/after score.</p>
+
+  <h2>Example run (after both TODOs are filled in)</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>--- Zero-shot ---
+Ticket                                                        Expected     Got          Match
+-----------------------------------------------------------------------------------------------
+Production login endpoint is returning 500 errors for all... P0-Critical  P0-Critical  yes
+Add a dark mode toggle to the settings page                  P3-Low       P2-Normal    no
+Search results take ~3s to load during peak hours, used t... P1-High      P2-Normal    no
+Typo in the footer copyright year                             P3-Low       P3-Low       yes
+Payment webhook occasionally drops events, causing a few m... P0-Critical  P2-Normal    no
+Could we get a CSV export button on the reports page?         P3-Low       P3-Low       yes
+
+--- Few-shot ---
+&#40;... same 6 tickets, all matching after the fix ...&#41;
+
+Zero-shot: 3/6 correct
+Few-shot:  6/6 correct</code></pre>
+  </div>
+  <p>(Exact scores vary run to run &mdash; LLM output isn't perfectly deterministic. The direction of the improvement is the point, not the exact numbers.)</p>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Install dependencies with <code>pip install anthropic python-dotenv</code>,
+    copy <code>.env.example</code> (repo root) to <code>.env</code> and add your
+    <code>ANTHROPIC_API_KEY</code>, then download <code>starter.py</code> below
+    and run <code>python starter.py</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>Fill in the <code># TODO</code> sections in <code>starter.py</code>:</p>
+  <ul>
+    <li><strong>TODO 1</strong> &mdash; <code>FEW_SHOT_PROMPT_TEMPLATE</code>: convert the zero-shot prompt into a few-shot one. Add 3&ndash;4 worked <code>Ticket: ... / Priority: ...</code> examples covering each priority level, including at least one genuinely tricky boundary case. Don't reuse the exact test tickets as your examples &mdash; that's memorization, not a fix.</li>
+    <li><strong>TODO 2</strong> &mdash; <code>score()</code>: for each ticket/expected pair, classify it with the given prompt template, compare to the expected label, print a row, and return the count correct.</li>
+    <li><strong>TODO 3</strong> &mdash; in <code>run()</code>, print a one-line takeaway comparing the zero-shot and few-shot scores.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">The diagnostic habit this project trains</span>
+    Notice the two tricky boundary cases baked into the test set: a payment
+    webhook that "occasionally" drops events (still working, but a real
+    data-integrity risk &mdash; that's P0, not a shrug-worthy P2) and a
+    dashboard that's merely slower, not down (P1, not P3 and not P0). A
+    zero-shot prompt has no way to know your company draws the line exactly
+    there. The fix isn't a cleverer instruction &mdash; it's showing the model
+    worked examples that land on those exact boundaries.
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Add a role prompt on top of the few-shot examples ("You are a meticulous on-call engineering triage lead...") and see if it changes the score.</li>
+    <li>Add a genuinely ambiguous ticket of your own and see which tier the model picks &mdash; then decide if you agree, and if not, what example would fix it.</li>
+    <li>Track <em>which</em> tickets fail, not just the count, and look for a pattern in what kind of boundary case still trips up the few-shot version.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>This is the exact shape of a real prompt-debugging session: a prompt that "mostly works," a handful of production examples where it doesn't, and the diagnostic question that actually matters &mdash; not "is the instruction clear enough?" but "did I ever show the model where this specific line gets drawn?" Converting a failing zero-shot prompt into a working few-shot one, and proving the fix with a real before/after score, is a skill you'll use constantly once you're shipping AI features that touch company-specific rules.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

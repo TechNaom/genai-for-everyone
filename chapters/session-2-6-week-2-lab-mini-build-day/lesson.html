@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.6 Week 2 Lab — Mini Build Day — GenAI for Everyone</title>
+<meta name="description" content="Synthesis lab: build a Customer-Support Reply Generator with tone control, pulling together everything from Week 2 — the four pillars, few-shot tone examples, invisible chain-of-thought reasoning, schema-constrained output, defensive parsing, and documented prompt templates.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Week 2 · Session 2.6</span>
+    <span class="badge-difficulty">Foundations</span>
+    <span class="reading-time">~25&ndash;30 min (mostly building)</span>
+  </div>
+  <h1>Week 2 Lab &mdash; Mini Build Day</h1>
+  <p><em>Five sessions of prompting techniques, one real system that needs all of them at once. Today is where you find out they were never five separate party tricks.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#the-build">1. The build: a support reply generator with tone control</a>
+    <a href="#why-this-tool">2. Why this build needs every technique from the week</a>
+    <a href="#steps">3. The build, step by step</a>
+    <a href="#done-well">4. "Done well" vs. "done technically"</a>
+    <a href="#reflection">5. Reflection: what clicked, what's fuzzy</a>
+  </nav>
+
+  <div class="hook">
+    Five sessions ago you couldn't reliably get an LLM to do what you wanted. Since
+    then you've picked up the four pillars of a great prompt, zero-shot vs. few-shot
+    vs. role prompting, chain-of-thought and self-consistency, schema-constrained
+    JSON output with defensive parsing, and how to organize prompts into a real,
+    versioned system instead of scattered strings. Learned one technique at a time,
+    that can start to feel like five separate skills sitting in five separate
+    corners of your head. Today that ends. You're building <strong>one real
+    thing</strong> &mdash; a customer-support reply generator with tone control
+    &mdash; and every single technique from this week earns its place in it, not
+    because the instructions say so, but because the problem genuinely needs it.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="the-build">
+    <span class="subtopic-label">Sub-topic 1 of 5</span>
+    <h2>1. The build: a support reply generator with tone control</h2>
+
+    <p>
+      Picture a small software company: twelve hundred support tickets a week,
+      four support agents, and a backlog that never quite gets to zero. Most
+      tickets are routine &mdash; a password reset, a billing question, a "how do
+      I export my data" &mdash; but each one still needs a reply that's accurate,
+      on-brand, and doesn't read like it was copy-pasted from a template that
+      ignores what the customer actually asked.
+    </p>
+
+    <p>
+      The company doesn't want to fully automate support away. They want a tool
+      that drafts a strong first-pass reply for every incoming ticket, in a tone
+      that fits the situation, which a human agent can review, lightly edit, and
+      send &mdash; instead of writing every reply from a blank page. That's the
+      artifact you're building today: a <strong>customer-support reply generator
+      with tone control.</strong>
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a synthesis build?</span>
+      A synthesis build is a small project whose whole purpose is to make you use
+      several separate ideas <em>together</em>, in one working system, rather than
+      one idea in isolation. It would be easy to write a single, reasonably good
+      prompt for this task and call it done &mdash; and that's exactly the trap. A
+      single ad-hoc prompt might handle one ticket well and quietly fail on the
+      next one, with no way to tell which is which until a customer complains.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The tool drafts a first-pass <strong>support reply</strong> in one of three tones, for a human agent to review and send.</li>
+        <li>The goal isn't full automation &mdash; it's a strong, trustworthy first draft.</li>
+        <li>One ad-hoc prompt is a trap: it can look fine in testing and fail unpredictably in production.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="why-this-tool">
+    <span class="subtopic-label">Sub-topic 2 of 5</span>
+    <h2>2. Why this build needs every technique from the week</h2>
+
+    <p>
+      This project was chosen specifically because building it well requires
+      touching almost everything from this week. Look at what the real
+      requirements actually demand, and each earlier session shows up as a
+      concrete design decision:
+    </p>
+
+    <div class="code-breakdown">
+      <dl>
+        <dt>Session 2.1 &mdash; anatomy of a great prompt</dt>
+        <dd>None of the rest matters if the prompt itself is vague about what
+        "good" looks like. Clarity, context, constraints, and format
+        specification are the floor everything else is built on.</dd>
+
+        <dt>Session 2.2 &mdash; few-shot and role prompting</dt>
+        <dd>An angry billing dispute and a casual feature question shouldn't get
+        the same voice. Tone control only becomes concrete once it's backed by
+        example replies, not adjectives like "be empathetic."</dd>
+
+        <dt>Session 2.3 &mdash; chain-of-thought</dt>
+        <dd>The model needs to reason about severity <em>before</em> it writes:
+        should this ticket be escalated to a human immediately, or is a standard
+        reply fine? That's a judgment worth thinking through step by step.</dd>
+
+        <dt>Session 2.4 &mdash; structured outputs</dt>
+        <dd>The output needs to be machine-checkable, not just a paragraph of
+        text &mdash; a real support tool needs to log the tone used, flag
+        escalations, and route tickets. That means a schema, and defensive
+        parsing that never assumes the model complied.</dd>
+
+        <dt>Session 2.5 &mdash; prompt systems</dt>
+        <dd>The prompt itself needs to be a maintainable, documented template
+        &mdash; not a string improvised fresh for this exercise &mdash; because
+        in six months someone will need to add a fourth tone option without
+        reading through application code to find where the prompt lives.</dd>
+      </dl>
+    </div>
+
+    <div class="what-is">
+      <span class="label">The real lesson of a lab day</span>
+      Production prompting work is rarely "pick the one right technique." It's
+      combining several techniques, each solving a different sub-problem, into
+      one coherent system. Few-shot alone doesn't get you machine-checkable
+      output. A perfect schema alone doesn't get you consistent tone. Today's
+      build only works if all five sessions show up at once.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>2.1 sets the floor (clarity/context/constraints/format); 2.2 anchors tone with examples; 2.3 drives the escalation judgment; 2.4 makes the output machine-checkable; 2.5 makes the prompt maintainable.</li>
+        <li>A real prompting problem usually needs several techniques combined, each solving a distinct sub-problem &mdash; not one technique picked in isolation.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="steps">
+    <span class="subtopic-label">Sub-topic 3 of 5</span>
+    <h2>3. The build, step by step</h2>
+
+    <p>
+      A natural instinct is to start by writing the prompt and see what comes
+      back. For this build, it's better to start at the other end.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Step 1 &mdash; design the output contract first</span>
+      Decide exactly what a finished reply needs to contain, <em>as a schema</em>,
+      before writing a single word of the prompt. This mirrors the discipline from
+      Session 2.4: the schema is the actual deliverable; the prompt is just the
+      mechanism that produces it.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">reply-schema.json</span>
+      </div>
+      <pre><code>{
+  "reply_body": "string",
+  "tone_applied": "empathetic | professional | concise",
+  "confidence": "high | medium | low",
+  "escalate": true | false,
+  "escalation_reason": "string or null"
+}</code></pre>
+    </div>
+
+    <p>
+      Notice what this schema does beyond just holding the reply text.
+      <code>confidence</code> lets a human reviewer triage their workload &mdash;
+      a "low confidence" reply gets a closer read before sending.
+      <code>escalate</code> and <code>escalation_reason</code> mean the model
+      isn't just drafting replies blindly; it's making (and explaining) a
+      judgment call about whether this ticket actually needs a human, which is a
+      chain-of-thought decision baked directly into the contract.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Step 2 &mdash; define the three tones with examples, not adjectives</span>
+      "Tone control" is a vague phrase until you pin it down with
+      <strong>examples</strong>. Telling a model "be empathetic" is far weaker
+      than showing it one short example of what empathetic actually sounds like
+      in this context &mdash; exactly the lesson from few-shot prompting (2.2).
+      <ul>
+        <li><strong>Empathetic</strong> &mdash; for frustrated, upset, or anxious customers. Leads with acknowledgment before any explanation or solution.</li>
+        <li><strong>Professional</strong> &mdash; the default for routine, neutral requests. Clear, polite, efficient, no unnecessary warmth or formality.</li>
+        <li><strong>Concise</strong> &mdash; for customers who clearly want a fast, no-fluff answer. Shortest replies of the three, with no preamble.</li>
+      </ul>
+    </div>
+
+    <p>
+      Per Session 2.5's convention, this prompt doesn't live as a one-off string
+      improvised inline &mdash; it's built as a named, documented template with
+      placeholders, stored separately from the calling code:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">support_reply_v1.py</span>
+      </div>
+      <pre><code>PROMPT_TEMPLATE = """You are a customer support reply assistant for a software company.
+You write clear, accurate replies. You never invent policy details, refund
+amounts, or timelines that are not stated in the ticket.
+
+Subject: {ticket_subject}
+Body: {ticket_body}
+
+Write a reply in a {tone} tone.
+
+{tone_examples}
+
+{reasoning_instructions}
+
+Return ONLY a JSON object matching exactly this schema:
+{schema}
+"""</code></pre>
+    </div>
+
+    <p>
+      <code>{tone_examples}</code> carries the few-shot anchors (2.2). The
+      <code>{reasoning_instructions}</code> block is where chain-of-thought (2.3)
+      enters &mdash; asking the model to privately think through what the
+      customer actually wants, whether the ticket gives it enough information,
+      and whether the issue involves money, data loss, or a repeated complaint
+      that should push toward escalation, <strong>while explicitly excluding that
+      reasoning from the final output.</strong> A subtlety worth naming: a
+      customer should never see "Let me think about whether this needs
+      escalation..." in their actual reply. Instructing the model to reason
+      "internally" keeps the <em>benefit</em> of chain-of-thought (a more careful
+      decision) without its <em>cost</em> (a confusing, unprofessional-looking
+      reply).
+    </p>
+
+    <div class="what-is">
+      <span class="label">Step 3 &mdash; defensive parsing, again</span>
+      Session 2.4 introduced defensive parsing: never trust that the model's JSON
+      is well-formed, never trust that an enum field actually contains one of the
+      allowed values, always validate before your application logic touches the
+      data. It's tempting to think of that as "the 2.4 lesson," already checked
+      off. It isn't. Every session from here forward that touches model output
+      needs this same discipline, because the underlying risk &mdash; a model
+      that's <em>usually</em> well-behaved but not <em>guaranteed</em> to be
+      &mdash; never goes away. <code>parse_reply()</code> needs to handle, at
+      minimum: JSON that fails to parse at all (the model added a sentence of
+      preamble before the <code>{</code>), a <code>tone_applied</code> value
+      that isn't one of the three defined tones, and an
+      <code>escalate: true</code> response with a missing or empty
+      <code>escalation_reason</code> &mdash; a logically inconsistent output the
+      schema doesn't prevent on its own, but your validation code should catch.
+    </div>
+
+    <p>
+      Try the core of that validation logic here &mdash; a tiny, self-contained
+      version of the checks <code>parse_reply()</code> needs to run after
+      <code>json.loads()</code> already succeeded:
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">validate_reply.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="20">VALID_TONES = ("empathetic", "professional", "concise")
+
+def validate(parsed):
+    # Successfully parsing JSON only proves the SYNTAX is fine.
+    # These checks are about the CONTENT -- the part json.loads() can't see.
+    if parsed.get("tone_applied") not in VALID_TONES:
+        return f"invalid tone_applied: {parsed.get('tone_applied')!r}"
+    if parsed.get("escalate") and not parsed.get("escalation_reason"):
+        return "escalate=True but escalation_reason is missing/empty"
+    return "OK"
+
+replies = [
+    {"tone_applied": "casual", "escalate": False, "escalation_reason": None},
+    {"tone_applied": "professional", "escalate": True, "escalation_reason": None},
+    {"tone_applied": "concise", "escalate": False, "escalation_reason": None},
+]
+
+for r in replies:
+    print(r, "->", validate(r))</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; notice the second reply parses as valid JSON but still fails validation for a reason no schema alone would catch.</div>
+    </div>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the entire quality
+      of this build lives in the prompt template's specificity and the
+      validation logic's thoroughness, not in the plumbing around them. So the
+      real "thought process" is deciding, up front: what exactly must be true of
+      a reply before it's safe to hand to an agent? Every answer to that question
+      becomes one more check in <code>parse_reply()</code> &mdash; and every gap
+      in tone differentiation becomes one more few-shot example.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python module that builds a documented prompt template for a support-reply generator with three tones, internal chain-of-thought reasoning hidden from the output, and a schema-validated JSON response..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this session's exercise &mdash; does it actually combine few-shot tone examples, hidden reasoning, a schema, and defensive validation, or does it settle for just one of those? That comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python module named support_reply_v1 that generates customer-support replies. Define a named PROMPT_TEMPLATE (not an inline string) with placeholders for ticket_subject, ticket_body, tone, tone_examples, reasoning_instructions, and schema. Write three concrete few-shot example replies, one per tone (empathetic, professional, concise), each showing STYLE not content. Add reasoning instructions that ask the model to privately think through what the customer wants, whether there's enough information to resolve it, and whether it involves money/data loss/repeated complaints -- explicitly instructing it to exclude that reasoning from the final output. Define the JSON schema with fields reply_body, tone_applied, confidence, escalate, and escalation_reason. Then write build_prompt() (validates tone against an allowed set), parse_reply() (defensively parses the JSON, handling wrapper text/code fences, and validates every field -- including that escalate=True always has a non-empty escalation_reason), and generate_reply() (ties it together, falling back to a safe escalation response instead of crashing if parsing fails).</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Design the schema first &mdash; it's the deliverable; the prompt is the mechanism.</li>
+        <li>Tone is concrete only with examples; chain-of-thought reasoning about escalation should stay hidden from the customer-facing text.</li>
+        <li>Defensive parsing checks <em>content</em>, not just syntax &mdash; valid JSON can still be a logically inconsistent or unsafe reply.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="done-well">
+    <span class="subtopic-label">Sub-topic 4 of 5</span>
+    <h2>4. "Done well" vs. "done technically"</h2>
+
+    <p>
+      It's possible to build something that runs without errors and still misses
+      the point of the exercise. Here's the difference, concretely.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Done technically (passes, but misses the point)</span>
+      A single prompt with one line &mdash; "respond in whatever tone seems
+      appropriate" &mdash; instead of explicit tone options and examples. It
+      returns valid JSON. It doesn't crash. But because "appropriate" is left for
+      the model to interpret case by case, tone drifts across similar tickets:
+      sometimes warm, sometimes flat, sometimes overly casual, even though
+      nothing about the actual instruction changed. Or: <code>parse_reply()</code>
+      does nothing but <code>json.loads()</code> wrapped in a try/except &mdash;
+      it "handles errors," but a syntactically valid reply with an invalid tone
+      or an unexplained escalation still sails straight through to a customer.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Done well (the actual goal)</span>
+      Each tone is backed by a concrete example the model can match the
+      <em>style</em> of, not just an adjective. The reasoning instructions
+      explicitly steer the escalation decision toward money, data loss, and
+      repeated complaints. And validation checks content, not just syntax: every
+      field is present, <code>tone_applied</code> is one of exactly three values,
+      and an <code>escalate: true</code> reply is required to carry a real
+      <code>escalation_reason</code> &mdash; because a system that always
+      generates a confident-sounding reply, even when it doesn't actually have
+      enough information, will eventually generate replies that are wrong or
+      unhelpful, and a confident tone makes people trust them more than they
+      should.
+    </div>
+
+    <p>
+      That distinction &mdash; recognizing that a successfully-parsed JSON object
+      is not the same thing as a <em>safe</em> one &mdash; is the whole reason
+      Session 2.4's lesson doesn't retire once you've passed its quiz. The stakes
+      of defensive parsing scale with how close a tool is to something real: in
+      an isolated exercise, a malformed response is an inconvenience you notice
+      immediately while testing. In a tool meant to run continuously over a live
+      ticket queue, an unhandled malformed response is the difference between
+      "the system flags one ticket for manual review" and "the system silently
+      sends a customer a JSON parsing error instead of a reply."
+    </p>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why versioned templates matter here, not just as a style rule</summary>
+      <p>
+        Naming this template <code>support_reply_v1</code> rather than leaving it
+        as an anonymous string isn't a cosmetic choice. If the support team's
+        ticketing integration is built against <code>v1</code>'s exact schema and
+        tone behavior, you want to be able to ship an improved <code>v2</code>
+        deliberately &mdash; deciding when the change rolls out and who reviews
+        it &mdash; rather than editing the prompt in place and silently changing
+        behavior for anyone already depending on the current version. That's the
+        practical payoff of Session 2.5's discipline, and it's exactly the kind
+        of thing that only bites you once a prompt is actually load-bearing.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>"Runs without errors" and "demonstrates real understanding" are different bars &mdash; especially for validation.</li>
+        <li>Inconsistent tone across similar tickets is usually a missing-examples problem, not a code problem.</li>
+        <li>A schema-valid reply can still be unsafe; content checks (not just syntax checks) are what catch that.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="reflection">
+    <span class="subtopic-label">Sub-topic 5 of 5</span>
+    <h2>5. Reflection: what clicked, what's fuzzy</h2>
+
+    <p>
+      Before moving into Week 3, take five honest minutes (genuinely worth doing,
+      not a platitude) to answer these for yourself:
+    </p>
+    <ul>
+      <li>Could you explain, without looking back, why "be empathetic" is a
+        weaker instruction than one concrete empathetic example? If shaky,
+        revisit Session 2.2.</li>
+      <li>Could you sketch, from memory, why a model might be told to reason
+        step by step but hide that reasoning from the final output? If not,
+        Session 2.3 is worth a second pass.</li>
+      <li>Did building today's tool surprise you anywhere &mdash; a place where
+        you thought "surely <code>json.loads()</code> succeeding is enough"
+        until you had to think through what content-level checks were still
+        missing? That surprise is valuable information.</li>
+    </ul>
+    <p>
+      This isn't busywork. The single best predictor of struggling in Week 3
+      (and beyond, once retrieval and multi-step agents enter the picture) is
+      carrying forward an unexamined gap from Week 2, because every later week
+      assumes you can reliably get structured, trustworthy output out of a model
+      &mdash; not just a fluent one.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Honest self-assessment now is cheaper than discovering a gap later.</li>
+        <li>Shaky on tone consistency &rarr; Session 2.2. Shaky on hidden reasoning &rarr; Session 2.3. Shaky on validation &rarr; Session 2.4.</li>
+        <li>The surprises during the build are the most useful signal you have.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Nearly every production support-copilot in 2026 combines these same five ingredients: tone-anchored examples, hidden reasoning for triage decisions, a strict output schema, defensive validation, and versioned prompt templates &mdash; there is no shortcut version that skips one and still ships reliably.</li>
+      <li>"It parsed as JSON" is a surprisingly common false sense of security in real incident post-mortems &mdash; teams that only wrap <code>json.loads()</code> in a try/except, without content-level validation, are the ones who get paged when a model returns a technically-valid-but-nonsensical response.</li>
+      <li>The escalate/escalation_reason pattern &mdash; letting a system say "I don't have enough information" instead of always sounding confident &mdash; is the same design principle Week 5 formalizes as evaluation and guardrails; it shows up here already as a basic requirement, not an advanced add-on.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>A lab day isn't about learning something new</strong> &mdash; it's about discovering that the week's separate techniques were never actually separate. A real prompting problem usually needs several combined, each solving a distinct sub-problem.</li>
+      <li><strong>Design the output contract (schema) before writing the prompt.</strong> The schema is the actual deliverable; the prompt is the mechanism that produces it.</li>
+      <li><strong>Tone control is concrete only when backed by few-shot examples</strong>, not adjectives alone &mdash; and chain-of-thought reasoning about sensitive decisions like escalation should often stay invisible to the end user.</li>
+      <li><strong>Defensive parsing is not a one-time 2.4 lesson.</strong> Every exercise that touches model output needs it, and the stakes increase as a tool moves from a single test run toward something running continuously on real data.</li>
+      <li><strong>Prompts belong in named, versioned templates</strong> from the first version of a tool &mdash; not retrofitted later once it's "important enough."</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; it's lighter than
+    usual, since today was mostly building.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../session-2-5-prompt-systems-not-just-prompts/lesson.html">&larr; Session 2.5</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.3 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 2.3: Prompting Techniques II — compare a direct prompt against a chain-of-thought prompt on a real multi-step business problem.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-3" data-chapter-id="session-2-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.3 Exercises</span>
+    <span class="reading-time">20 min, hands-on</span>
+  </div>
+  <h1>Exercise: Multi-Step Reasoning Prompt</h1>
+  <p>
+    Take a real multi-step business problem, write both a direct prompt and a
+    chain-of-thought version, run both against a real model, and compare the
+    results for accuracy &mdash; and for whether the reasoning trail actually
+    holds up to scrutiny, not just whether it looks thorough.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3, the <code>anthropic</code> and <code>python-dotenv</code>
+    packages (<code>pip install anthropic python-dotenv</code>), and your own
+    Anthropic API key set as the <code>ANTHROPIC_API_KEY</code> environment
+    variable. Download <code>starter.py</code> below, fill in the two prompts,
+    then run it with <code>python starter.py</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. A multi-step call-center staffing and cost
+    problem is provided as <code>PROBLEM</code> &mdash; it's deliberately
+    built from several compound calculations (a percentage, a subtraction, a
+    multiplication, a division) chosen so that skipping or misordering any
+    single step produces a wrong final answer.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Write the direct prompt</h3>
+    <p>Set <code>direct_prompt</code> to the problem text plus an instruction asking only for the final numeric answers &mdash; no reasoning steps requested.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Write the chain-of-thought prompt</h3>
+    <p>Set <code>cot_prompt</code> to the <em>same</em> underlying problem, this time explicitly instructing the model to work through it step by step before giving a final answer. Keep the problem text identical between both prompts &mdash; you're isolating the technique, not rewriting the question.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Verify the math yourself</h3>
+    <p>Before trusting either output, work out the correct total cost and capacity percentage by hand or with a calculator. This is the step people skip and the one that makes the exercise actually worth doing &mdash; per Session 1.5, a confident answer is not a correct one until you've checked it.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Compare the failure modes</h3>
+    <p>Run the script and look closely at both responses. A common failure pattern in the <strong>direct</strong> version is skipping the break-time adjustment to capacity entirely, or applying the 15% abandonment rate to the wrong base number. If your direct response shows one of these errors, does the chain-of-thought version avoid it? If both get it wrong, is it the <em>same</em> mistake in both, or a different one &mdash; and what does that tell you about where the model's actual weak point is on this problem?</p>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>PROBLEM = """A call center has 12 agents. Each agent can handle 8 calls per
+hour. The center operates 10 hours per day. Average cost to handle a call is
+$2.50. On a particular day, the center received 850 calls, but 15% of calls
+were abandoned before being answered ...
+What is the total cost of handled calls that day, and what percentage of
+total daily capacity was actually used?"""
+
+def main():
+    client = get_client()
+
+    direct_prompt = None   &#35; TODO: problem + "give only the final answer"
+    cot_prompt = None       &#35; TODO: SAME problem + step-by-step instructions
+
+    print(ask(client, direct_prompt))
+    print(ask(client, cot_prompt))
+    &#35; ... then verify both against a ground truth you compute yourself ...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    <code>solution.py</code> includes an independently-verified ground truth
+    for this exact problem (worked by hand, shown in the file's docstring),
+    so you can check both model responses against a real answer, not just
+    against each other. Run it with <code>python solution.py</code> once
+    you've made a genuine attempt with your own prompts.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

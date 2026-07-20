@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.2 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 2.2: build a working few-shot classification prompt, add your own boundary-case example, and verify it generalizes to unseen tickets.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-2-2" data-chapter-id="session-2-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 2.2 Exercises</span>
+    <span class="reading-time">20 min, hands-on</span>
+  </div>
+  <h1>Exercises: The Few-Shot Classifier Prompt</h1>
+  <p>
+    Build a working few-shot prompt for a company-specific classification task,
+    add one boundary-case example of your own, and prove it actually
+    <strong>generalizes</strong> &mdash; not just that it matches the examples you
+    wrote. This exercise makes a real LLM API call, since testing generalization
+    is the whole point: a prompt that only "works" on the exact tickets used as
+    examples hasn't proven anything.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3, plus the Anthropic SDK and a free-tier API key:
+    <code>pip install anthropic python-dotenv</code>. Copy <code>.env.example</code>
+    (repo root) to <code>.env</code> and add your <code>ANTHROPIC_API_KEY</code>.
+    Then download <code>starter.py</code> below and run
+    <code>python starter.py</code>. It classifies five held-out test tickets and
+    prints the results in a table.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. The support-ticket few-shot prompt from this
+    session's lesson is already there as a starting point &mdash; four examples
+    covering Billing, Technical, Account Access, and Other. Your job is to
+    strengthen it and then test it.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Add one more few-shot example</h3>
+    <p>Add at least one new example, in the same <code>Ticket: "..."</code> / <code>Category: ...</code> format, before the final placeholder line. The instinct to practice from the lesson: pick something that covers a case the existing four examples <em>don't</em>, rather than a near-duplicate of one that's already there.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Test against unseen tickets</h3>
+    <p>Run the script. It sends five test tickets &mdash; ones your examples never showed the model &mdash; through your few-shot prompt and prints the category each one lands in.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Diagnose any misclassification</h3>
+    <p>If a ticket lands somewhere unexpected, the fix is almost never "write a stronger instruction." Ask instead: did any of my examples actually demonstrate this kind of case? That question is the real skill this exercise trains.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Prompt</h3>
+    <p>A teammate's few-shot prompt keeps classifying "What's your favorite color?" as <strong>Technical</strong> instead of <strong>Other</strong>. Here's their example set. Find the bug and fix it.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_prompt.txt</span>
+      </div>
+      <pre><code>Classify the following support ticket into one of: Billing, Technical, Account Access, Other.
+
+Ticket: "I was charged twice for my subscription this month."
+Category: Billing
+
+Ticket: "The app crashes every time I try to upload a photo."
+Category: Technical
+
+Ticket: "I can't log in, it says my password is wrong even after I reset it."
+Category: Account Access
+
+&#35; missing: no example at all shows the model what "Other" looks like
+
+Ticket: "{ticket}"
+Category:</code></pre>
+    </div>
+    <p>With no worked example of the "Other" boundary, the model has never seen what an unrelated, off-topic ticket should map to &mdash; so it defaults to forcing every input into one of the three categories it <em>has</em> seen, usually whichever felt closest. Add an "Other" example (like the paddle-boarding one from the lesson) and the misclassification disappears.</p>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">classifier.py</span>
+    </div>
+    <pre><code>FEW_SHOT_PROMPT_TEMPLATE = """Classify the following support ticket into one of: Billing, Technical, Account Access, Other.
+
+Ticket: "I was charged twice for my subscription this month."
+Category: Billing
+
+&#35; ... 3 more given examples ...
+
+&#35; TODO: add your own example here, in the same format.
+
+Ticket: "{ticket}"
+Category:"""
+
+TEST_TICKETS = [
+    "My invoice shows a fee I don't recognize from last week.",
+    "The export button just spins forever and never finishes.",
+    "I think someone else logged into my account, I see purchases I didn't make.",
+    "What's your favorite color?",
+    "Why was I charged $4.99 extra this month?",
+]</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader &mdash; that's intentional. Getting all five test
+    tickets right isn't about memorizing those exact five, it's about whether
+    your added example taught a pattern general enough to handle inputs you
+    didn't specifically write for. Compare your choice of example (and your
+    results) against <code>solution.py</code> once you've made a genuine
+    attempt &mdash; it explains <em>why</em> its added example was chosen, not
+    just what it is.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

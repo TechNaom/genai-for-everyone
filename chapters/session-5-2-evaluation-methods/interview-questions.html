@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.2 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 5.2: Evaluation Methods — rubric grading vs. LLM-as-judge, the semantic-similarity blind spot, and combining methods into a defensible ship decision, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-2" data-chapter-id="session-5-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.2 Interview Prep</span>
+    <span class="reading-time">9 min read</span>
+  </div>
+  <h1>Interview Questions: Evaluation Methods</h1>
+  <p>
+    "How do you know your prompt actually works?" is one of the most common
+    questions a GenAI-adjacent role will ask, and interviewers can tell
+    quickly whether a candidate has ever actually scaled evaluation past
+    "I tried a few examples and it looked fine." Each question below includes
+    what a strong answer sounds like, common red flags, and a natural
+    follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> A teammate says, "I tried the new contract-summarizer prompt on a few clauses and it looked great." Why isn't this sufficient, and what would you ask them to produce instead?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>"A few examples looked great" is anecdotal and almost certainly cherry-picked &mdash; it says nothing about the 1,500 clauses that weren't checked, and nothing about the specific failure mode that actually matters here (a summary that's true about what it says but silently omits a legally significant detail, like a class-action waiver). A strong answer asks for a real evaluation instead: a golden dataset covering happy-path, edge, and adversarial clauses, scored against an explicit rubric, run consistently across variants so results are comparable over time &mdash; not a one-off impression. It doesn't dismiss "it looked great" entirely; that's a fine first signal, just not sufficient evidence to ship on.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"If it looks good, it's good" with no mention of systematic coverage; being unable to describe what a golden dataset actually contains; no mention that anecdotal review can't catch a failure mode you haven't specifically checked for.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your teammate's golden dataset has 50 clauses and no arbitration or indemnification examples in it. What's your objection?" (Coverage of the highest-risk categories matters more than raw count &mdash; a golden dataset that skips the clause types where failure is most expensive isn't actually evaluating what matters most.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Compare rubric-based grading to LLM-as-judge for scoring contract summaries. When would you reach for each, and what's the single biggest risk of relying on LLM-as-judge alone?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Rubric grading is explicit and human-defined &mdash; it catches things like tone mismatches a computation can't represent &mdash; but it's slow (2&ndash;3 minutes per summary, 50 hours for 1,500) and a tired reviewer drifts even against the same rubric. LLM-as-judge scores the same 1,500 in minutes and doesn't get tired, but its default failure mode is generosity: asked a vague "is this accurate?" question, it evaluates whether the stated content is true, not whether anything important was left out, so a summary that's 100% true about the part it covers scores well even after silently dropping the most consequential detail. The fix isn't to distrust LLM-as-judge wholesale &mdash; it's to write the judge prompt with an explicit partial-failure cap, and reserve rubric grading for the smaller, final check (golden-dataset scale) rather than the full test set.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"They're basically interchangeable"; no mention of the generosity/omission failure mode specifically; treating either method as infallible on its own.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you validate that your LLM-judge's scores actually correlate with real human judgment?" (Periodically re-score a sample with an actual human rubric and compare &mdash; without this, you have no way of knowing which blind spot is currently biting you.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Your semantic-similarity metric gives a candidate summary a 0.79 score against the human-verified reference. Is 0.79 "good enough" to ship? Walk me through how you'd actually decide.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Not by itself &mdash; 0.79 sits squarely inside the deceptive middle band (roughly 0.70&ndash;0.85) where an incomplete-but-related summary still reads as semantically close to a complete one, precisely because semantic similarity measures overall closeness in meaning space and has no concept of which single omitted detail is the legally significant one. A clean 0.95+ is probably genuinely faithful and a clean sub-0.5 is probably genuinely bad, but the middle band is exactly where a summary that mentions arbitration while quietly dropping the class-action waiver lives. The right move is to treat that score as a routing signal, not a verdict &mdash; send it to an LLM-judge with an explicit omission check, or to human review, before deciding anything.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating any score above some round number (0.7, 0.8) as automatically acceptable; not recognizing that the danger zone is the middle of the scale rather than the bottom.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What if the score were 0.95 instead &mdash; does your answer change?" (Yes &mdash; a clean high score is much more likely to reflect genuine faithfulness, though periodic spot-checking against human judgment is still the only way to be sure the metric hasn't quietly drifted.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Your eval harness reports Variant B has the highest LLM-judge average, the lowest flag-for-review rate, and the highest semantic similarity of three prompt variants. Is that enough to ship it? What do you still need to check?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>It's a strong candidate, but "highest on every number" still isn't automatically the right ship decision without checking what's actually driving those numbers &mdash; and checking the cases the harness itself flagged. Even Variant B's smaller flag rate (say 9%) still needs a manual rubric pass to confirm those flagged cases are genuinely low-risk and not a high-risk clause type slipping through quietly. It's also worth checking whether a variant scoring slightly lower, like one written in a more casual tone, is being penalized by the LLM-judge for style rather than an actual accuracy or completeness problem &mdash; in which case the "winner" by the numbers might not be the best real system.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Highest average score wins, ship it" with no further checking; not distinguishing between a quality-driven gap and a tone- or style-driven gap between variants.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your team has 30 minutes before the ship decision, not 50 hours. What's the highest-value use of that time?" (A targeted manual rubric check on the small set of cases the automated methods flagged for review &mdash; not a fresh full read of all three variants' output.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Your evaluation harness gave all three prompt variants a clean pass six months ago. Users are now reporting the summarizer is missing important clause details more often, and no code has changed since. How is that possible, and what would you check?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Nothing about "no code changed" guarantees the system's real-world behavior hasn't shifted. The real distribution of contract clauses users feed it may have drifted from what the golden dataset covered six months ago &mdash; new clause types, new phrasing conventions, a new client vertical with unfamiliar boilerplate. A model version behind a fixed alias may have been silently updated upstream. Or the LLM-judge's own calibration may have quietly drifted if it's implemented as a versioned model call. The fix is the same instinct as the rest of this chapter: don't treat a one-time eval as permanent, periodically re-score against a refreshed golden dataset (or a sample of real production output) against actual human judgment, and treat a passing eval from six months ago as a snapshot, not a guarantee.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"If the code didn't change, the eval score should still hold" &mdash; misses drift entirely; naming only one possible drift source instead of several; no mention of re-validating against human judgment periodically.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What's one metric you'd monitor continuously in production, rather than re-checking only at the next quarterly review?" (The % of live outputs the routing logic flags for human review &mdash; a sudden rise in that rate over time is a leading indicator of exactly this kind of drift, well before user complaints arrive.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Rubric grading is accurate but doesn't <code>____</code> to 1,500 outputs reviewed by hand.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="scale" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> An ungrounded LLM-judge prompt tends to be too <code>____</code>, rating a partial truth higher than it deserves.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="generous" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Semantic similarity catches paraphrasing well but catches selective <code>____</code> poorly.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="omission" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> The most dangerous omission failures hide in the <code>____</code> band of a similarity score, not the lowest scores.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="middle" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> "% flagged for human review" is decision-relevant even though it isn't itself a <code>____</code> score.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="quality" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about evaluation methods in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for the specific-failure-mode instinct (know what your task's most expensive blind spot looks like, then design around that shape) &mdash; not textbook recall of "rubric vs. automated" definitions alone.</li>
+    <li>Pair this set with Session 5.1's golden-dataset questions for a more realistic mixed-topic mock interview on evaluation.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-5-3-safety-fundamentals/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.4 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 5.4: bias measurement, fairness audits, and responsible AI in practice — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-4" data-chapter-id="session-5-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.4 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Bias Measurement &amp; Responsible AI</h1>
+  <p>
+    Bias and fairness questions are where interviewers separate candidates who can
+    recite "AI can be biased" from candidates who can actually design a measurement,
+    name a concrete trade-off, or explain why a stakeholder's confident claim doesn't
+    hold up. These questions probe exactly that. Each question below includes what a
+    strong answer sounds like, common red flags, and a natural follow-up. Click any
+    question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> A stakeholder says, "I tested our hiring tool on a resume from a woman and it gave a fair result &mdash; so we're good on bias." What's wrong with this claim?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Bias is a comparative property &mdash; a single output tells you nothing about whether treatment is <em>unequal</em>. A real bias check requires matched variants (the same underlying qualifications, varied only in a demographic or framing detail) and comparing the outputs across them. One fair-looking output doesn't rule out disparities that would show up across many comparisons, or in specific edge cases. A strong answer also notes that bias checks should be an explicit, ongoing category of testing &mdash; the five-step audit framework from this session, not a one-time spot check.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Accepting the stakeholder's claim as sufficient, not mentioning the need for a controlled comparison, or treating bias testing as a single pass/fail check rather than an ongoing discipline.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Design two matched test cases you'd use to check this hiring tool for bias." (Strong answer: two resumes identical in every qualification, differing only in a name signaling gender or ethnicity, then compare the model's recommendation and score for each.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> A model achieves higher overall accuracy by performing very well on the majority group and noticeably worse on a minority group. Is this an acceptable trade-off?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>This is a fairness/parity concern, not just an aggregate accuracy question &mdash; optimizing for overall accuracy can mask real harm concentrated in a subgroup. Acceptability depends on stakes: a hiring, lending, or healthcare decision has a much lower tolerance for this gap than a low-stakes recommendation feature. Concrete responses include reporting per-group metrics separately (never just the aggregate), setting explicit parity thresholds, adjusting decision thresholds per group, or accepting a small aggregate accuracy cost in exchange for better parity.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Higher overall accuracy is always better" with no acknowledgment of distributional harm, no mention of stakes or context mattering, or no concrete mitigation proposed at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you explain this trade-off to a stakeholder who only cares about the headline accuracy number?" (Strong answer: show the per-group breakdown next to the aggregate number, and frame the gap in terms of concrete harm to real people, not just a second statistic.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Walk me through the difference between demographic parity, equal opportunity, and calibration &mdash; and give an example where satisfying one would make another one worse.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Demographic parity asks whether outcome rates match across groups regardless of underlying qualification rates; equal opportunity asks whether people who genuinely deserve a positive outcome get it at the same rate across groups; calibration asks whether a stated confidence level (e.g. "80% likely") means the same thing across every group. A strong candidate can produce a concrete example where they conflict: if the true qualification rate genuinely differs between two groups, forcing demographic parity (equal approval rates) will push calibration out of alignment, since a well-calibrated model would naturally produce different approval rates when the underlying rates differ. This is exactly why "no single definition of fairness" isn't a hedge &mdash; it's a mathematical reality.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating the three metrics as interchangeable, being unable to produce a concrete conflicting example, or claiming one metric is simply "the correct" definition of fairness in all cases.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Which of the three would you prioritize for a medical screening tool, and why?" (Strong answer: likely equal opportunity, since missing a real case across any group is the costliest failure mode &mdash; but a strong candidate reasons through it rather than reciting a rule.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Amazon's hiring bot and the COMPAS recidivism tool were both biased, without anyone intentionally designing them to discriminate. How does that happen, and what does it imply about how you'd audit a new system?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Both systems learned patterns already present in historical data &mdash; a decade of male-dominated tech hiring, or historical bias already baked into the criminal justice system &mdash; and reproduced those patterns faithfully, exactly as a model is supposed to do with its training data. The implication for auditing a new system: you can't assume good intentions or a clean-looking spec means a clean outcome. You have to actually measure outcomes across groups on real (or representative) data, because the bias lives in the data's history, not in anyone's stated intent.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Assuming bias requires malicious intent, or concluding "so bias is unavoidable, nothing to be done" instead of naming concrete mitigations and audit steps.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The company removes the biased tool's protected-attribute fields entirely. Is that sufficient?" (Strong answer: no &mdash; per the healthcare AI incident, a proxy variable correlated with the protected attribute can reproduce the same bias even when the attribute itself is never an input.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> You're asked to write a model card for a system with a real accuracy gap between two groups. What goes in it, and what would you say in the "recommended use" section?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A model card documents overall accuracy, accuracy broken out per group (not hidden behind the aggregate), known limitations stated plainly (e.g. "lower accuracy for group B"), and a recommended-use statement grounded in the actual findings &mdash; e.g. "not recommended for high-stakes decisions without human review" when a real disparity was found, versus "acceptable for medium-stakes decisions, monitor continuously" when parity checks pass. A strong candidate treats the model card as an honesty tool, not a marketing document &mdash; its entire value comes from stating the real limitations, not from making the system look good.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Suggesting the model card only report the overall accuracy number, treating "recommended use" as boilerplate rather than tied to the actual findings, or omitting known limitations to make the write-up look cleaner.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"A PM asks you to soften the 'not recommended for high-stakes use' language before a launch review. What do you do?" (Strong answer: push back &mdash; a model card exists specifically to give decision-makers accurate information; softening a real, measured limitation defeats its entire purpose.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Bias is a <code>____</code> property &mdash; you can't detect it from a single output, only by comparing matched cases across groups.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="comparative" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Calibration means a model's stated confidence level (e.g. "80% likely") means the same thing <code>____</code> every group.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="across,for" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A <code>____</code> variable (like healthcare spending standing in for race) can reproduce bias even when the sensitive attribute itself is never used as an input.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="proxy" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> A model card should document accuracy per group, known limitations, and <code>____</code> use &mdash; not just an overall accuracy number.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="recommended" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> You cannot optimize for demographic parity, equalized odds, and calibration all at once when base rates genuinely <code>____</code> between groups.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="differ,vary" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about bias and responsible AI in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers listen for a controlled-comparison instinct and concrete trade-off reasoning &mdash; not textbook recall of the word "bias."</li>
+    <li>Pair this set with Week 5's other interview questions (evaluation, prompt injection, guardrails) for a more realistic mixed-topic mock interview.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-5-5-guardrails-and-mitigations/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

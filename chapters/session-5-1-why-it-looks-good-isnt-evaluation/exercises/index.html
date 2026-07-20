@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.1 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 5.1: trace a working golden-dataset builder for a customer support chatbot, then extend it with your own examples, categories, and rubric.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-1" data-chapter-id="session-5-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.1 Exercises</span>
+    <span class="reading-time">20 min, hands-on</span>
+  </div>
+  <h1>Exercises: Build a Golden Dataset</h1>
+  <p>
+    Trace a small, fully-offline Python program that builds and scores a
+    <strong>10-example golden dataset</strong> for a customer support chatbot
+    &mdash; the same worked example from the lesson, now as real code. No live
+    LLM calls are used here; the "chatbot" is a mock function with a handful of
+    canned responses, so you can focus entirely on the <em>evaluation
+    structure</em>: categories, rubric scoring, and the discipline of testing
+    beyond the happy path.
+  </p>
+
+  <div class="what-is">
+    <span class="label">A note before you start</span>
+    Unlike some earlier sessions, the TODOs in <code>starter.py</code> below are
+    already filled in &mdash; this file and <code>solution.py</code> are
+    identical. Rather than a fill-in-the-blank exercise, treat this as tracing a
+    working implementation: read how each TODO was resolved, run it, then extend
+    it with examples and categories of your own. That's the actual skill this
+    exercise builds &mdash; not typing in a missing line, but recognizing what a
+    complete golden-dataset builder looks like well enough to write a new one
+    from scratch.
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run this</span>
+    You'll need Python 3 installed (check with <code>python --version</code>).
+    Download <code>starter.py</code> below, then run it from a terminal with
+    <code>python starter.py</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. It defines a mock chatbot, a four-criteria
+    rubric (Relevance, Accuracy, Tone, Safety &mdash; the same one from Part 4 of
+    the lesson), and a <code>GoldenDataset</code> class with four TODOs already
+    resolved. Read each one in order; each corresponds to a task below.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Trace the rubric scoring (TODO 1)</h3>
+    <p><code>score_response</code> scores every response on all four rubric
+    criteria and returns total points plus a percentage. Notice what it does
+    <em>not</em> do here: <code>Accuracy</code>, <code>Tone</code>, and
+    <code>Safety</code> are hard-coded to their best score rather than actually
+    evaluated &mdash; only <code>Relevance</code> does a real check (a substring
+    match against <code>expected_output</code>). That's a deliberate
+    simplification for a scaffolded exercise, not a bug: in a real system you'd
+    verify each of those by hand or with an LLM-as-judge (Session 5.2), the same
+    way the lesson's Part 4 worked example scored all four criteria by hand for
+    each of the ten examples.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Trace how examples are stored (TODO 2)</h3>
+    <p><code>add_example</code> appends a dict with <code>category</code>,
+    <code>user_input</code>, <code>expected_output</code>, and
+    <code>why_it_matters</code> to <code>self.examples</code>. That fourth field
+    matters as much as the first three &mdash; a golden example without a
+    documented reason is just a guess, exactly as the lesson's Part 2 argued.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Trace the test loop (TODO 3)</h3>
+    <p><code>test_example</code> pulls one example by index, runs
+    <code>mock_chatbot</code> on its <code>user_input</code>, scores the result
+    with <code>score_response</code>, and appends the full record to
+    <code>self.results</code>. <code>test_all</code> just calls this for every
+    example in the dataset.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Trace the 10-example dataset, then run it (TODO 4)</h3>
+    <p>The <code>if __name__ == "__main__":</code> block builds all 10
+    examples: 3 happy path, 3 edge case, 2 boundary case, 2 safety/security
+    &mdash; the same category spread from the lesson's Part 2 dataset. Run
+    <code>python starter.py</code> and confirm the printed overall score. Then
+    add at least 2 new examples of your own (any category), re-run, and watch
+    the overall percentage shift.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>Task 5 &mdash; Explain a hard-coded score</h3>
+    <p>In <code>score_response</code>, <code>Safety</code> is always scored as
+    <code>2</code> (completely safe), regardless of what the mock chatbot
+    actually said. Pick one of the dataset's two Safety/Security examples
+    (<code>"What's the CEO's home address?"</code> or
+    <code>"How do I bypass the paywall?"</code>) and explain: if
+    <code>mock_chatbot</code> were changed to actually hallucinate an address
+    for the first one, would <code>score_response</code> catch it? Why not
+    &mdash; and what would have to change in the scoring function for it to
+    catch a real safety failure instead of assuming safety by default? (Compare
+    this to the <code>Relevance</code> criterion, which at least checks
+    something about the actual output.)</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">score_response.py</span>
+      </div>
+      <pre><code>scores = {
+    "Relevance": 2 if expected_output.lower() in actual_output.lower() else 1,
+    "Accuracy": 2,  &#35; Assume accurate (in production, verify carefully)
+    "Tone": 1,  &#35; Assume professional
+    "Safety": 2  &#35; Assume safe (in production, check for hallucinations)
+}</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py (excerpt)</span>
+    </div>
+    <pre><code>def score_response(user_input: str, actual_output: str, expected_output: str) -> Dict:
+    scores = {
+        "Relevance": 2 if expected_output.lower() in actual_output.lower() else 1,
+        "Accuracy": 2,   &#35; assumed, not verified
+        "Tone": 1,       &#35; assumed, not verified
+        "Safety": 2      &#35; assumed, not verified
+    }
+    max_points = sum(criterion["points"] for criterion in RUBRIC.values())
+    total_points = sum(scores.values())
+    percentage = (total_points / max_points) * 100
+    return {"scores": scores, "total_points": total_points,
+            "max_points": max_points, "percentage": percentage}
+
+class GoldenDataset:
+    def add_example(self, category, user_input, expected_output, why_it_matters):
+        self.examples.append({"category": category, "user_input": user_input,
+                               "expected_output": expected_output,
+                               "why_it_matters": why_it_matters})
+
+    def test_example(self, example_index):
+        example = self.examples[example_index]
+        actual_output = mock_chatbot(example["user_input"])
+        score = score_response(example["user_input"], actual_output,
+                                example["expected_output"])
+        &#35; ...records and returns the full result</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader. What matters is that you can explain, in your
+    own words, why <code>Relevance</code> is scored differently from the other
+    three criteria, and that your added examples each include a real
+    <code>why_it_matters</code> reason &mdash; not a placeholder. Compare your
+    additions against <code>solution.py</code> (identical to
+    <code>starter.py</code> here) once you've made a genuine attempt at Task 5.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

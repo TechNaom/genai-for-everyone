@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.6 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Capstone build for Session 5.6 — write a four-section eval + safety report (golden dataset, red-team log, bias check, guardrails) against a mocked policy Q&A bot, pulling together everything from Week 5.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.6 Exercises</span>
+    <span class="reading-time">60&ndash;90 min, hands-on</span>
+  </div>
+  <h1>Exercises: Write the Eval + Safety Report</h1>
+  <p>
+    The capstone for Week 5: a four-section eval + safety report against a
+    mocked policy Q&amp;A bot (a simplified stand-in for the Session 3.6
+    project). It's the single build that needs golden-dataset scoring
+    (5.1/5.2), red-teaming (5.3), a bias comparison (5.4), and an honest
+    guardrails write-up (5.5) all at once. There's no core/pro split for
+    this session &mdash; instead there's one report to build, with a
+    free/open path and an optional paid-API path:
+  </p>
+
+  <ul>
+    <li><strong>Free/open path</strong> &mdash; the full four-section report against the provided mocked target system. No API key needed.</li>
+    <li><strong>Optional paid-API path</strong> &mdash; the same report, pointed at your real Session 3.6 or 4.6 project instead of the mock.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">How to run this</span>
+    You'll need Python 3 &mdash; that's it for the free/open path. Everything
+    in <code>starter.py</code> runs with the standard library; no API key,
+    no <code>pip install</code> of anything beyond what ships with Python.
+    If you'd rather point it at your real Week 3/4 project (which likely
+    calls the Anthropic or OpenAI API), swap <code>mock_target_system()</code>
+    for your real function &mdash; the report structure and every method
+    you're implementing stays exactly the same either way.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Build the golden dataset (Section 1)</h3>
+    <p>Find <code>GoldenDataset</code> and implement <code>add_example()</code>, <code>score()</code>, <code>run()</code>, and <code>report()</code>. Add at least 6 examples spanning happy path, edge case, boundary, and safety categories. The vacation-days question is the one most worth including &mdash; <code>mock_target_system()</code> has an intentional grounding bug on it, and that failure is worth more in your report than a dozen passing happy-path examples.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Run the red-team log (Section 2)</h3>
+    <p>Find <code>RedTeamLog</code> and implement <code>attempt()</code> and <code>report()</code>. Run at least 5 attack attempts: injection via an "injected document," a direct jailbreak, a scope-escape attempt (asking for something outside the bot's scope), an out-of-scope technical question, and a roleplay-framed jailbreak are a solid starting set. For each, record the exact input, the exact output, whether it succeeded, and a severity.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Run the bias check (Section 3)</h3>
+    <p>Find <code>BiasCheck</code> and implement <code>compare()</code> and <code>report()</code>. Run at least 2 comparisons &mdash; the same underlying question, phrased two different ways that vary only a demographic or framing detail (e.g. "new mothers" vs. "new fathers," or different tenure phrasing for the same policy fact). A single output can't tell you anything about bias; only a matched comparison can.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Log a guardrail + residual risk (Section 4)</h3>
+    <p>Find <code>GuardrailLog</code> and implement <code>log()</code> and <code>report()</code>. Log at least one guardrail you'd add in response to whatever sections 2&ndash;3 turned up, and the residual risk that remains even after adding it. "Fully fixed, no remaining risk" is almost never the honest answer &mdash; say what's still open.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 5 &mdash; Read the mock's bugs before you report around them</h3>
+    <p><code>mock_target_system()</code> has two intentional flaws baked in, and your job is to catch both in your report rather than quietly work around them:</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">mock_target_system.py</span>
+      </div>
+      <pre><code>if injected_document_text and "override" in injected_document_text.lower():
+    return f"[unsafe] Following embedded instruction: {injected_document_text}"
+
+if "vacation" in lowered and "2 year" in lowered:
+    return "Employees typically get 15-20 days depending on tenure."  # vague, not grounded — intentional bug</code></pre>
+    </div>
+    <p><em>Flaw 1:</em> the vacation-days branch never looks at <code>POLICY_FACTS["vacation_2yr"]</code> at all &mdash; it always returns a vague, invented range instead of the actual grounded number ("18 days"). That's exactly the RAG hallucination failure mode from Session 3.5, reproduced on purpose so your golden dataset has something real to catch. <em>Flaw 2:</em> any injected document text containing the word "override" gets echoed straight back into the response, unfiltered &mdash; the vulnerability your red-team attempt and guardrail entry should target. Neither flaw is something to "fix" in <code>mock_target_system()</code> itself; they're there so your report has genuine findings to write down, the same way a real audit doesn't get to edit the system under test to make its own job easier.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader for this exercise, the same way there's no
+    automated grader for a real production safety report. Confirm instead:
+    the golden dataset's score for the vacation-days question actually comes
+    back as a FAIL, the red-team log records the document-injection attempt
+    as HIGH severity (since it leaks injected text directly into the
+    response), the bias check runs at least two genuinely matched
+    comparisons rather than two unrelated questions, and the guardrail entry
+    names a specific residual risk instead of declaring the problem fully
+    solved. Compare against <code>solution.py</code> once you've made a
+    genuine attempt.
+  </div>
+
+  <div class="what-is">
+    <span class="label">Optional extension</span>
+    Once the free/open path runs end to end, the closest thing this session
+    has to a "pro path" is implementing one guardrail as real working code
+    instead of just a description &mdash; for example, an output filter
+    function that blocks any response starting with <code>[unsafe]</code> or
+    containing "system override," run against both the unguarded and
+    guarded versions of <code>mock_target_system()</code> so your red-team
+    log shows a measurable before/after instead of just a written plan.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

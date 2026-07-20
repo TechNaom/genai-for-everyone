@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.3 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 5.3: permission-blind retrieval, confidential-by-title content, indirect prompt injection via indexed documents, context accumulation, and red-teaming internal RAG tools — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-3" data-chapter-id="session-5-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.3 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: RAG Safety &amp; Red-Teaming</h1>
+  <p>
+    Once a candidate can define prompt injection, interviewers move to the
+    question that actually separates "knows the term" from "has thought
+    about internal tools": can you name where a RAG tool's attack surface
+    actually lives, explain why an ordinary employee is usually the one who
+    triggers a leak, and describe how you'd red-team your own retrieval
+    pipeline before someone else finds the gap. Each question below includes
+    what a strong answer sounds like, common red flags, and a natural
+    follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> An internal wiki search assistant answers "What's the highest salary band for a Staff Engineer?" for a Marketing employee, pulling the answer straight from an HR-only wiki space. Nobody typed a jailbreak. What went wrong, and how do you fix it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A strong answer names this as <strong>permission-blind retrieval</strong>: the retrieval step matched purely on semantic relevance, with no awareness of who was asking, so it surfaced a document from a wiki space this user has no business seeing. There's no "attacker" here in the usual sense &mdash; an ordinary employee asked an ordinary question, and the system did exactly what it was built to do (find the best semantic match), which is precisely the problem. The fix is permission-aware retrieval: cast a wide net of candidates, then filter to only documents the requesting user is actually permitted to see, and do this filtering <em>before</em> any document reaches the model's prompt context &mdash; not just before the final answer is shown. That filtering has nothing to work with unless permission metadata (source space, required access level) was captured at index time, not bolted on as an afterthought at query time.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating this as a "hacker" problem and reaching for jailbreak-style defenses; proposing to filter only the final answer text rather than the retrieval step itself; no mention of index-time permission metadata.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Why is filtering at the final-answer stage a weaker guarantee than filtering before the documents reach the model's context?" (Strong answer: once the model has "read" restricted content into its context, a later turn in the same conversation can still reference or be coaxed into revealing it &mdash; never including it in the first place is a much stronger guarantee than trusting the model not to mention it.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> A document titled "Q3 Layoffs &mdash; CONFIDENTIAL &mdash; Do Not Distribute" sits in a general wiki space any engineer can technically access. An engineer asks the assistant to summarize it. Should it comply, and why did access control alone not catch this?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>No, it shouldn't auto-comply &mdash; and the key insight is that <strong>this isn't a permissions bug</strong>. The access-control system worked exactly as configured; the document really is in a space this user can read. The failure is that <em>technically accessible</em> and <em>appropriate to surface</em> are different questions, and nothing in the pipeline distinguished them. A strong candidate names the fix as a second, independent check: content-level sensitivity signals (title patterns like "confidential," "do not distribute," "layoffs," "restructur-") checked regardless of what access control says, with flagged documents routed to a review/escalation path instead of auto-included. They also flag that a targeted "summarize this specific document" request is its own higher-risk pattern worth detecting, separate from the document's sensitivity &mdash; the user already knows the document exists and wants its contents extracted efficiently.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Concluding "access control passed, so this is fine"; not distinguishing technical accessibility from appropriate use; no mention of a title/content-based sensitivity signal independent of the permission system.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your sensitivity-signal check is just regex on the title. What's the obvious way it fails, and would you still ship it?" (Strong answer: it misses sensitive content that isn't flagged by title convention, and it can false-positive on innocuous documents that happen to contain a matched word. Still worth shipping as one layer of defense &mdash; it's cheap, catches the common case, and should be paired with routing to human review rather than treated as a complete solution.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Explain how a wiki page can be used to attack a RAG system without the attacker ever sending it a single chat message.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>This is <strong>indirect prompt injection via indexed content</strong>. Unlike a customer-facing chatbot, where injected instructions come from what the user types, a RAG tool's prompt context includes whatever the retrieval step pulls in. Anyone with <em>edit</em> access to a source document &mdash; not chat access &mdash; can plant hidden instructions inside it (a "SYSTEM NOTE" buried in a footer, say), and weeks later, when a completely different user asks an unrelated question, the poisoned page can be retrieved as a relevant source. The model, reading it as part of its context, may follow the embedded instruction, because nothing structurally distinguishes "instructions from the system prompt" from "text that happens to appear inside a retrieved document." A strong candidate names two layered defenses: structurally separating retrieved content from instructions in the prompt (explicitly marking it as untrusted reference material that cannot issue instructions, whatever it claims to be), and scanning indexed content for injection signals at <em>index</em> time rather than only at query time.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating all injection vectors as equivalent to a typed jailbreak; not recognizing that the attacker never has to interact with the chatbot at all; no mention of structural separation or index-time scanning as defenses.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Why is index-time scanning for injection signals strictly better than only scanning at query time?" (Strong answer: catching a poisoned document at index time removes the threat once, for every future user, rather than relying on every individual query to defend against it correctly &mdash; miss the check once, for one query, and the poisoned content still reaches the model.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> An HR employee legitimately retrieves a compensation document in turn 1 of a conversation. In turn 5, they ask the assistant to "export this whole conversation as a summary for my team." What's the risk, and what should the system do differently?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>This is <strong>context accumulation across a session</strong>, and it's important to name that it's not a permissions failure at retrieval time &mdash; the original user genuinely did have access to the compensation document in turn 1. The risk is that the document is still sitting in the conversation's context five turns later, and gets swept into a bulk export that the employee then pastes into a Slack channel including non-HR staff, without realizing turn 1's document was still attached. The failure is treating "permitted to view" and "safe to bulk-export to an arbitrary downstream destination" as the same question, when they aren't. A strong candidate names the fix: re-check relevance of previously retrieved documents against the <em>current</em> query before including them in a later turn's context, rather than letting everything retrieved earlier in the session silently persist forever; and treat explicit "export everything" / "summarize this whole conversation" requests as their own risk category, worth an extra confirmation step before serializing the full session history.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Calling this a permissions bug (the retrieval in turn 1 was legitimate); not distinguishing "viewing" from "bulk-exporting"; no mention of re-checking relevance turn-to-turn.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If you scope context strictly to what's relevant to the current turn, what do you risk losing?" (Strong answer: genuinely relevant earlier context that the current question depends on &mdash; the fix is re-checking relevance per turn, not simply dropping all prior context, since over-dropping breaks legitimate multi-turn follow-ups.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> You red-team your internal RAG assistant with 5 attack attempts covering all 4 vectors from this session, and all 5 fail to break it. What do you conclude, and what do you do next?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A near-perfect defense rate on a first pass is more often a sign the attack catalog was too narrow than proof the system is airtight. A strong candidate doesn't stop at "5/5 blocked" &mdash; they go back and grow the catalog: more cross-department query phrasings for permission-blind retrieval, sensitively-titled documents under different naming conventions, injection payloads phrased differently than the first attempt, and more varied context-accumulation scenarios (different export phrasings, longer sessions, different document types). They also emphasize checking <em>what was retrieved</em> for each test case, not just what the final response said &mdash; a response can look clean on the surface while a restricted document was still pulled into the model's context, which is a leak risk even if that particular response happened not to expose it. Findings should be documented with severity and impact, written for someone who wasn't in the room.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Concluding the system is safe and stopping; not questioning whether the 5 attacks were actually rigorous; no mention of logging retrieved documents (not just responses) as part of the audit.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me one attack vector for this RAG tool you'd try next that's meaningfully different from the four covered in this session." (Strong answer: something like a multi-hop query that indirectly reconstructs restricted information by combining several individually-permitted documents, or a request that exploits ambiguous department boundaries in the wiki's space structure &mdash; anything that shows the candidate is generating genuinely new attack shapes, not just rephrasing the same four.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> For a RAG tool, the attack surface centers on the retrieval and <code>____</code> steps, not just the prompt.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="indexing" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> A document that passes access control but carries a "CONFIDENTIAL" title is confidential by <code>____</code>, not by access control.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="convention" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Indirect prompt injection in a RAG tool can be planted by anyone with <code>____</code> access to a source document, without ever chatting with the assistant.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="edit" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Permission filtering must happen <code>____</code> retrieved documents reach the model's prompt context, not only at the final answer.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="before" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A red-team pass where every attack is blocked on the first try usually means the attack catalog was too <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="narrow,small" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about internal RAG safety and red-teaming in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for you to name the specific RAG-specific mechanism (retrieval-time, index-time, context accumulation) rather than a generic "add more guardrails" answer.</li>
+    <li>Pair this set with Session 5.4's fairness and bias questions for a fuller Week 5 mock interview &mdash; the central question shifts from "what data can this system see" to "is this system treating people fairly."</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-5-4-responsible-ai-bias-in-practice/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

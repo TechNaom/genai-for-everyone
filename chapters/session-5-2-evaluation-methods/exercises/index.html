@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.2 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 5.2: Evaluation Methods — trace a working eval harness for a contract-clause summarizer, then extend its golden dataset and routing thresholds to prove the deceptive middle band is real.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-2" data-chapter-id="session-5-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.2 Exercises</span>
+    <span class="reading-time">25&ndash;30 min, hands-on</span>
+  </div>
+  <h1>Exercises: Eval Harness for a Contract-Clause Summarizer</h1>
+  <p>
+    <code>starter.py</code> below is a <strong>fully working</strong> evaluation
+    harness &mdash; not a fill-in-the-blank file. It scores three prompt
+    variants of a contract-clause summarizer using a mocked LLM-judge (with an
+    explicit partial-failure cap) and a mocked semantic-similarity metric, then
+    routes clauses to human review using the chapter's routing rules. Your job
+    is to <strong>trace it carefully</strong> until you can predict its output
+    from reading the code alone, then <strong>extend it</strong> with a new
+    test case and a routing-threshold experiment of your own.
+  </p>
+
+  <div class="what-is">
+    <span class="label">Why this one starts pre-solved</span>
+    Real semantic-similarity embeddings and a real LLM judge call both need
+    paid, networked dependencies this exercise deliberately avoids. So
+    <code>mock_semantic_similarity()</code> approximates real embeddings with
+    a small concept-overlap check, calibrated to reproduce the <em>exact same
+    blind spot</em> real embeddings have for this task &mdash; it rewards
+    covering the gist even when the one legally significant detail is the
+    part that's missing. Reading working code that reproduces a real blind
+    spot on purpose is the point here, not filling in boilerplate.
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run it</span>
+    You'll need Python 3 only &mdash; no packages, no API key, no network
+    calls. Download <code>starter.py</code> below and run
+    <code>python starter.py</code>. It prints per-clause scores and a
+    per-variant summary for all three prompt variants.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>Part 1 &mdash; Trace it before you run it</h2>
+  <p>
+    Open <code>starter.py</code>. Before running anything, work through these
+    three functions by hand for <strong>Variant A (concise)</strong>'s
+    <code>arb_1</code> clause &mdash; the one that omits the class-action
+    waiver.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Predict the semantic similarity score</h3>
+    <p><code>mock_semantic_similarity()</code> checks four concepts for <code>arb_1</code>: <code>arbitration</code>, <code>not_court</code>, <code>class_action_waiver</code>, and <code>binding_nature</code>. Variant A's summary is <em>"You agree to settle disputes through arbitration instead of court."</em> &mdash; which of the four concepts does it actually hit? Work out the fraction by hand before checking the printed output.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Predict the LLM-judge score</h3>
+    <p><code>llm_judge_score()</code> starts from that similarity score scaled to 0&ndash;10, then applies the partial-failure cap. <code>OMITS_DETAIL["Variant A (concise)"]["arb_1"]</code> is <code>True</code>. Given the cap rule (<code>min(base_score, 5)</code>), what should the final score be, regardless of how high the raw similarity looked?</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Predict whether it gets flagged for review</h3>
+    <p><code>needs_human_review()</code> flags on high-risk clause type, OR an LLM-judge score of 4&ndash;7, OR a similarity in the 0.70&ndash;0.85 band. <code>arb_1</code> is type <code>"arbitration"</code> &mdash; on that fact alone, does it matter what the other two numbers are? Run <code>python starter.py</code> and confirm all three of your predictions against the printed per-clause line.</p>
+  </div>
+
+  <h2>Part 2 &mdash; Extend it</h2>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Add a fourth clause designed to hide in the middle band</h3>
+    <p>Add a new entry to <code>GOLDEN_DATASET</code> (a <code>"non_compete"</code> clause type, not currently in <code>HIGH_RISK_TYPES</code>), a reference summary, and one variant's summary for it that deliberately omits a real detail (e.g. drops a specific geographic scope or duration limit). Add matching entries to <code>VARIANT_OUTPUTS</code> and <code>OMITS_DETAIL</code>. Tune the summary's wording until <code>mock_semantic_similarity()</code> lands in the 0.70&ndash;0.85 band on its own &mdash; then confirm the LLM-judge cap is the thing that actually catches it, not the routing rule's clause-type override (since <code>non_compete</code> isn't flagged as high-risk).</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">5</span> Stress-test the routing bands</h3>
+    <p>Temporarily narrow the middle band in <code>needs_human_review()</code> from <code>0.70&ndash;0.85</code> to <code>0.78&ndash;0.82</code> and re-run. Does your new non-compete case still get flagged? If not, that's the lesson made concrete: a routing band that's too narrow silently lets exactly the failure type it was designed to catch slip through. Put the band back to <code>0.70&ndash;0.85</code> when you're done.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Debug the Code</h3>
+    <p>A teammate "simplifies" <code>llm_judge_score()</code> to this. What real failure mode does it silently reintroduce, and which specific chapter example (Part 2 or Part 3) does it break on?</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_judge.py</span>
+      </div>
+      <pre><code>def llm_judge_score(summary, reference, omits_detail):
+    &#35; "simplified" -- just use the similarity score, scaled up
+    return round(mock_semantic_similarity(summary, reference) * 10)</code></pre>
+    </div>
+    <p><em>Hint:</em> this deletes the partial-failure cap entirely. Variant A's <code>arb_1</code> case &mdash; the one you traced in Part 1 &mdash; would score however high its raw similarity happens to be, with nothing capping it at 5 despite the omitted class-action waiver. This is exactly the ungrounded, too-generous LLM-judge failure mode from Part 2 of the lesson, reintroduced by a "simplification" that looked harmless.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    Your traced predictions from Part 1 should match the printed output for
+    <code>arb_1</code> exactly: similarity 0.75 (3 of 4 concepts), LLM-judge
+    capped at 5/10, and flagged &mdash; both because it's high-risk and
+    because 0.75 sits in the middle band. For Part 2, your new non-compete
+    case should show a middle-band similarity score with the LLM-judge cap
+    doing the real work of catching it, since clause type alone won't flag it.
+    <code>solution.py</code> is the same fully-worked harness as
+    <code>starter.py</code> &mdash; use it to confirm you haven't
+    accidentally changed the base behavior while adding your own extensions.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -202,12 +202,57 @@ window.GFE_MODULES = [
     title: "Week 5 — Evaluation, Safety & Responsible AI",
     examPath: "assessments/written-exams/week-05-exam.md",
     chapters: [
-      { id: "session-5-1", num: "5.1", title: "Why \"It Looks Good\" Isn't Evaluation", path: null, subtopics: [] },
-      { id: "session-5-2", num: "5.2", title: "Evaluation Methods", path: null, subtopics: [] },
-      { id: "session-5-3", num: "5.3", title: "Safety Fundamentals", path: null, subtopics: [] },
-      { id: "session-5-4", num: "5.4", title: "Responsible AI & Bias in Practice", path: null, subtopics: [] },
-      { id: "session-5-5", num: "5.5", title: "Guardrails & Mitigations", path: null, subtopics: [] },
-      { id: "session-5-6", num: "5.6", title: "Week 5 Lab — Mini Build Day", path: null, subtopics: [] }
+      { id: "session-5-1", num: "5.1", title: "Why \"It Looks Good\" Isn't Evaluation", path: "chapters/session-5-1-why-it-looks-good-isnt-evaluation/lesson.html", subtopics: [
+        { id: "eval-mindset", title: "The Eval Mindset" },
+        { id: "golden-datasets", title: "Golden Datasets" },
+        { id: "regression-testing", title: "Regression Testing for Prompts" },
+        { id: "grading-rubrics", title: "Grading Rubrics" },
+        { id: "common-mistakes", title: "Common Mistakes in Evaluation" },
+        { id: "building-your-own", title: "Building Your Own Golden Dataset" },
+        { id: "production-quality", title: "From Golden Dataset to Production Quality" }
+      ] },
+      { id: "session-5-2", num: "5.2", title: "Evaluation Methods", path: "chapters/session-5-2-evaluation-methods/lesson.html", subtopics: [
+        { id: "rubric-grading", title: "Rubric Grading (Manual)" },
+        { id: "llm-as-judge", title: "LLM-as-Judge (Automated)" },
+        { id: "automatic-metrics", title: "Automatic Metrics" },
+        { id: "human-in-the-loop", title: "Human-in-the-Loop" },
+        { id: "building-a-harness", title: "Building an Evaluation Harness" },
+        { id: "combining-methods", title: "Combining Methods — A Worked Comparison" },
+        { id: "common-pitfalls", title: "Common Pitfalls" }
+      ] },
+      { id: "session-5-3", num: "5.3", title: "Safety Fundamentals", path: "chapters/session-5-3-safety-fundamentals/lesson.html", subtopics: [
+        { id: "threat-model-for-rag-tools", title: "Threat Model for Internal RAG Tools" },
+        { id: "permission-blind-retrieval", title: "Attack 1 — Permission-Blind Retrieval" },
+        { id: "confidential-by-title", title: "Attack 2 — Confidential-by-Title, Not by Access Control" },
+        { id: "indirect-prompt-injection", title: "Attack 3 — Indirect Prompt Injection via Indexed Content" },
+        { id: "accumulating-context", title: "Attack 4 — Accumulating Context Across a Session" },
+        { id: "red-teaming-internal-rag-tools", title: "Red-Teaming an Internal RAG Tool" }
+      ] },
+      { id: "session-5-4", num: "5.4", title: "Responsible AI & Bias in Practice", path: "chapters/session-5-4-responsible-ai-bias-in-practice/lesson.html", subtopics: [
+        { id: "types-of-bias", title: "Types of Bias" },
+        { id: "measuring-bias", title: "Measuring Bias" },
+        { id: "audit-framework", title: "Audit Framework" },
+        { id: "mitigations", title: "Mitigations" },
+        { id: "real-incidents", title: "Real Incidents" },
+        { id: "fairness-framework", title: "Fairness Framework" },
+        { id: "accessibility", title: "Accessibility" }
+      ] },
+      { id: "session-5-5", num: "5.5", title: "Guardrails & Mitigations", path: "chapters/session-5-5-guardrails-and-mitigations/lesson.html", subtopics: [
+        { id: "what-are-guardrails", title: "What Are Guardrails?" },
+        { id: "input-guardrails", title: "Input Guardrails" },
+        { id: "system-prompt-hardening", title: "System Prompt Hardening" },
+        { id: "output-guardrails", title: "Output Guardrails" },
+        { id: "human-review-gates", title: "Human Review Gates" },
+        { id: "defense-in-depth-applied", title: "Defense in Depth, Applied" },
+        { id: "verifying-your-fixes", title: "Verifying Your Fixes" },
+        { id: "common-pitfalls", title: "Common Pitfalls" }
+      ] },
+      { id: "session-5-6", num: "5.6", title: "Week 5 Lab — Mini Build Day", path: "chapters/session-5-6-week-5-lab-mini-build-day/lesson.html", subtopics: [
+        { id: "what-goes-into-the-report", title: "What Goes Into the Report" },
+        { id: "worked-example", title: "Worked Example: Auditing the Policy Q&A Bot" },
+        { id: "choosing-your-target-system", title: "Choosing Your Target System" },
+        { id: "time-budget", title: "Time Budget (90-Minute Session)" }
+      ] }
     ]
   },
   {

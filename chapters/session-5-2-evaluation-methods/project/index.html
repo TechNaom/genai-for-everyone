@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.2 Project: Routing Logic Stress Test — GenAI for Everyone</title>
+<meta name="description" content="Pro-path challenge for Session 5.2: prove that proper multi-signal routing catches omission failures a naive similarity threshold misses, measured by false negative rate on the failures that matter most.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-2" data-chapter-id="session-5-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.2 Project</span>
+    <span class="badge-difficulty">Pro path</span>
+    <span class="reading-time">30&ndash;40 min build</span>
+  </div>
+  <h1>Routing Logic Stress Test</h1>
+  <p>
+    The Pro-path build for this session &mdash; prove, with actual numbers,
+    that the chapter's multi-signal routing rule catches omission failures a
+    naive "flag anything below 0.5 similarity" threshold misses. Like the
+    core exercise, <code>starter.py</code> is <strong>fully working</strong>
+    already; the point here isn't filling in gaps, it's designing and
+    running the comparison that makes the chapter's central claim concrete
+    and then pushing on it to find where it breaks.
+  </p>
+
+  <div class="what-is">
+    <span class="label">Free and fully offline</span>
+    No API key, no network calls, no paid dependency &mdash; this project is
+    pure logic over a hand-built 8-case test set. Every case has a known
+    ground truth (<code>actually_omits_detail</code>) that a human would have
+    determined at golden-dataset build time (Session 5.1), so you can measure
+    each routing strategy's real accuracy on the failure that matters most,
+    not just its overall-looking pass rate.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The setup</h2>
+  <p>
+    <code>TEST_CASES</code> has 8 clause/summary pairs spanning three clause
+    types, with a known similarity score, LLM-judge score, and ground-truth
+    omission flag for each. Five of the eight genuinely omit a legally
+    significant detail &mdash; three of those five (<code>case_2</code>,
+    <code>case_4</code>, <code>case_7</code>) land in the deceptive
+    0.70&ndash;0.85 similarity band the lesson describes, not at the bottom
+    of the scale where a naive threshold would catch them.
+  </p>
+
+  <h2>Trace it, then run the comparison</h2>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Trace <code>proper_routing_review()</code> against case_2</h3>
+    <p><code>case_2</code> is arbitration, similarity 0.75, LLM-score 5, and genuinely omits a detail. Work out by hand which of the three routing conditions fire for it &mdash; is it just one, or more than one? Then check <code>naive_threshold_review(0.75)</code> for the same case. Does the naive rule flag it?</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Run the full 8-case comparison</h3>
+    <p>Run <code>python starter.py</code>. It runs both <code>naive_threshold_review()</code> and <code>proper_routing_review()</code> against all 8 cases and reports each strategy's false-negative rate <em>specifically among the 5 real omission cases</em>, plus its overall flag rate. Confirm the printed false-negative rate for the naive strategy matches what you'd expect given how many of the 5 omission cases sit above 0.5 similarity (3 of them: <code>case_2</code>, <code>case_4</code>, <code>case_7</code>).</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Find where the "proper" rule still isn't perfect</h3>
+    <p>Check the per-case output for <code>proper_routing_review()</code> carefully &mdash; does it actually catch all 5 omission cases, or does one still slip through? Look specifically at <code>case_3</code>: notice_period (not a high-risk type), LLM-score 3 (not in the 4&ndash;7 uncertain band), similarity 0.40 (not in the 0.70&ndash;0.85 band, and not even close). It's an "obviously bad" case a human would catch instantly &mdash; and the naive threshold does catch it &mdash; but the proper rule's three conditions were built around the deceptive-middle-band problem specifically, not around catching every low score too. Explain in a comment why a routing rule built entirely from these three signals can still miss a genuinely bad case that happens to score low on everything, and what you'd add to close that specific gap without just reintroducing the naive rule's whole class of misses.</p>
+  </div>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output (abridged)</span>
+    <pre><code>--- NAIVE: flag only if similarity &lt; 0.5 ---
+  case_1 (sim=0.95, llm=9, omits=False): not flagged
+  case_2 (sim=0.75, llm=5, omits=True): not flagged  🚨 MISSED OMISSION
+  case_3 (sim=0.40, llm=3, omits=True): FLAGGED
+  case_4 (sim=0.80, llm=6, omits=True): not flagged  🚨 MISSED OMISSION
+  case_6 (sim=0.30, llm=2, omits=True): FLAGGED
+  case_7 (sim=0.78, llm=5, omits=True): not flagged  🚨 MISSED OMISSION
+  ...
+  False negative rate (among omission cases): 60% (3/5 missed)
+
+--- PROPER: high-risk type OR mid-band score ---
+  case_2 (sim=0.75, llm=5, omits=True): FLAGGED  (high-risk type)
+  case_3 (sim=0.40, llm=3, omits=True): not flagged  🚨 MISSED OMISSION
+  case_4 (sim=0.80, llm=6, omits=True): FLAGGED  (high-risk type)
+  case_6 (sim=0.30, llm=2, omits=True): FLAGGED  (high-risk type)
+  case_7 (sim=0.78, llm=5, omits=True): FLAGGED  (high-risk type)
+  ...
+  False negative rate (among omission cases): 20% (1/5 missed)
+
+VERDICT
+Naive threshold:  60% of real omissions missed, 25% overall flag rate
+Proper routing:   20% of real omissions missed, 62% overall flag rate</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Why this matters</span>
+    A lower false-negative rate on the failures that matter most is worth a
+    higher overall review workload &mdash; that trade-off is the point of
+    human-in-the-loop routing, not a flaw in it. Measuring "false negatives
+    among the cases that actually matter" instead of overall accuracy is
+    what makes that trade-off visible and defensible, rather than hidden
+    inside a single aggregate number that treats every case as equally
+    important.
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>An eval harness that only reports "% correct overall" can look
+    excellent while still missing most of the failures a legal or medical
+    reviewer would consider unacceptable, simply because those failures are
+    a minority of the total cases. Measuring false negatives specifically
+    among the failure type you care about most &mdash; and being honest about
+    where even a well-designed routing rule still has a gap &mdash; is the
+    same discipline a real evaluation team applies before shipping anything
+    to production.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

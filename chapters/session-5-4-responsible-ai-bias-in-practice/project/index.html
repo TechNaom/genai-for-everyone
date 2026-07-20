@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.4 Project: Comprehensive Bias Audit Framework — GenAI for Everyone</title>
+<meta name="description" content="Build a full audit-config-to-model-card bias audit framework across four groups, with deterministic fairness scoring and a standalone model-card export.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-4" data-chapter-id="session-5-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.4 Project</span>
+    <span class="reading-time">35 min build</span>
+  </div>
+  <h1>Comprehensive Bias Audit Framework</h1>
+  <p>The Pro-path build for this session &mdash; a complete audit framework covering all five steps from Part 3 of the lesson (define scope, collect a sample, annotate, calculate metrics, document in a model card), plus parity checking that decides the model card's recommended-use language automatically.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>======================================================================
+COMPREHENSIVE BIAS AUDIT REPORT
+======================================================================
+
+MODEL CARD:
+{
+  "model_name": "Hiring Recommendation System",
+  "overall_metrics": {
+    "accuracy": 0.845
+  },
+  "group_performance": {
+    "accuracy": {"male": 0.92, "female": 0.75, "latino": 0.65},
+    "representation": {"male": 0.33, "female": 0.33, "latino": 0.33},
+    "fairness_score": {"male": 0.88, "female": 0.82, "latino": 0.79}
+  },
+  "parity_violations": {
+    "accuracy": true,
+    "representation": false,
+    "fairness_score": false
+  },
+  "limitations": [
+    "Significant disparity in accuracy across groups"
+  ],
+  "recommended_use": "Not recommended for high-stakes decisions. Use with human review."
+}
+
+METRICS BY GROUP:
+...
+
+PARITY VIOLATIONS:
+  accuracy: VIOLATED
+  representation: PASS
+  fairness_score: PASS
+======================================================================</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    No installation and no API key needed &mdash; just Python 3. Download
+    <code>starter.py</code> below and run <code>python starter.py</code>.
+    <code>AuditConfig</code>, <code>ComprehensiveBiasAudit</code>, and all six
+    audit steps are already implemented; the point of this build is
+    understanding how the pieces fit together end to end, then extending the
+    framework through the challenges below.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>Run <code>starter.py</code> as-is first, read through each of the six methods, then take on these challenges:</p>
+  <ul>
+    <li><strong>Challenge 1</strong> &mdash; replace the simulated <code>fairness_score</code> metric, currently <code>0.85 + (hash(group) % 10) / 100</code>, with a deterministic calculation. That line's biggest problem: Python randomizes string hashing per process by default, so this "metric" produces a different number every time you run the script &mdash; not something you'd ever want from a real fairness measurement. <code>solution.py</code> derives it from each group's actual annotated-match rate instead.</li>
+    <li><strong>Challenge 2</strong> &mdash; add a 4th group (e.g. <code>"asian"</code>) to <code>AuditConfig.groups</code> and to the sample data, and confirm <code>calculate_metrics()</code>, <code>check_parity()</code>, and <code>create_model_card()</code> all handle it correctly without any changes to those methods.</li>
+    <li><strong>Challenge 3</strong> &mdash; add an <code>export_model_card()</code> method that writes just the model card dict to its own JSON file, separate from the full text report, so it can be shared on its own with a non-technical stakeholder.</li>
+  </ul>
+
+  <h2>How parity checking drives the model card</h2>
+  <p>
+    <code>check_parity()</code> computes the gap between each metric's highest
+    and lowest group, then compares it against a threshold &mdash; 5% for
+    accuracy, 10% for representation and other metrics, both configurable on
+    <code>AuditConfig</code>. <code>create_model_card()</code> then reads those
+    parity results directly: any violated metric becomes a listed limitation,
+    and the presence of <em>any</em> violation flips the recommended-use
+    language from "acceptable for medium-stakes decisions" to "not recommended
+    for high-stakes decisions without human review." This is the audit
+    framework's real payoff &mdash; a stakeholder-facing recommendation that's
+    derived directly from measured numbers, not from someone's gut feeling
+    about whether the model "seems fine."
+  </p>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Add an <code>equal_opportunity</code> metric (true positive rate per group among cases with a genuinely positive ground-truth label), matching Metric 2 from Part 2 of the lesson.</li>
+    <li>Have <code>collect_sample_data()</code> warn (rather than silently truncate) when a group doesn't have enough source data to reach its target <code>per_group</code> count.</li>
+    <li>Persist every run's full model card to a dated file (e.g. <code>model_card_2026-07-20.json</code>) so you can track whether parity violations improve or worsen over successive audits.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>A bias audit that only prints numbers to a terminal doesn't change anything &mdash; the model card is what turns a measurement into a decision a team can actually act on. This framework's real lesson is the connection between the two: parity violations aren't just displayed, they directly determine whether the model card recommends the system for high-stakes use at all. That's the shape of a real production audit process: config in, numbers out, and a stakeholder-facing recommendation that's honestly derived from the numbers rather than asserted separately from them.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

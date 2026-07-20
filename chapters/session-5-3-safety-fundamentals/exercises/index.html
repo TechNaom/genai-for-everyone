@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.3 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 5.3: Safety Fundamentals — red-team a deliberately vulnerable internal wiki search assistant across permission-blind retrieval, confidential-by-title bypass, indirect prompt injection, and context accumulation.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-3" data-chapter-id="session-5-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.3 Exercises</span>
+    <span class="reading-time">30&ndash;45 min, hands-on</span>
+  </div>
+  <h1>Exercises: Red-Team the Vulnerable Wiki Assistant</h1>
+  <p>
+    A permission-blind internal wiki search assistant is provided
+    &mdash; intentionally vulnerable across all 4 attack vectors from the
+    lesson. Craft test queries, run them, log what gets retrieved per user,
+    and document which ones leak restricted content and to whom. This is
+    the red-teaming discipline from Part 6 of the lesson, made concrete
+    against a real (if small) mock wiki index. This is a pure-Python
+    exercise &mdash; no API key or network access required.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run this</span>
+    You'll need Python 3 only &mdash; no dependencies, no API key. Download
+    <code>starter.py</code> below, then run it from a terminal with
+    <code>python starter.py</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. It contains a mock wiki index (5
+    documents, including one poisoned with a hidden "SYSTEM NOTE" and one
+    confidential-by-title-not-space document), a deliberately vulnerable
+    <code>vulnerable_retrieve</code>/<code>vulnerable_answer</code> pipeline,
+    and two functions to complete: <code>check_for_leakage()</code> and
+    <code>run_red_team_suite()</code>.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Implement the leakage checker</h3>
+    <p>Complete <code>check_for_leakage(result, user)</code> so it detects three distinct failure types from a single result: a <strong>permission leak</strong> (any retrieved doc from a space this user's access list doesn't include), a <strong>sensitivity leak</strong> (any retrieved doc whose title matches a sensitive pattern &mdash; "confidential," "do not distribute," "layoffs" &mdash; regardless of whether the user's access technically permits it), and an <strong>injection fired</strong> signal (the response mentions "compensation" when the user's own query never asked about salary or compensation, meaning the embedded "SYSTEM NOTE" successfully hijacked the response).</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Run the full red-team suite</h3>
+    <p>Complete <code>run_red_team_suite()</code> so it runs the 4 provided red-team cases (one per attack vector: permission-blind retrieval, confidential-by-convention bypass, indirect injection, and a simplified single-turn version of context accumulation), calls <code>check_for_leakage()</code> on each, and prints a clear VULNERABLE/SAFE verdict with the retrieved spaces and leakage detail for every case.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 3 &mdash; Debug the Code</h3>
+    <p>A teammate wrote this leakage check for the permission leak specifically, but it reports <code>permission_leak = False</code> for the Marketing employee's salary query even though <code>comp_1</code> (an <code>hr_only</code> document) was clearly retrieved. Find the bug.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_permission_check.py</span>
+      </div>
+      <pre><code># Bug: this checks whether ALL retrieved spaces are outside the user's
+# access (using `all`), so it only flags a leak when EVERY single
+# retrieved document is restricted. If even one permitted document
+# (like the general-space onboarding doc) is retrieved alongside the
+# restricted one, `all(...)` becomes False and the leak goes unreported.
+#
+# Fix: use `any`, not `all` -- a SINGLE retrieved doc outside the
+# user's access is already a leak, regardless of what else came back:
+#   permission_leak = any(space not in user_access for space in spaces)
+permission_leak = all(
+    space not in user_access for space in result["retrieved_spaces"]
+)</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>WIKI_INDEX = [...]  # 5 mock docs, including one poisoned + one confidential-by-title
+USERS = {"marketing_employee": {"access": ["general"]}, "hr_employee": {...}, ...}
+
+def vulnerable_retrieve(query, top_k=3): ...   # pure keyword overlap, no permission check
+def vulnerable_answer(query, user): ...        # no filtering, no instruction/content separation
+
+def check_for_leakage(result, user) -> dict:
+    # TODO 1: permission_leak, sensitivity_leak, injection_fired
+    ...
+
+def run_red_team_suite():
+    # TODO 2: run the 4 attack-vector cases, print VULNERABLE/SAFE per case
+    ...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">A note on this exercise's starter/solution files</span>
+    Unlike some exercises in this course, <code>starter.py</code> and
+    <code>solution.py</code> here are <strong>identical</strong> &mdash;
+    both TODOs are already filled in, since the leakage-detection logic is
+    the whole point of what you're studying, not a fill-in-the-blank
+    warm-up. Treat this as a <strong>trace-and-extend</strong> exercise:
+    read <code>check_for_leakage()</code> line by line and confirm you can
+    explain, for each of the 4 provided red-team cases, exactly why
+    <code>permission_leak</code>, <code>sensitivity_leak</code>, or
+    <code>injection_fired</code> comes back <code>True</code>. Then extend
+    it &mdash; add a 5th red-team case of your own and confirm the existing
+    checker correctly flags it (or discover a real gap if it doesn't).
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    Run <code>python starter.py</code> and check the final summary line
+    against the printed per-case detail &mdash; note whether any single
+    case triggers more than one distinct leak type at once (a realistic
+    compounding effect worth noticing, not a bug in the exercise) and
+    whether the count matches what you'd expect from tracing the logic
+    yourself. Compare your output against <code>solution.py</code> (run it
+    with <code>python solution.py</code>) once you've made a genuine attempt
+    at the trace.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.1 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 5.1: the eval mindset, golden datasets, regression testing for prompts, and grading rubrics — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-1" data-chapter-id="session-5-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.1 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: The Eval Mindset</h1>
+  <p>
+    Evaluation is where interviewers separate candidates who've shipped a real
+    GenAI feature from candidates who've only prototyped one &mdash; almost
+    everyone can get a demo to look good; far fewer can describe how they'd know
+    if it actually works. These questions probe golden datasets, rubric design,
+    and regression testing for prompts &mdash; the specific habits this session
+    builds. Each question below includes what a strong answer sounds like,
+    common red flags, and a natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Someone on your team says, "I tried the new prompt on a few examples and it looked great." Why isn't this sufficient, and what would you ask them to produce instead?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>This is demoing, not evaluating &mdash; anecdotal, likely cherry-picked (even unintentionally, since people naturally try the examples they already expect to work), with no systematic coverage. A strong candidate names the alternative directly: a golden dataset covering happy path, edge cases, boundary cases, and safety/security examples, scored against an explicit rubric rather than a gut-feel impression. They'd also mention repeatability &mdash; a real eval produces a comparable, trackable result over time, not a one-off impression &mdash; while not dismissing the "it looked great" observation entirely; it's a starting signal, just not sufficient evidence on its own.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"That's fine, if it works it works" (misses the entire eval-mindset lesson); can't name what a golden dataset actually contains; no mention of coverage across edge cases.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How many examples is 'enough' for a golden dataset, and does that number change based on the stakes of the system?" (Strong answer: golden datasets stay intentionally small &mdash; 10 to 100 &mdash; because they need to be hand-verifiable; higher-stakes systems justify more examples and heavier weighting toward edge/safety cases, not necessarily a much larger raw count.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Walk me through how you'd design a golden dataset for a new customer support chatbot from scratch.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Start from real signal &mdash; user questions, logs, support tickets &mdash; not invented examples. Deliberately cover four categories: happy path (the most common real requests), edge cases (unusual but real), boundary cases (right at the line of what the system should or shouldn't handle), and safety/security cases (attempts to extract sensitive info or produce harmful output). Verify every expected answer by hand &mdash; you are the ground truth &mdash; and document, for each example, a one-line reason it's in the dataset. A strong candidate explicitly notes the ratio should be light on happy path and heavy on the ways things actually go wrong, since happy-path-only testing is exactly what lets real failures ship unnoticed.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Proposing an all-happy-path dataset, or one so large (thousands of examples) that nobody could realistically hand-verify every answer &mdash; that stops being "golden" and becomes just "big."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me one boundary-case example for this chatbot, and explain why it's a boundary case rather than an edge case." (A boundary case tests where the system's scope legitimately ends, e.g. "can you help with my mortgage?" for a product-support bot; an edge case is an unusual but clearly in-scope request, e.g. a user who forgot both their password and email.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Your prompt v2 scores higher on accuracy than v1, but lower on safety. How do you decide whether to ship v2?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Don't decide from the two aggregate numbers alone &mdash; trace the regression back to which specific examples got worse and why. A strong candidate walks through the mechanism: if the same prompt instruction that fixed one example (say, by encouraging the model to act on its best guess) is what caused a different example to fail (by making the model less likely to pause and refuse an unsafe request), that tells you the fix needs to be scoped more narrowly rather than abandoned outright or accepted wholesale. The actual decision (ship v2, keep v1, or refine further) genuinely depends on the domain's tolerance for each kind of error &mdash; but the reasoning has to be grounded in which examples changed, not just whether the average moved.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Higher accuracy wins, ship it" with no acknowledgment of the safety cost; or the opposite blanket rule ("never accept any regression") with no case-by-case reasoning.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The safety regression only shows up on one example out of ten. Does that change your answer?" (Strong answer: it depends on what that one example represents &mdash; if it's a rare, low-stakes edge case, the trade might be acceptable with monitoring; if it's a security-critical case like refusing to leak credentials, even a single regression there is a much bigger deal than the count alone suggests.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Why use a point-based rubric instead of just asking "was this response good?"</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>An explicit rubric with named criteria and point values (e.g. Relevance 0&ndash;2, Accuracy 0&ndash;2, Tone 0&ndash;1, Safety 0&ndash;2) makes scoring objective, reproducible, and explainable &mdash; the same test run twice produces the same score, and you can point to exactly which criterion drove a low result. A strong candidate also notes that not every criterion needs the same scale: something closer to pass/fail (like Tone) can use a 2-point scale, while something with genuine partial credit (like Relevance) benefits from a finer scale &mdash; the rubric's shape should match how the criterion actually behaves, not be forced into uniformity.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating all criteria as needing the same point range regardless of what they measure, or defending "good/bad" gut-feel scoring as good enough because "the rubric is basically the same thing anyway."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"A response scores perfectly on Accuracy and Tone but 0 on Relevance. What's the overall verdict?" (Strong answer: it should still fail, or score very low overall &mdash; a well-written, accurate answer to the wrong question is a Relevance failure the other criteria can't rescue, which is exactly why criteria shouldn't just be averaged without attention to a floor-level failure like this.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> A team ships a chatbot after testing it on 5 examples, all of which worked, and says it "feels ready." What's wrong with this reasoning, and what would you tell them to do instead?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Multiple problems stack here: 5 examples is far too small a sample to claim systematic coverage (very likely cherry-picked, even unintentionally); "all 5 worked" says nothing about edge cases, boundaries, or safety since none were apparently tested; and "feels ready" is a subjective judgment, not a measurable one. A strong answer proposes the concrete fix: build a golden dataset of 10+ examples spanning all four categories, score every response with an explicit rubric, and only make a shipping decision once there's a percentage tied to a decision framework (e.g. 95%+ ready for low-stakes use with documented limitations, 80&ndash;94% needs refinement, below 80% not ready) &mdash; not a felt impression.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Accepting "it feels ready" as sufficient with minor caveats, or fixating on only one of the three problems (sample size, missing edge cases, subjectivity) instead of naming all of them.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Suppose the golden-dataset score comes back at 87%. Does that mean it's ready to ship?" (Strong answer: 87% lands in the "needs refinement" band, not "ready" &mdash; the right next step is going example-by-example on what failed and matching each failure to the right kind of fix, which might be a prompt change, a policy decision, or routing to a human, rather than treating the percentage itself as a ship/no-ship gate.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Demoing asks about a favorite example; evaluating asks about <code>____</code> examples that matter.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="all" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> A golden dataset is small, representative, diverse, and <code>____</code> &mdash; every answer personally verified.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="grounded" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A rubric replaces "good/bad" judgments with specific, <code>____</code>-valued criteria.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="point" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Regression testing means checking whether a change broke something that used to <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="work" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A score in the 80&ndash;94% band on the decision framework means the system needs <code>____</code>, not an automatic ship.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="refinement" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about the eval mindset in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers listen for the eval-mindset instinct: do you reach for "how would we measure this" before claiming something works, rather than an unqualified yes or no?</li>
+    <li>Pair this set with Week 2's prompt-engineering questions and Week 4's agent questions for a more realistic mixed-topic mock interview by Week 7.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-5-2-evaluation-methods/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

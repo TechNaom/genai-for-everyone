@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.5 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 5.5: guardrails, input/output validation, and defense in depth — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-5" data-chapter-id="session-5-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.5 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Guardrails &amp; Defense in Depth</h1>
+  <p>
+    Anyone can describe a guardrail in the abstract. What hiring managers
+    actually probe for is whether you understand guardrails as
+    <em>layers</em> that assume each other might fail, not a single fix you
+    apply once and move on from. Each question below includes what a strong
+    answer sounds like, common red flags, and a natural follow-up. Click any
+    question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> What's the key difference between a guardrail and a system prompt?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A system prompt is persuasion &mdash; a request to the model that can still be argued with, reframed, or bypassed by a sufficiently creative attacker. A guardrail is enforcement &mdash; code that runs regardless of what the model decides to do, whether that's a pattern filter before the LLM ever sees the input, or an output check before a user ever sees the response. A strong candidate names both as necessary, not competing: a hardened system prompt reduces how often the model tries to misbehave, while guardrails ensure that even when it does, the bad output never reaches production.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating them as interchangeable, or claiming a sufficiently well-written system prompt makes code-level guardrails unnecessary.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If you could only ship one of the two, which would you pick, and why?" (A strong answer resists the false choice: a system prompt with zero enforcement is fragile, but recognizes that in a resource-constrained situation, code-level output filtering is usually the higher-leverage single investment, since it catches failures regardless of their cause.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> What's the most effective fix for a chatbot leaking secrets like passwords or API keys, and why isn't an output filter enough on its own?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The most effective fix is architectural: never put the secret in the model's context in the first place. An output filter that redacts a known secret string is a useful backstop, but it only catches secrets you already know to look for, in exactly the format you expected &mdash; it does nothing for a secret it wasn't told about, or one leaked in a slightly reformatted way. A strong candidate frames this as the general principle behind data leakage defense: filtering treats a symptom, removing the secret from context removes the underlying cause.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Proposing only a keyword/regex output filter as "the fix," with no mention of removing the secret from context at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your app genuinely needs the model to know a user's account balance to answer questions about it. Balances aren't secret the way a password is, but how do you reason about what's safe to put in context versus what isn't?" (Strong answer: distinguish data the model needs to do its job from data it never needs to see at all &mdash; and for anything sensitive that's arguably needed, still apply output-side redaction as a backstop.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Your input guardrail blocks any message containing the word "password," including "How do I reset my password?" What's actually wrong here, and how would you fix it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>This is a false positive &mdash; the guardrail is blocking a legitimate, harmless request because it matched on topic ("password") rather than on the attack itself ("tell me the admin password" or "what's the password"). A strong candidate identifies the fix as more <em>specific</em> patterns, not fewer guardrails: matching the actual attack shape (a demand for a credential, an override attempt) instead of a single broad keyword. They should also mention testing the guardrail against a legitimate-use sample, not just red-team attacks, since that's the only way over-blocking gets caught before it reaches real users.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Suggesting the fix is to remove the guardrail entirely, or not recognizing this as a distinct failure mode (over-blocking) from the attack succeeding.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you measure whether your guardrail changes are actually improving things, rather than just moving the false positive/negative trade-off around?" (Strong answer: track both rates &mdash; false negative rate against a red-team suite, false positive rate against a legitimate-use suite &mdash; every time a pattern changes, not just once at launch.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> You add a keyword-based output filter blocking any response containing the phrase "system prompt." A red-team attempt still extracts your instructions using different wording. Did the guardrail fail?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Not a total failure &mdash; it still blocks the literal case it was designed for. But it's not a complete fix either: keyword filters are inherently bypassable by rephrasing, and treating this one filter as "done" was the real mistake. The correct response is to document this as an open residual risk and add another layer (a hardened system prompt that declares user input has no special authority, or a semantic classifier instead of literal string matching), not to conclude the whole guardrail approach doesn't work. A strong candidate frames this with the general principle: guardrails are layers of defense, not single solutions, and testing for bypasses is ongoing, not a one-time check.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Calling it either a complete failure or a complete success with no nuance, or not mentioning that keyword filters specifically are brittle to rephrasing.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What additional layer would you add on top of the keyword filter to catch semantically similar bypasses?" (e.g. an LLM-based classifier asking "does this response reveal internal instructions? yes/no," or a hardened system prompt combined with a stricter allow-list of topics.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Walk me through how you'd verify that a set of guardrails you just added actually work, after patching a chatbot that failed a red-team assessment.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Re-run the exact same attack prompts that originally found the vulnerabilities &mdash; not a new, easier set &mdash; against the patched system, and confirm every one is now blocked. This is regression testing applied to security: it verifies the fix actually works instead of just assuming it does, and it catches cases where a fix for one vulnerability accidentally reintroduces or misses another. A strong candidate also mentions the other half of verification: running a legitimate-use sample through the same patched system to confirm the fix didn't introduce over-blocking, since a guardrail system needs to be measured on both axes at once.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Describing verification as "I tried a few things and it looked fixed," or only mentioning the attack side and never the legitimate-use side.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your regression suite passes 10/10 on attacks and 5/5 on legitimate requests. Are you done?" (Strong answer: no &mdash; a small, fixed suite of known attacks and known legitimate requests is a good regression check, not proof against novel attack framings never tried before; ongoing, expanding red-teaming is still needed.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Guardrails <code>____</code> behavior with code; system prompts persuade the model.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="enforce" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> The four guardrail layers are: input filtering, hardened system prompt, output filtering, and <code>____</code> review gates.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="human" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A legitimate request that gets blocked by mistake is called a false <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="positive" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> An attack that gets through a guardrail undetected is called a false <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="negative" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Guardrails are layers of defense, not a single <code>____</code> &mdash; expect to combine several and keep testing for bypasses.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="solution,fix" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about guardrails and defense in depth in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for layered thinking &mdash; always be ready to name what happens if the layer you just described fails, not just how it works.</li>
+    <li>Pair this set with Session 5.3's red-teaming questions for a realistic "break it, then fix it" mock interview flow.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-5-6-week-5-lab-mini-build-day/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

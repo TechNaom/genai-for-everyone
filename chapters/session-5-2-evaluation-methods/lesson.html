@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.2 Evaluation Methods — GenAI for Everyone</title>
+<meta name="description" content="Rubric grading, LLM-as-judge, automatic metrics, and human-in-the-loop routing — what each evaluation method actually catches, what it misses, and how to combine them so no single blind spot goes unchecked.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.2</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">35&ndash;40 min read</span>
+  </div>
+  <h1>Evaluation Methods</h1>
+  <p><em>Session 5.1 gave you a golden dataset and a rubric. This chapter is about what happens when a rubric that works beautifully by hand can't possibly scale to 1,500 outputs &mdash; and why no single automated substitute is safe to trust alone.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#rubric-grading">1. Rubric Grading (Manual)</a>
+    <a href="#llm-as-judge">2. LLM-as-Judge (Automated)</a>
+    <a href="#automatic-metrics">3. Automatic Metrics</a>
+    <a href="#human-in-the-loop">4. Human-in-the-Loop</a>
+    <a href="#building-a-harness">5. Building an Evaluation Harness</a>
+    <a href="#combining-methods">6. Combining Methods &mdash; A Worked Comparison</a>
+    <a href="#common-pitfalls">7. Common Pitfalls</a>
+  </nav>
+
+  <div class="hook">
+    A legal tech startup builds a tool that reads contract clauses and produces
+    a one-sentence, plain-English summary &mdash; meant for a non-lawyer to
+    quickly understand what a clause actually commits them to. A summary like
+    <em>"You're giving up your right to sue in court and agreeing to
+    arbitration instead"</em> for an arbitration clause. The team needs to
+    evaluate three different prompt variants before picking one to ship. But
+    how do you score "is this summary faithful to the clause" at scale? You
+    can't read all three variants' output on 500 clauses yourself &mdash;
+    that's 1,500 summaries. You also can't just trust an automated score
+    blindly, because a summary can use completely different words and still
+    be faithful, or use very similar words and still misrepresent the
+    clause's actual legal effect. This is exactly the problem Session 5.1's
+    golden dataset and rubric don't fully solve on their own: a rubric is
+    accurate but doesn't scale to 1,500 summaries by hand, and a single
+    automated metric can be fooled. This chapter covers four evaluation
+    methods, what each one is actually good at, and how to combine them so
+    you're not relying on any single one's blind spots.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="rubric-grading">
+    <span class="subtopic-label">Sub-topic 1 of 7</span>
+    <h2>1. Rubric Grading (Manual)</h2>
+
+    <div class="what-is">
+      <span class="label">What is... rubric grading?</span>
+      A human scores each output against explicit criteria &mdash; the same
+      approach from Session 5.1, just formalized here as one tool among
+      several rather than the whole story.
+    </div>
+
+    <p>
+      Rubric grading's strengths are exactly what you'd expect from a careful
+      human reader: it catches subtle legal misrepresentation a keyword match
+      would miss, it can judge things a machine can't easily check &mdash;
+      like whether a summary downplays how serious a clause actually is
+      &mdash; and it's transparent, since you can explain exactly why a
+      summary scored low. Here's a rubric shaped for this exact task:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">rubric.py</span>
+      </div>
+      <pre><code>def grade_summary(clause_text, summary, expected_meaning):
+    """Manual rubric grading -- same shape as Session 5.1's rubric"""
+
+    # Legal Accuracy (0-2): does the summary correctly state what the
+    # clause actually does, legally?
+    accuracy = 2  # human judgment call
+
+    # Completeness (0-2): does it omit a legally significant detail?
+    # e.g., an arbitration clause that also waives class actions --
+    # summarizing only "arbitration" and skipping "no class action"
+    # is incomplete even if the arbitration part is correct
+    completeness = 2
+
+    # Plain Language (0-1): would a non-lawyer actually understand it?
+    plain_language = 1
+
+    # Severity Match (0-2): does the summary's TONE match how serious
+    # the clause actually is? A summary of a binding arbitration clause
+    # written in a breezy, low-stakes tone is a failure even if the
+    # facts are technically correct
+    severity_match = 2
+
+    return accuracy + completeness + plain_language + severity_match  # /7</code></pre>
+    </div>
+
+    <p>
+      Notice the <strong>Severity Match</strong> criterion &mdash; it's the
+      kind of thing no keyword-based check could ever catch. A summary can
+      state every fact correctly and still fail if its tone makes a binding,
+      consequential clause sound trivial. That's rubric grading's real
+      advantage: it can weigh things a computation simply has no way to
+      represent.
+    </p>
+
+    <p>
+      But the cost is real too. A lawyer reviewing summaries for legal
+      accuracy might take 2&ndash;3 minutes each &mdash; and 1,500 summaries
+      at 2 minutes each is 50 hours. Worse, a tired reviewer on summary #380
+      grades differently than on summary #12, even with the exact same
+      rubric in front of them. Rubric grading doesn't scale, and it isn't
+      even perfectly consistent with itself over a long session.
+    </p>
+
+    <div class="real-world">
+      <span class="label">When to actually reach for it</span>
+      <ul>
+        <li>The final, smaller-scale check before shipping &mdash; golden-dataset size, not the full test set.</li>
+        <li>Anywhere subjective legal or ethical judgment is the actual bottleneck, not a fact you could check computationally.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Rubric grading catches subtle misrepresentation and tone problems no automated check can, and it's fully transparent.</li>
+        <li>It's slow (50 hours for 1,500 summaries at 2&ndash;3 minutes each) and drifts as a reviewer tires over a long session.</li>
+        <li>Best used at golden-dataset scale as a final check, not as the only method across a full test set.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="llm-as-judge">
+    <span class="subtopic-label">Sub-topic 2 of 7</span>
+    <h2>2. LLM-as-Judge (Automated)</h2>
+
+    <div class="what-is">
+      <span class="label">What is... LLM-as-judge?</span>
+      Use an LLM to score the summaries automatically, instead of a human
+      reading all 1,500.
+    </div>
+
+    <p>
+      This is fast &mdash; it scores 1,500 summaries in minutes, not 50
+      hours. It's consistent in the sense that it doesn't get "tired" the way
+      a human reviewer does. And it can still make a genuine judgment call on
+      something a rule-based metric can't, like tone. Here's an
+      implementation for the contract summarizer:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">llm_judge.py</span>
+      </div>
+      <pre><code>from anthropic import Anthropic
+
+client = Anthropic()
+
+def llm_score_summary(clause_text, summary):
+    """Use an LLM to judge faithfulness of a contract clause summary"""
+
+    prompt = f"""You are reviewing a plain-English summary of a legal
+contract clause for accuracy.
+
+Clause text:
+{clause_text}
+
+Summary given to the user:
+{summary}
+
+Score 0-10 on whether the summary is legally accurate AND captures
+the full practical effect of the clause (not just part of it).
+A summary that is technically true but misses a legally significant
+detail (e.g., mentions arbitration but omits a class-action waiver)
+should score no higher than 5.
+
+Score (just the number):"""
+
+    response = client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=10,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return int(response.content[0].text.strip())</code></pre>
+    </div>
+
+    <p>
+      Look closely at that prompt's third paragraph &mdash; it's not
+      decoration. Here's the concrete failure mode it exists to prevent: an
+      LLM judge asked simply "is this summary accurate?" will often score a
+      summary that mentions arbitration but completely omits a buried
+      class-action waiver as an 8 or 9 &mdash; because the part it
+      <em>did</em> say is accurate. The fix above is narrow on purpose: it
+      explicitly tells the judge that an incomplete-but-true summary should
+      be capped at 5. Without that instruction, LLM-as-judge's generosity
+      bias and this task's specific failure mode &mdash; partial truths
+      &mdash; compound each other into a badly wrong score.
+    </p>
+
+    <div class="real-world">
+      <span class="label">The honest cons</span>
+      <ul>
+        <li>It tends to be generous &mdash; an LLM judge often rates things "pretty good" even when they're subtly wrong, unless you explicitly ground it against the specific failure mode of your task.</li>
+        <li>It can be fooled by confident-sounding language, the same way a human skimming quickly can be.</li>
+        <li>It costs money per call &mdash; though far less than 50 hours of legal review.</li>
+      </ul>
+    </div>
+
+    <div class="what-is">
+      <span class="label">When to use it</span>
+      Large test sets where manual review of everything is infeasible, and as
+      a first-pass filter, with human review reserved for whatever it flags.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>LLM-as-judge scores at scale in minutes, at a real but modest per-call cost.</li>
+        <li>Its default bias is generosity &mdash; an ungrounded prompt rates "technically true but incomplete" summaries too highly.</li>
+        <li>An explicit partial-failure cap, written into the judge prompt itself, directly counters that bias for this task's specific failure mode.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="automatic-metrics">
+    <span class="subtopic-label">Sub-topic 3 of 7</span>
+    <h2>3. Automatic Metrics</h2>
+
+    <div class="what-is">
+      <span class="label">What are... automatic metrics?</span>
+      Computational metrics that compare the generated summary to a reference
+      summary, without any LLM call at all.
+    </div>
+
+    <p>
+      The one worth understanding in depth here is <strong>semantic
+      similarity</strong>: it embeds both summaries and compares meaning,
+      forgiving different wording along the way.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">semantic_similarity.py</span>
+      </div>
+      <pre><code>from sentence_transformers import SentenceTransformer, util
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+def semantic_similarity(summary_a, summary_b):
+    emb_a = model.encode(summary_a)
+    emb_b = model.encode(summary_b)
+    return util.pytorch_cos_sim(emb_a, emb_b).item()  # 0-1</code></pre>
+    </div>
+
+    <p>
+      Here's where this metric actively misleads, for this task specifically:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">where_it_misleads.txt</span>
+      </div>
+      <pre><code>Reference summary: "You agree to arbitration and waive your right
+                     to join a class action lawsuit."
+
+Candidate A: "You agree to settle disputes through arbitration
+              instead of going to court, and you give up the
+              ability to join a class action."
+  -&gt; Semantic similarity: 0.91 (genuinely faithful, different wording)
+
+Candidate B: "You agree to arbitration for any disputes that arise."
+  -&gt; Semantic similarity: 0.79 (still reasonably high!)
+  -&gt; But this candidate OMITS the class-action waiver entirely --
+     arguably the more legally significant part of the clause.</code></pre>
+    </div>
+
+    <p>
+      A 0.79 looks "pretty good" on a 0&ndash;1 scale. But Candidate B is
+      missing the single most consequential detail in the clause. Semantic
+      similarity measures how close in <em>meaning space</em> two pieces of
+      text are &mdash; it has no concept of "which omitted detail matters
+      more," because it was never told there's a hierarchy of importance
+      within the clause. This is the central limitation to understand:
+      semantic similarity catches paraphrasing well and catches <em>selective
+      omission</em> poorly, because an incomplete-but-related summary is
+      still semantically close to a complete one.
+    </p>
+
+    <div class="what-is">
+      <span class="label">When to use it</span>
+      As a fast, free sanity check across a large set, paired with a method
+      that can catch omission &mdash; never as the only signal for a task
+      where missing details are dangerous.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Automatic metrics like semantic similarity are computational, fast, and free &mdash; no LLM call required.</li>
+        <li>Semantic similarity catches paraphrasing well but catches selective omission poorly &mdash; a 0.79 can hide a missing, legally significant detail.</li>
+        <li>It has no concept of which detail within a passage matters most &mdash; it only measures overall closeness in meaning space.</li>
+        <li>Use it as a fast sanity check paired with an omission-aware method, never alone for a task where missing details are dangerous.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="human-in-the-loop">
+    <span class="subtopic-label">Sub-topic 4 of 7</span>
+    <h2>4. Human-in-the-Loop</h2>
+
+    <div class="what-is">
+      <span class="label">What is... human-in-the-loop evaluation?</span>
+      Combine automation (covers everything) with humans (covers what
+      automation gets wrong) &mdash; LLM-as-judge scores all 1,500, a lawyer
+      reviews only the cases that need it.
+    </div>
+
+    <p>
+      <strong>The routing decision matters more than the math.</strong> For
+      this task, route to human review when:
+    </p>
+
+    <ul>
+      <li>LLM-as-judge score is in the uncertain middle (4&ndash;7), not just low scores.</li>
+      <li>Semantic similarity is moderate-high (0.70&ndash;0.85) &mdash; exactly the band where Candidate B above lives, since a clean 0.95+ is probably genuinely faithful and a clean &lt;0.5 is probably genuinely bad, but the middle band is where omission hides.</li>
+      <li>The clause type is flagged as high-risk (arbitration, class-action waivers, indemnification) regardless of any score, because the cost of missing a real failure here is much higher than for a low-stakes clause like a notice-period definition.</li>
+    </ul>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">routing.py</span>
+      </div>
+      <pre><code>def needs_human_review(llm_score, semantic_sim, clause_type):
+    HIGH_RISK_CLAUSES = {"arbitration", "class_action_waiver", "indemnification"}
+
+    if clause_type in HIGH_RISK_CLAUSES:
+        return True  # always human-reviewed, regardless of score
+    if 4 &lt;= llm_score &lt;= 7:
+        return True  # uncertain LLM judgment
+    if 0.70 &lt;= semantic_sim &lt;= 0.85:
+        return True  # the omission-prone middle band
+    return False</code></pre>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Why this routing logic looks like it does</span>
+      <ul>
+        <li>It's built around the <em>specific failure mode</em> identified in Part 3 &mdash; the omission-prone middle band of semantic similarity &mdash; not a generic "flag anything uncertain" rule.</li>
+        <li>A human-in-the-loop system is only as good as the routing logic deciding what reaches the human; if you don't know your method's specific blind spot, you can't route around it.</li>
+      </ul>
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why not just route on "low score" and be done with it?</summary>
+      <p>
+        Because for this task, the dangerous failures don't cluster at the
+        bottom of the scale &mdash; they cluster in the middle. A summary
+        that's mostly right but silently drops one consequential clause
+        doesn't read as obviously bad to an automated metric; it reads as
+        "pretty close." A naive threshold tuned to catch obviously bad
+        outputs is, by construction, blind to the specific failure this task
+        cares about most. The lesson generalizes past contracts: whatever
+        your system's most expensive failure mode actually looks like in the
+        numbers, your routing rule has to be built to catch <em>that</em>
+        shape, not a generic "review anything that looks uncertain" rule
+        borrowed from a different problem.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Human-in-the-loop combines automation's coverage with a human's judgment on exactly the cases automation is least trustworthy on.</li>
+        <li>The routing rule, not the raw math, is what determines whether the system actually works.</li>
+        <li>Route on the middle band of similarity, the uncertain-middle LLM score, and high-risk categories &mdash; not just "anything scoring low."</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="building-a-harness">
+    <span class="subtopic-label">Sub-topic 5 of 7</span>
+    <h2>5. Building an Evaluation Harness</h2>
+
+    <div class="what-is">
+      <span class="label">What is... an evaluation harness?</span>
+      A harness runs all of this together &mdash; rubric grading (on a small
+      subset), LLM-as-judge (on everything), semantic similarity (on
+      everything), and the routing logic &mdash; and reports a verdict per
+      prompt variant.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">eval_harness.py</span>
+      </div>
+      <pre><code>class ContractSummaryEvalHarness:
+    def __init__(self, golden_dataset, reference_summaries):
+        self.dataset = golden_dataset  # clause texts + clause types
+        self.references = reference_summaries  # human-verified summaries
+        self.results = {}
+
+    def eval_variant(self, summarize_fn, variant_name):
+        scores = {"llm_judge": [], "semantic": [], "needs_review": []}
+
+        for clause in self.dataset:
+            summary = summarize_fn(clause["text"])
+            reference = self.references[clause["id"]]
+
+            llm_score = llm_score_summary(clause["text"], summary)
+            sem_sim = semantic_similarity(summary, reference)
+            flagged = needs_human_review(llm_score, sem_sim, clause["type"])
+
+            scores["llm_judge"].append(llm_score)
+            scores["semantic"].append(sem_sim)
+            scores["needs_review"].append(flagged)
+
+        self.results[variant_name] = {
+            "avg_llm_judge": sum(scores["llm_judge"]) / len(scores["llm_judge"]),
+            "avg_semantic": sum(scores["semantic"]) / len(scores["semantic"]),
+            "pct_flagged_for_review": (sum(scores["needs_review"]) /
+                                        len(scores["needs_review"])) * 100,
+        }
+        return self.results[variant_name]
+
+    def compare(self, variant_names):
+        print("\nVariant Comparison:")
+        for name in variant_names:
+            r = self.results[name]
+            print(f"\n{name}:")
+            print(f"  LLM-judge avg:        {r['avg_llm_judge']:.1f}/10")
+            print(f"  Semantic similarity:  {r['avg_semantic']:.2f}")
+            print(f"  % needing human review: {r['pct_flagged_for_review']:.1f}%")</code></pre>
+    </div>
+
+    <p>
+      The third metric &mdash; <strong>% flagged for human review</strong>
+      &mdash; is arguably the most useful one for a decision-maker, even
+      though it's not a "quality score" at all. A prompt variant with a
+      slightly lower LLM-judge average but a much lower flag rate may be the
+      better choice in practice, because it means less human review time at
+      scale. A harness that only reports quality scores would miss that
+      trade-off entirely.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A harness runs rubric grading, LLM-as-judge, semantic similarity, and routing logic together, and reports a verdict per variant.</li>
+        <li>"% flagged for human review" is a decision-relevant number even though it's not itself a quality score &mdash; it captures the practical cost of shipping a variant.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 6 ============ -->
+  <div class="subtopic" id="combining-methods">
+    <span class="subtopic-label">Sub-topic 6 of 7</span>
+    <h2>6. Combining Methods &mdash; A Worked Comparison</h2>
+
+    <p>
+      Suppose the team tests 3 prompt variants on the same 50-clause golden
+      dataset:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">variant_comparison.txt</span>
+      </div>
+      <pre><code>Variant A ("concise"): instructed to keep summaries under 15 words
+  LLM-judge avg: 6.8/10
+  Semantic similarity avg: 0.81
+  % flagged for review: 38%
+  -&gt; Short summaries frequently omit secondary details (the class-action
+     waiver problem from Part 3) to hit the word count
+
+Variant B ("thorough"): instructed to mention every material term
+  LLM-judge avg: 8.9/10
+  Semantic similarity avg: 0.93
+  % flagged for review: 9%
+  -&gt; Longer, but catches the details that matter
+
+Variant C ("plain language emphasis"): instructed to prioritize a
+  non-lawyer being able to understand it, with no length constraint
+  LLM-judge avg: 8.1/10
+  Semantic similarity avg: 0.88
+  % flagged for review: 14%
+  -&gt; Slightly less complete than B in rare cases, but the rubric scores
+     from a manual review of its flagged 14% show it's still catching
+     the high-risk clause types correctly -- it just phrases things more
+     casually, which the LLM-judge mildly penalizes despite no real
+     accuracy loss</code></pre>
+    </div>
+
+    <p>
+      Reading these three numbers together tells a story none of them tells
+      alone. Variant A's lower semantic similarity and high flag rate point
+      to the same root cause: omission for brevity. Variant B's high scores
+      across the board make it look like the clear winner &mdash; but the
+      team still needs the manual rubric on its flagged 9% to confirm those
+      flags are genuinely low-risk and not high-risk clauses slipping through
+      quietly. Variant C looks worse than B by the numbers, but a 10-minute
+      manual rubric check on its flagged cases reveals the LLM-judge's score
+      is penalizing tone, not accuracy &mdash; information no single
+      automated number would have surfaced.
+    </p>
+
+    <div class="real-world">
+      <span class="label">The takeaway, stated plainly</span>
+      <ul>
+        <li>The highest average score and the best real system aren't automatically the same thing.</li>
+        <li>A small, targeted manual check on the cases an automated method flagged is what turns three numbers into an actual, defensible decision.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Three variants' numbers, read together, reveal root causes (omission-for-brevity, genuine thoroughness, tone-vs-accuracy) that no single metric shows alone.</li>
+        <li>Even a "clear winner" on paper still needs a manual spot-check of its flagged cases before you trust the ranking.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 7 ============ -->
+  <div class="subtopic" id="common-pitfalls">
+    <span class="subtopic-label">Sub-topic 7 of 7</span>
+    <h2>7. Common Pitfalls</h2>
+
+    <div class="what-is">
+      <span class="label">Pitfall 1: Trusting semantic similarity alone for a task where omission is dangerous</span>
+      As shown in Part 3, a 0.79 similarity score can hide a missing
+      class-action waiver. Always pair it with a method that checks
+      completeness.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Pitfall 2: Letting LLM-as-judge's generosity bias go unchecked</span>
+      An ungrounded "is this accurate?" prompt will rate an
+      incomplete-but-true summary too highly. The fix is a judge prompt that
+      explicitly defines what counts as a partial failure (Part 2).
+    </div>
+
+    <div class="what-is">
+      <span class="label">Pitfall 3: Routing to human review based only on "low score"</span>
+      The omission problem hides in the <em>middle</em> band of semantic
+      similarity, not the bottom. A naive "review anything under 0.5" rule
+      misses exactly the failures this task cares most about.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Pitfall 4: Picking the variant with the single highest average score</span>
+      Variant C's lower LLM-judge score, once manually checked, turned out to
+      reflect tone, not accuracy. Without checking the actual flagged cases,
+      the team would have under-rated a perfectly good variant.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Pitfall 5: Never validating the automated methods against human judgment at all</span>
+      If you never compare LLM-judge or semantic similarity scores to actual
+      human review on at least a sample, you have no way of knowing which of
+      these pitfalls is actively happening in your own system.
+    </div>
+
+    <p>
+      Before you open this session's exercise, it's worth writing the prompt
+      you'd hand an AI assistant to help you scaffold an eval harness like
+      this one &mdash; the design decisions (what counts as a partial
+      failure, where the routing bands sit) are the part that actually
+      matters, not the boilerplate of looping over a dataset.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill here isn't asking an assistant to "build an eval harness" &mdash; it's specifying the exact failure mode you're defending against. A vague request gets you a harness that computes averages; a precise one gets you a harness that explicitly caps partial-truth scores and routes on the deceptive middle band rather than a naive low-score threshold.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Build an eval harness for a contract summarizer that scores 3 variants with LLM-as-judge and semantic similarity, and flags cases for human review..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever
+          assistant you use, and compare what it builds against this
+          session's exercise &mdash; does its LLM-judge prompt include an
+          explicit partial-failure cap, and does its routing logic flag the
+          middle band of similarity rather than only low scores? That
+          comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Build a Python evaluation harness that scores 3 prompt variants of a contract-clause summarizer against a small golden dataset. For each clause: (1) compute a mocked semantic similarity score between the generated summary and a human-verified reference summary, (2) compute a mocked LLM-judge score 0-10 that explicitly CAPS the score at 5 if a legally significant detail was omitted -- don't let the judge score purely on "is what's here true," (3) implement a needs_human_review() routing function that flags a case if the clause type is high-risk (arbitration, indemnification), OR the LLM-judge score is in the uncertain middle (4-7), OR the semantic similarity is in the deceptive middle band (0.70-0.85) -- NOT just "similarity below some low threshold." Report per-variant averages plus the percentage of cases flagged for human review, since that's the decision-relevant number, not just the quality score.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Five pitfalls, one root cause: trusting a single number without understanding what it can and can't see.</li>
+        <li>Every fix in this chapter is the same shape &mdash; know the specific failure mode, then design the check or routing rule around that shape, not a generic rule borrowed from elsewhere.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Teams that ship LLM-judged eval pipelines almost always discover their judge's generosity bias the hard way first, then add an explicit partial-failure or completeness clause after the fact &mdash; building it in from the start, as this chapter does, saves that painful discovery cycle.</li>
+      <li>"% flagged for human review" quietly becomes the real operating metric in many production eval setups, even when a "quality score" is what gets reported upward &mdash; because it's the number that actually predicts review-team workload.</li>
+      <li>Periodically re-validating an automated method against a fresh batch of real human judgment is the single habit that separates teams who know their blind spots from teams who are flying blind and don't know it.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>No single method is reliable in isolation</strong> for this kind of faithfulness check &mdash; each one has a known blind spot: rubric grading is slow, LLM-as-judge is generous, semantic similarity is blind to omission.</li>
+      <li><strong>Know your task's specific failure mode, then design your routing and grading logic around THAT</strong> &mdash; not a generic "flag low scores" rule.</li>
+      <li><strong>The most useful output of an eval harness might not be a quality score at all</strong> &mdash; "% needing human review" can be the decision-relevant number.</li>
+      <li><strong>A worse-looking automated score doesn't always mean a worse system.</strong> Check what's actually driving the number before ranking variants by it.</li>
+      <li><strong>Validate your automated methods against human judgment periodically</strong>, or you'll never know which blind spot is currently biting you.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the
+    exercise has you build the eval harness itself and watch the deceptive
+    middle band show up in real numbers.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

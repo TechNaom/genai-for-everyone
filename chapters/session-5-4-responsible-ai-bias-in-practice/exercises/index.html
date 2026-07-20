@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.4 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercises for Session 5.4: Responsible AI & Bias in Practice — trace a working bias-audit implementation across three groups, then extend it with a new group, severity labels, and a JSON export.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-4" data-chapter-id="session-5-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.4 Exercises</span>
+    <span class="reading-time">20 min, hands-on</span>
+  </div>
+  <h1>Exercises: Bias Audit on Hiring Recommendations</h1>
+  <p>
+    Run a bias audit across three groups (male, female, latino) on 48 sample
+    hiring-recommendation outputs, computing accuracy, representation, and
+    occupational distribution per group &mdash; the exact five-step framework
+    from Part 3 of the lesson, in code. This exercise has no API calls and no
+    paid keys: it's plain Python that runs anywhere.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python --version</code>).
+    Download <code>starter.py</code> below, then run it from a terminal with
+    <code>python starter.py</code>. It prints a full bias audit report:
+    accuracy per group, representation per group, and occupational
+    distribution per group, followed by a list of mitigation suggestions.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. Unlike some earlier exercises, there are no
+    <code>TODO</code> blanks here &mdash; the <code>BiasAudit</code> class is
+    already a complete, working implementation. Your job for this exercise is
+    different: <strong>trace how it works</strong>, run it, confirm you
+    understand every number it prints, and then <strong>extend it</strong>.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Trace the three metric methods</h3>
+    <p>Read <code>calculate_accuracy()</code>, <code>calculate_representation()</code>, and <code>calculate_occupational_distribution()</code>. For each, write down in your own words: what does this method treat as "accurate," and what would change the number it reports? (Hint: the accuracy threshold of <code>score &gt; 0.8</code> is a specific, debatable design choice, not an objective fact.)</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Add a fourth group</h3>
+    <p>Add a handful of sample outputs for a new group (e.g. <code>"asian"</code>) to <code>SAMPLE_OUTPUTS</code>, and re-run the script. Confirm the report picks up the new group automatically without any other code changes &mdash; and explain why that works, given how <code>self.groups</code> is built in <code>__init__</code>.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Add a <code>severity()</code> helper and a JSON export</h3>
+    <p>Write a <code>severity(gap_pct)</code> function that returns <code>"HIGH"</code>, <code>"MEDIUM"</code>, or <code>"LOW"</code> given a gap percentage, matching the severity levels used in the lesson's Part 3 sample audit report. Then add a <code>save_report_json()</code> method that writes the accuracy, representation, and occupational-distribution dicts (plus each gap and its severity) to a JSON file, so the audit's findings are machine-readable, not just printed.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Code</h3>
+    <p>A teammate's version of <code>calculate_accuracy()</code> divides by <code>len(self.outputs)</code> (the total across every group) instead of <code>len(group_outputs)</code> (just this group's outputs). Explain what number this actually produces instead of accuracy, and why it would make every group's "accuracy" look artificially low and roughly proportional to that group's representation.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_accuracy.py</span>
+      </div>
+      <pre><code>def calculate_accuracy(self):
+    accuracy = {}
+    for group in self.groups:
+        group_outputs = [o for o in self.outputs if o["group"] == group]
+        accurate = sum(1 for o in group_outputs if o["score"] > 0.8)
+        # Bug: divides by the TOTAL sample size, not this group's size --
+        # this computes "share of all outputs that were both this group AND
+        # accurate," not "accuracy rate within this group." A small group
+        # with 100% real accuracy would still show a tiny fraction here,
+        # making it look far more biased than it actually is.
+        accuracy[group] = accurate / len(self.outputs) if self.outputs else 0
+    return accuracy</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>class BiasAudit:
+    def __init__(self, outputs):
+        self.outputs = outputs
+        self.groups = set(o["group"] for o in outputs)  # groups come FROM the data
+
+    def calculate_accuracy(self):
+        # % of each group's outputs with score > 0.8
+        ...
+
+    def calculate_representation(self):
+        # % of all outputs belonging to each group
+        ...
+
+    def calculate_occupational_distribution(self):
+        # % breakdown of occupations, per group
+        ...
+
+    def generate_report(self):
+        # ties the three metrics together, prints gaps + mitigations
+        ...
+
+# TODO (yours to add): a 4th group, a severity() helper, save_report_json()</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader. What matters is that you can explain every
+    number the report prints (not just read it), that your fourth group flows
+    through the existing methods with zero changes to them, and that your
+    <code>severity()</code> thresholds are ones you could defend to a
+    stakeholder, not arbitrary numbers. Compare your extensions against
+    <code>solution.py</code> (run it with <code>python solution.py</code>)
+    once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

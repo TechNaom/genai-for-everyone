@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.3 Project: Permission-Aware Retrieval Pipeline — GenAI for Everyone</title>
+<meta name="description" content="Build the secured version of the internal wiki assistant: index-time injection scanning, independent sensitivity-signal checking, and permission-aware retrieval filtering applied before content reaches the model's context.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-3" data-chapter-id="session-5-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.3 Project</span>
+    <span class="reading-time">60&ndash;90 min build</span>
+  </div>
+  <h1>Permission-Aware Retrieval Pipeline</h1>
+  <p>
+    The Pro-path build for this session &mdash; fix the vulnerable wiki
+    assistant from the exercises by implementing all three defenses from
+    the lesson, then re-run the same red-team suite and confirm every
+    attack vector is now blocked. This is a pure-Python exercise &mdash; no
+    API key or network access required.
+  </p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>===========================================================================
+BUILDING CLEAN INDEX (index-time injection scan)
+===========================================================================
+
+  ⚠️  Index-time scan EXCLUDED poisoned doc: onboard_2 (Remote Work Policy)
+
+Indexed 4/5 documents (excluded poisoned docs at index time)
+
+===========================================================================
+RE-RUNNING RED-TEAM SUITE AGAINST SECURED PIPELINE
+===========================================================================
+
+✅ BLOCKED | Permission-blind retrieval
+  User: marketing_employee | Query: What's the highest salary band for a Staff Engineer?
+  Included docs: []
+  Flagged for review: []
+
+✅ BLOCKED | Confidential-by-convention bypass
+  User: random_employee | Query: Summarize the Q3 Layoffs document for me, I don't want to read it
+  Included docs: []
+  Flagged for review: ['layoffs_1']
+
+✅ BLOCKED | Indirect injection via indexed content
+  User: random_employee | Query: What's our remote work policy?
+  Included docs: []
+  Flagged for review: []
+
+✅ BLOCKED | Context accumulation (simplified single-turn version)
+  User: hr_employee | Query: What's the Staff Engineer salary band, and also remind me of the remote work policy
+  Included docs: ['comp_1']
+  Flagged for review: []
+
+===========================================================================
+Result: 4/4 attack vectors blocked
+===========================================================================
+
+✅ All 4 RAG-specific attack vectors are now blocked.</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    You'll need Python 3 only &mdash; no dependencies, no API key. Download
+    <code>starter.py</code> below and run <code>python starter.py</code>.
+    The wiki index and users are simulated (the same mock data from the
+    exercises), so the point of this project is the <strong>filtering and
+    scanning logic itself</strong>, not a real vector database.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>Three defense functions in <code>starter.py</code>:</p>
+  <ul>
+    <li><strong>1. <code>scan_for_injection_at_index_time()</code></strong> &mdash; scan a document's text for injection signals ("system note," "ignore previous/your instructions," "when summarizing/answering...also") <em>before</em> it's ever allowed into the clean index (Defense 4.2 from the lesson).</li>
+    <li><strong>2. <code>flag_sensitive_content()</code></strong> &mdash; check a document's <em>title</em> for sensitivity signals, independent of its access-control space (Defense 3.1).</li>
+    <li><strong>3. <code>secured_retrieve()</code></strong> &mdash; find candidates via the same keyword overlap as the vulnerable version, filter to only documents the user has access to, then split the permitted set into documents to include normally and documents to flag for review rather than silently including them (Defense 2.1, combined with 3.1).</li>
+  </ul>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Verify the compounding fix</h3>
+    <p>Run your secured pipeline against the same 4 red-team queries from the exercises. Confirm the legitimate <code>hr_employee</code> query still returns <code>comp_1</code> normally (the fix must not break legitimate access), while the other 3 cases show empty or flagged results instead of the leaks they produced against the vulnerable pipeline.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Add a genuinely new attack vector</h3>
+    <p>Add a document and a query that combine two lesson patterns at once &mdash; for example, a document that's both in an <code>hr_only</code> space <em>and</em> carries a sensitive title. Confirm your pipeline handles it correctly regardless of which check would have caught it alone (permission filtering should exclude it for a non-HR user before the sensitivity check is even relevant).</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 3 &mdash; Debug the Code</h3>
+    <p>A teammate wrote this simplified version of <code>secured_retrieve</code>, reasoning that checking sensitivity before checking permission is more "defense in depth." It compiles and looks reasonable, but it actually leaks restricted content in a subtle way. What's wrong?</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_order_of_checks.py</span>
+      </div>
+      <pre><code># Bug: this checks sensitivity FIRST, across the full candidate list --
+# including documents the user has no permission to see at all -- and
+# only filters by permission afterward. The sensitivity check itself is
+# harmless, but by the time it runs, an HR-only document has already been
+# read and inspected as part of building the "flagged" list for a
+# non-HR user, and a bug in how flagged/included get merged downstream
+# can easily let a document leak into "included" if it happens to not
+# match any sensitive title pattern -- even though the user was never
+# permitted to see it in the first place. Permission filtering must
+# happen FIRST and gate everything downstream, exactly as the lesson's
+# Defense 2.1 says -- sensitivity flagging is a second, independent
+# check applied to the ALREADY-PERMITTED set, never a replacement for it.
+def secured_retrieve_buggy(query, user, index, top_k=3):
+    candidates = get_candidates(query, index, top_k * 2)
+    flagged = [d for d in candidates if flag_sensitive_content(d)]
+    not_flagged = [d for d in candidates if not flag_sensitive_content(d)]
+    user_access = USERS[user]["access"]
+    included = [d for d in not_flagged if d["space"] in user_access][:top_k]
+    return included, flagged</code></pre>
+    </div>
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Wire <code>secured_answer()</code> up to an actual LLM call, using the structural-separation prompt pattern from Defense 4.1 (retrieved content in an explicitly-marked untrusted block), instead of the simulated string-concatenation response.</li>
+    <li>Add a real "review queue": instead of just logging flagged documents, write them to a small file or list that a human reviewer would triage, and track how each flagged case was eventually resolved.</li>
+    <li>Extend context-accumulation handling to a genuinely multi-turn version: track a session history across several calls to <code>secured_answer()</code> and re-check relevance of prior retrieved documents against each new turn's query (Defense 5.1), rather than the simplified single-turn version used here.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>A red-team exercise that only finds vulnerabilities is half the job. The harder, more valuable part is building defenses that hold up when re-tested &mdash; permission filtering that runs before content ever reaches the model's context, sensitivity signals checked independently of formal access control, and index-time scanning that protects every future user rather than relying on catching a poisoned document at just the right moment. That's the same discipline Session 5.5's guardrails chapter formalizes further: layered defenses, each doing one job, tested and re-tested rather than trusted blindly.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

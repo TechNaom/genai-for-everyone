@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.4 Responsible AI & Bias in Practice — GenAI for Everyone</title>
+<meta name="description" content="Recognize, measure, and reduce bias in real GenAI systems: four types of bias, four fairness metrics, a five-step audit framework, concrete mitigations, four real-world incidents, a fairness-definition framework, and accessibility as fairness for everyone.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.4</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">40&ndash;45 min read</span>
+  </div>
+  <h1>Responsible AI &amp; Bias in Practice</h1>
+  <p><em>Your model works well. Technically sound. Passes safety tests. And then a hiring chatbot recommends men 40% more often than women, or a loan approval system denies loans to minorities at higher rates. These aren't bugs &mdash; they're bias: systematic unfairness baked into the model. This chapter teaches you to recognize it, measure it, and reduce it.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#types-of-bias">1. Types of Bias</a>
+    <a href="#measuring-bias">2. Measuring Bias</a>
+    <a href="#audit-framework">3. Audit Framework</a>
+    <a href="#mitigations">4. Mitigations</a>
+    <a href="#real-incidents">5. Real Incidents</a>
+    <a href="#fairness-framework">6. Fairness Framework</a>
+    <a href="#accessibility">7. Accessibility</a>
+  </nav>
+
+  <div class="hook">
+    A customer support bot responds better to some accents than others. An image
+    captioner misses people with disabilities. A hiring chatbot recommends men
+    40% more often than women. None of these systems were built by anyone trying
+    to discriminate &mdash; each one shipped after looking technically fine, maybe
+    even after passing a safety review from Session 5.3. That's exactly what
+    makes <strong>bias</strong> different from most bugs you've dealt with so
+    far: it doesn't throw an error, it doesn't crash, and it can sail straight
+    through testing that only ever checked "does it work," never "does it work
+    the same for everyone." This chapter is about closing that gap &mdash; naming
+    the specific shapes bias takes, measuring it with real numbers instead of a
+    gut feeling, running a structured audit, and knowing what to do once you find
+    something.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="types-of-bias">
+    <span class="subtopic-label">Sub-topic 1 of 7</span>
+    <h2>1. Types of Bias</h2>
+
+    <p>
+      "Bias" isn't one thing. It shows up in at least four distinct shapes, each
+      with its own cause, its own concrete impact, and its own mitigation &mdash;
+      which matters, because the fix for one type usually doesn't touch the
+      others at all.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... representation bias?</span>
+      Some groups are under-represented in the training data itself. If training
+      data has 10% women in technical roles, the model learns "engineers are
+      mostly male" &mdash; not because anyone told it that, but because that's
+      what the data looked like. <strong>Impact:</strong> career advice biased
+      against women, hiring systems that favor male candidates, women feeling
+      excluded from the system's outputs. <strong>Mitigation:</strong> audit
+      training data composition, oversample underrepresented groups, use
+      balanced datasets.
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... performance bias?</span>
+      The model performs differently across groups. A speech-to-text system with
+      a 35% error rate for Latinx accents versus 5% for standard US English is
+      performance bias in action. <strong>Impact:</strong> deaf and hard-of-hearing
+      users with certain accents can't use the system at all &mdash; an
+      accessibility barrier and a form of exclusion by the technology itself.
+      <strong>Mitigation:</strong> benchmark performance per group (not just in
+      aggregate), collect data from diverse speakers, and treat "improve fairness"
+      as a real, trackable model-quality goal, not an afterthought.
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... allocation bias?</span>
+      The system denies resources or opportunities unfairly. A loan approval
+      system that denies 30% of applications from Black applicants versus 10%
+      from white applicants is allocation bias. <strong>Impact:</strong>
+      financial discrimination, perpetuated inequality, and in many
+      jurisdictions, this is flatly illegal, not just an ethical gray area.
+      <strong>Mitigation:</strong> monitor approval rates by group on an ongoing
+      basis, audit historical data the system was trained or tuned on for
+      pre-existing bias, and adjust thresholds deliberately for fairness.
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... associational bias?</span>
+      The model learns harmful associations baked into language itself &mdash;
+      "doctor" implicitly maps to male, "nurse" to female, "CEO" to white.
+      <strong>Impact:</strong> reinforces stereotypes, users internalize biased
+      beliefs from a system they trust, and the bias perpetuates societal
+      inequality rather than correcting for it. <strong>Mitigation:</strong>
+      audit word associations directly, debias embeddings, and prefer
+      gender-neutral language in prompts and outputs where it doesn't sacrifice
+      clarity.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">four_types_at_a_glance.txt</span>
+      </div>
+      <pre><code>Representation bias  -- who's in the training data at all?
+Performance bias      -- does the model work equally well for everyone?
+Allocation bias       -- who gets the resource/opportunity/approval?
+Associational bias    -- what stereotypes does the model's language reinforce?
+
+Each has a different root cause -- so a single "debias the model" effort
+rarely fixes more than one of these at a time.</code></pre>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>Representation bias:</strong> some groups under-represented in training data.</li>
+        <li><strong>Performance bias:</strong> the model works less well for some groups than others.</li>
+        <li><strong>Allocation bias:</strong> resources or opportunities denied unfairly across groups.</li>
+        <li><strong>Associational bias:</strong> harmful stereotypes learned and reinforced through language.</li>
+        <li>None of these are intentional &mdash; they're systematic, coming from data and design choices, not malice.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="measuring-bias">
+    <span class="subtopic-label">Sub-topic 2 of 7</span>
+    <h2>2. Measuring Bias</h2>
+
+    <p>
+      Naming the types of bias only gets you so far &mdash; you need actual
+      numbers to know whether a system has a problem, and how big it is. Four
+      metrics cover most of what shows up in practice.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Metric 1: Demographic Parity</span>
+      Do groups get equal treatment, full stop &mdash; regardless of any
+      underlying difference in the group's actual qualification rate?
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">demographic_parity.txt</span>
+      </div>
+      <pre><code>Approval rate for group A = 80%
+Approval rate for group B = 50%
+
+Difference = 30% (bias exists)
+Target: &lt;5% difference</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Metric 2: Equal Opportunity</span>
+      Among people who genuinely deserve a positive outcome, do all groups have
+      an equal chance of actually receiving it?
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">equal_opportunity.txt</span>
+      </div>
+      <pre><code>True positive rate for group A = 90%
+True positive rate for group B = 70%
+
+Difference = 20% (bias exists)</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Metric 3: Calibration</span>
+      When the model expresses a confidence level, does that confidence mean the
+      same thing across every group?
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">calibration.txt</span>
+      </div>
+      <pre><code>When model predicts 80% likelihood:
+- Group A: 80% actually approve -&gt; Calibrated
+- Group B: 60% actually approve -&gt; Biased</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Metric 4: Representation</span>
+      Do groups appear fairly across the model's actual outputs &mdash; not just
+      in the training data, but in what it recommends day to day?
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">representation_metric.txt</span>
+      </div>
+      <pre><code>Occupations in job recommendations:
+- Female candidates: 40% tech, 60% non-tech
+- Male candidates: 60% tech, 40% non-tech
+
+Difference suggests bias</code></pre>
+    </div>
+
+    <p>
+      Try it yourself: the calculation behind all four metrics is the same basic
+      move &mdash; take a rate for each group, then measure the gap between the
+      largest and smallest. Run the playground below with the demographic-parity
+      numbers above, then edit the rates to see how the gap (and the pass/fail
+      call against a 5% target) changes.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">parity_gap_demo.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="18">def parity_gap(rates: dict, target_pct: float = 5.0):
+    """rates: {"group_name": rate_as_percent, ...}"""
+    max_group = max(rates, key=rates.get)
+    min_group = min(rates, key=rates.get)
+    gap = rates[max_group] - rates[min_group]
+
+    print(f"Highest: {max_group} at {rates[max_group]}%")
+    print(f"Lowest:  {min_group} at {rates[min_group]}%")
+    print(f"Gap: {gap:.1f}% (target: <{target_pct}%)")
+
+    if gap > target_pct:
+        print("FINDING: bias exists -- gap exceeds target.")
+    else:
+        print("PASS: gap is within target.")
+
+approval_rates = {"group_a": 80, "group_b": 50}
+parity_gap(approval_rates)
+
+print("---")
+
+# Edit these numbers and re-run to see the gap and verdict change.
+tighter_rates = {"group_a": 82, "group_b": 79}
+parity_gap(tighter_rates)</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then edit the rates dict and re-run.</div>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>Demographic parity:</strong> equal outcome rates across groups.</li>
+        <li><strong>Equal opportunity:</strong> equal true positive rates among those who deserve a positive outcome.</li>
+        <li><strong>Calibration:</strong> a stated confidence level means the same thing for every group.</li>
+        <li><strong>Representation:</strong> groups appear fairly across actual outputs, not just training data.</li>
+        <li>All four reduce to the same basic move: compute a rate per group, then measure the gap.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="audit-framework">
+    <span class="subtopic-label">Sub-topic 3 of 7</span>
+    <h2>3. Audit Framework</h2>
+
+    <p>
+      Measuring one metric once is a spot check. A real <strong>bias audit</strong>
+      is a repeatable, five-step process &mdash; the same shape the Core Path
+      exercise for this session walks you through end to end.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Step 1: Define groups</span>
+      Decide, up front, which protected attributes the audit will actually
+      compare across.
+    </div>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">step1_define_groups.txt</span>
+      </div>
+      <pre><code>Protected attributes:
+- Gender (male, female, non-binary)
+- Race/ethnicity (self-identified)
+- Age (18-30, 31-50, 51+)
+- Disability status (yes/no)
+- Geographic region</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Step 2: Collect sample data</span>
+      Gather a large enough, genuinely diverse sample &mdash; not a handful of
+      convenient examples you happened to have lying around.
+    </div>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">step2_collect_sample.txt</span>
+      </div>
+      <pre><code>Sample 1000 model outputs across:
+- 5 groups x 5 metrics = 25 conditions
+- 40 samples per condition
+- Diverse scenarios (not cherry-picked)</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Step 3: Annotate ground truth</span>
+      Human annotators label each output &mdash; this is what makes the
+      difference between an accuracy number and a guess.
+    </div>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">step3_annotate.txt</span>
+      </div>
+      <pre><code>For each output, human annotators label:
+- Is it accurate? (Yes/No)
+- Is it helpful? (Yes/No/Partial)
+- Is it fair? (Yes/No)
+- Does it respect dignity? (Yes/No)</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Step 4: Calculate metrics per group</span>
+      Apply the metrics from Part 2 to every group separately, then look at the
+      gaps.
+    </div>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">step4_calculate_metrics.txt</span>
+      </div>
+      <pre><code>For group A:
+- Accuracy: 92%
+- Helpfulness: 85%
+- Fairness: 88%
+
+For group B:
+- Accuracy: 75%
+- Helpfulness: 60%
+- Fairness: 50%
+
+Gaps suggest bias</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Step 5: Document findings</span>
+      Write the findings down formally, with a severity rating &mdash; a bias
+      audit that lives only in someone's head doesn't help the next person who
+      touches the system.
+    </div>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">step5_bias_audit_report.txt</span>
+      </div>
+      <pre><code>BIAS AUDIT REPORT
+==================
+
+Finding 1: Accuracy disparity
+- Group A: 92% accurate
+- Group B: 75% accurate
+- Gap: 17%
+- Severity: HIGH
+
+Finding 2: Representation
+- Group A appears 60% of outputs
+- Group B appears 40% of outputs
+- Gap: 20%
+- Severity: MEDIUM</code></pre>
+    </div>
+
+    <p>
+      Before you open this session's starter file, it's worth writing the prompt
+      you'd hand an AI assistant to help scaffold an audit script like this
+      &mdash; the design decisions (what counts as a group, what "accurate"
+      means for this dataset, what severity threshold triggers a finding) are
+      the part that actually matters, not the boilerplate loop that computes a
+      percentage.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill isn't asking an assistant to "check my model for bias" &mdash; it's specifying the audit's <em>scope and criteria</em> up front: which groups, which metrics, what threshold counts as a finding, and what a finding's severity should be based on. A vague request gets you a script that prints some percentages with no way to tell whether any of them actually matter.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python class that audits a list of model outputs for bias across named groups, computing accuracy and representation per group, flagging gaps above a threshold..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you
+          use, and compare what it builds against this session's exercise &mdash;
+          does it let you name the groups and metrics explicitly, and does every
+          finding come with a severity level tied to an actual threshold? That
+          comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python class called BiasAudit that takes a list of model output dicts (each with a "group", an "occupation" or category, and a "score"). Implement methods to calculate: (1) accuracy per group, using a score threshold I can configure, (2) representation per group as a percentage of the total, (3) occupational/category distribution per group. Then write a generate_report() method that prints all three sections, computes the gap between the highest and lowest group for accuracy and representation, and prints an explicit FINDING line with a severity label when a gap exceeds a configurable target (default 5% for accuracy, 10% for representation). End the report with a short, concrete list of mitigation suggestions tied to whatever findings were actually triggered, not a generic list.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A real audit is five steps: define groups, collect a diverse sample, annotate ground truth with humans, calculate metrics per group, and document findings with severity.</li>
+        <li>Documentation matters as much as the numbers &mdash; an undocumented finding doesn't help the next person who touches the system.</li>
+        <li>The valuable design decisions are scope and criteria (which groups, which metrics, what threshold), not the loop that computes a percentage.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="mitigations">
+    <span class="subtopic-label">Sub-topic 4 of 7</span>
+    <h2>4. Mitigations</h2>
+
+    <p>
+      Finding bias is only half the job. Once an audit surfaces a gap, four
+      concrete levers exist to actually reduce it &mdash; each intervening at a
+      different point in the system's lifecycle.
+    </p>
+
+    <h3>Mitigation 1: Data Balancing</h3>
+    <p>Oversample underrepresented groups so training data stops skewing the model's assumptions.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">data_balancing.py</span>
+      </div>
+      <pre><code># Oversample underrepresented groups
+from sklearn.utils import resample
+
+df_majority = data[data['group'] == 'A']
+df_minority = data[data['group'] == 'B']
+
+# Oversample minority
+df_minority_upsampled = resample(df_minority,
+                                 n_samples=len(df_majority),
+                                 random_state=1)
+
+df_balanced = pd.concat([df_majority, df_minority_upsampled])</code></pre>
+    </div>
+
+    <h3>Mitigation 2: Fairness Constraints</h3>
+    <p>Add a fairness objective directly into training, alongside the model's normal loss function.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">fairness_constraint.py</span>
+      </div>
+      <pre><code># During training, add fairness objective
+fairness_loss = abs(accuracy_group_A - accuracy_group_B)
+total_loss = model_loss + lambda_weight * fairness_loss</code></pre>
+    </div>
+
+    <h3>Mitigation 3: Post-Hoc Adjustment</h3>
+    <p>After training is done, adjust decision thresholds per group rather than retraining the model from scratch.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">post_hoc_adjustment.py</span>
+      </div>
+      <pre><code># After model training, adjust thresholds
+# Use different thresholds per group
+
+if group == 'A':
+    threshold = 0.5
+elif group == 'B':
+    threshold = 0.3  # Lower threshold for underserved group
+
+prediction = 1 if score > threshold else 0</code></pre>
+    </div>
+
+    <h3>Mitigation 4: Transparency &amp; Documentation</h3>
+    <p>Document exactly what the model does and doesn't do well, in a model card &mdash; the Pro Path exercise builds exactly this.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">model_card.txt</span>
+      </div>
+      <pre><code>Model Card (document model behavior):
+- Overall accuracy: 85%
+- Accuracy per group: A=92%, B=75%
+- Known limitations: Lower accuracy for group B
+- Recommended use: Not recommended for high-stakes decisions
+  without human review.</code></pre>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Choosing among the four</span>
+      <ul>
+        <li>Data balancing and fairness constraints require access to the training pipeline &mdash; they're not available if you're only consuming someone else's model through an API.</li>
+        <li>Post-hoc adjustment and transparency/documentation work regardless of who trained the model &mdash; which is why they're usually the first two levers available to most teams building on top of a foundation model.</li>
+        <li>None of the four is "the" fix. A serious response to a real finding usually combines more than one.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>Data balancing:</strong> oversample underrepresented groups before/during training.</li>
+        <li><strong>Fairness constraints:</strong> add a fairness term directly to the training objective.</li>
+        <li><strong>Post-hoc adjustment:</strong> use different decision thresholds per group after training.</li>
+        <li><strong>Transparency &amp; documentation:</strong> a model card that states accuracy per group, limitations, and recommended use.</li>
+        <li>Data-level mitigations require training access; threshold and documentation mitigations don't &mdash; a useful split when you're building on someone else's model.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="real-incidents">
+    <span class="subtopic-label">Sub-topic 5 of 7</span>
+    <h2>5. Real Incidents</h2>
+
+    <p>
+      None of this is hypothetical. Four well-documented, real-world incidents
+      show every type of bias from Part 1 causing genuine harm at scale.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Incident 1: Amazon Hiring Bot</span>
+      <ul>
+        <li><strong>What happened:</strong> Amazon's ML hiring tool showed bias against women.</li>
+        <li><strong>Why:</strong> training data came from 10 years of male-dominated tech hiring.</li>
+        <li><strong>Impact:</strong> women were less likely to be recommended for roles.</li>
+        <li><strong>Lesson:</strong> bias in training data becomes bias in the model &mdash; the model didn't invent the pattern, it learned it.</li>
+      </ul>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Incident 2: COMPAS Recidivism</span>
+      <ul>
+        <li><strong>What happened:</strong> a criminal risk-assessment tool was biased against Black defendants.</li>
+        <li><strong>Why:</strong> historical bias already present in the criminal justice system.</li>
+        <li><strong>Impact:</strong> higher false-positive rates for Black defendants &mdash; flagged as high-risk more often, even when they weren't.</li>
+        <li><strong>Lesson:</strong> historical bias in the data a system learns from becomes perpetuated bias in its decisions.</li>
+      </ul>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Incident 3: Google Images</span>
+      <ul>
+        <li><strong>What happened:</strong> image search for "CEO" showed mostly white men.</li>
+        <li><strong>Why:</strong> web images already reflected societal bias, compounded by search-ranking bias.</li>
+        <li><strong>Impact:</strong> reinforced the stereotype that CEOs are white men, to anyone who searched.</li>
+        <li><strong>Lesson:</strong> representation matters, and defaults matter &mdash; what a system shows by default shapes what users come to expect as normal.</li>
+      </ul>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Incident 4: Healthcare AI</span>
+      <ul>
+        <li><strong>What happened:</strong> a model for patient health-risk scoring used race as a proxy for socioeconomic status.</li>
+        <li><strong>Why:</strong> race happened to correlate with healthcare access, itself a product of existing inequality.</li>
+        <li><strong>Impact:</strong> Black patients were assessed as lower-risk and denied care they actually needed.</li>
+        <li><strong>Lesson:</strong> proxies for sensitive attributes can cause real harm even when the sensitive attribute itself is never used directly.</li>
+      </ul>
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why does "we didn't use race as an input" not settle the healthcare case?</summary>
+      <p>
+        Because a model doesn't need a field literally labeled "race" to end up
+        making race-correlated decisions &mdash; it just needs some other input
+        (healthcare spending, in the actual case) that happens to correlate with
+        race for reasons rooted in historical inequality. This is exactly why
+        an audit has to look at <em>outcomes across groups</em>, not just check
+        whether a sensitive attribute appears in the model's input schema.
+        Removing the field doesn't remove the correlation the model can still
+        find through everything else that's left.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Amazon's hiring bot and COMPAS both show historical bias in training data becoming bias in the model's decisions.</li>
+        <li>Google Images shows how representation and defaults reinforce stereotypes at scale.</li>
+        <li>Healthcare AI shows that a proxy variable can reproduce bias even when the sensitive attribute itself is never used as an input.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 6 ============ -->
+  <div class="subtopic" id="fairness-framework">
+    <span class="subtopic-label">Sub-topic 6 of 7</span>
+    <h2>6. Fairness Framework</h2>
+
+    <p>
+      There is no single, universal definition of "fair." Which definition
+      applies depends on context, and a serious system has to choose one
+      deliberately rather than assuming there's one obvious right answer.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">fairness_definitions.txt</span>
+      </div>
+      <pre><code>Fairness Type          Definition                              Example
+---------------------- ---------------------------------------- ------------------------------------------
+Demographic Parity     Equal treatment across groups             Same % approval for all groups
+Equalized Odds         Equal true & false positive rates         Same hiring accuracy for all genders
+Calibration            Predictions equally accurate per group    Model 80% confident = 80% likely, for all
+Individual Fairness    Similar individuals treated similarly     Two similar applicants get similar scores</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">The trade-off you can't avoid</span>
+      You can't optimize for all of these simultaneously &mdash; it's a
+      mathematical fact, not a limitation of current tools. Satisfying
+      demographic parity exactly can force calibration to break, and vice versa,
+      when the underlying base rates genuinely differ between groups. The
+      practical response: choose which definition matters most based on
+      stakeholder values and the stakes of the decision, and be transparent
+      about which one you chose and why.
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: how do you actually choose, for a specific system?</summary>
+      <p>
+        Ask what a false negative and a false positive each cost in this
+        specific context. For a loan approval system, demographic parity in
+        approval rates might matter most to regulators and to public trust. For
+        a medical screening tool, equalized odds (catching real cases at the
+        same rate across groups) might matter more than raw approval-rate
+        parity, since missing a real case is far more costly than a false alarm.
+        There's no formula that picks the answer for you &mdash; but naming the
+        cost of each error type, for each group, is what turns "it depends" into
+        an actual decision you can defend and document.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Four common fairness definitions: demographic parity, equalized odds, calibration, individual fairness.</li>
+        <li>You cannot optimize for all of them at once &mdash; it's a real trade-off, not a tooling gap.</li>
+        <li>Choose a definition based on context and stakeholder values, and document the choice transparently.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 7 ============ -->
+  <div class="subtopic" id="accessibility">
+    <span class="subtopic-label">Sub-topic 7 of 7</span>
+    <h2>7. Accessibility</h2>
+
+    <p>
+      Fairness isn't only about the protected-attribute groups from Part 3.
+      It's about <strong>everyone</strong> &mdash; and accessibility is where
+      that broader idea becomes concrete and checkable.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Accessibility dimensions</span>
+      <strong>Vision:</strong> blind users, low vision, color blindness.
+      <strong>Hearing:</strong> deaf users, hard of hearing.
+      <strong>Motor:</strong> users who can't use a keyboard or mouse.
+      <strong>Cognitive:</strong> dyslexia, ADHD, autism.
+      <strong>Language:</strong> non-native speakers, different dialects.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">accessibility_audit_checklist.txt</span>
+      </div>
+      <pre><code>[ ] Does the system work with screen readers?
+[ ] Are captions/transcripts provided?
+[ ] Can users interact without a mouse?
+[ ] Is text large enough (18pt+)?
+[ ] Are color contrasts sufficient (4.5:1)?
+[ ] Is language clear and simple?
+[ ] Are there multiple ways to complete tasks?</code></pre>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Why accessibility belongs in a bias chapter</span>
+      <ul>
+        <li>Performance bias (Part 1) and accessibility are the same underlying problem, viewed from two angles: does the system work equally well for everyone who might use it.</li>
+        <li>Accessibility fixes tend to help far beyond their original target &mdash; captions help everyone in a noisy room, clear simple language helps every non-expert user, not just non-native speakers.</li>
+        <li>An audit (Part 3) that never checks accessibility has a systematic blind spot, even if every demographic-parity number looks clean.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Accessibility spans vision, hearing, motor, cognitive, and language dimensions &mdash; not just "protected attribute" groups.</li>
+        <li>A concrete, checkable audit checklist exists: screen readers, captions, keyboard-only interaction, text size, color contrast, plain language, multiple task paths.</li>
+        <li>Accessibility fixes tend to benefit everyone, not only the group they were designed for.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Every real incident in Part 5 shipped after looking technically fine &mdash; bias audits catch a category of problem that ordinary functional testing structurally cannot see.</li>
+      <li>Model cards (Mitigation 4) are becoming a real industry norm, not a nice-to-have &mdash; expect to be asked for one whenever a model touches a hiring, lending, or healthcare decision.</li>
+      <li>Session 5.5 picks up directly from here: once you've measured bias and other safety gaps, guardrails are how you implement the actual defenses and mitigations in a running system.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Bias is systematic, not intentional.</strong> It comes from data and design choices, not malicious intent.</li>
+      <li><strong>You can't ignore bias.</strong> It causes real, documented harm &mdash; hiring, lending, healthcare, criminal justice.</li>
+      <li><strong>Measure fairness explicitly.</strong> What you measure, you improve; what you never check, you never catch.</li>
+      <li><strong>Different fairness definitions exist,</strong> and you can't satisfy all of them at once &mdash; choose based on context, and be transparent about the choice.</li>
+      <li><strong>Representation matters.</strong> Track which groups actually appear in a system's outputs, not just its training data.</li>
+      <li><strong>Accessibility benefits everyone.</strong> Clear captions, plain language, and keyboard navigation help far beyond their original target group.</li>
+      <li><strong>There's no perfect fairness.</strong> Trade-offs are unavoidable &mdash; the responsible move is being transparent about which ones you made.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a Check
+    button, so you'll know instantly if you've got it. Then the exercises have you
+    run a real bias audit on sample outputs, and the project extends it into a full
+    audit framework with a model card.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

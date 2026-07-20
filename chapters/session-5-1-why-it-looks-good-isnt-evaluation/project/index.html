@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.1 Project: Regression Testing for Prompts — GenAI for Everyone</title>
+<meta name="description" content="Build a regression testing framework that compares two prompt versions on a shared golden dataset, then find and explain a genuinely fragile metric hiding inside it: an Accuracy score computed from response length.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-1" data-chapter-id="session-5-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.1 Project</span>
+    <span class="reading-time">25 min build</span>
+  </div>
+  <h1>Regression Testing for Prompts</h1>
+  <p>
+    The Pro-path build for this session. The Core-path exercise scored a single
+    prompt version against a golden dataset. This project is harder: it builds a
+    full <strong>regression testing framework</strong> that runs two prompt
+    versions against the same dataset and compares them metric by metric &mdash;
+    the same discipline from Part 3 of the lesson, now as real, runnable code.
+    And it hides a genuinely fragile metric for you to find and explain.
+  </p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>Testing PROMPT V1 (Baseline)...
+Testing PROMPT V2 (Improved)...
+
+======================================================================
+REGRESSION TEST: Prompt V1 (Basic) vs Prompt V2 (Helpful)
+======================================================================
+
+Metric               v1 Score        v2 Score        Change          Status
+----------------------------------------------------------------------
+Relevance            85.0            90.0           +5.0%           Improved
+Accuracy             90.0            88.0           -2.0%           Regressed
+Helpfulness          75.0            85.0          +10.0%           Improved
+Overall              83.3            87.7           +4.4%           Improved
+======================================================================
+
+DECISION:
+  Improvements: 2
+  Regressions: 1
+  Overall change: +4.4%
+
+V2 is better overall. Recommend promoting to production.</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">A note before you start</span>
+    As with the exercise, <code>starter.py</code> and <code>solution.py</code>
+    here are identical &mdash; this is a complete, working regression testing
+    framework, not a fill-in-the-blank stub. The work in this project isn't
+    typing in missing code; it's tracing how the framework scores each
+    criterion, then catching the one criterion that's scored in a way that
+    doesn't actually measure what its name claims.
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    No installation and no API key needed. Download <code>starter.py</code>
+    below and run <code>python starter.py</code>. Both prompt versions are
+    mock functions with canned responses &mdash; the point of this project is
+    the <strong>comparison and decision logic</strong>, not live model output.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>How the framework is built</h2>
+  <p>Trace these four pieces in <code>starter.py</code>:</p>
+  <ul>
+    <li><strong>Two mock prompt versions</strong> &mdash; <code>prompt_v1</code> (basic, terse responses) and <code>prompt_v2</code> (longer, more helpful responses) simulate testing two real prompt variants without calling a live model.</li>
+    <li><strong><code>RegressionTestSuite.score_response</code></strong> &mdash; scores a response on whichever criteria a given example asks for: <code>Relevance</code> (does the expected text appear in the actual response?), <code>Accuracy</code>, and <code>Helpfulness</code> (does the response contain action words like "go to" or "email"?).</li>
+    <li><strong><code>test_prompt</code></strong> &mdash; runs every example in the dataset through a given prompt function, scores each one, and averages scores per criterion into a metrics dict.</li>
+    <li><strong><code>compare_versions</code> and <code>decision</code></strong> &mdash; diff the v1 and v2 metrics dicts, label each metric Improved/Regressed/Stable, and recommend PROMOTE, EQUIVALENT, or REJECT based on the overall average.</li>
+  </ul>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Run it and read the comparison table</h3>
+    <p>Run the file. Confirm you get the same comparison table shown above, and that the decision at the bottom follows from the Overall row &mdash; not from the count of improvements vs. regressions alone (notice v2 wins even though it regressed on one metric out of three).</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Add a new example and re-run</h3>
+    <p>Add at least one new example via <code>suite.add_example(...)</code> using a category and criteria list of your choice, then re-run the file. Confirm your new example shows up in both v1 and v2's runs and shifts the Overall percentages.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>Task 3 &mdash; Find and explain the fragile Accuracy proxy</h3>
+    <p>Look closely at the <code>Accuracy</code> branch inside
+    <code>score_response</code>:</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">score_response (excerpt)</span>
+      </div>
+      <pre><code>elif criterion == "Accuracy":
+    &#35; For this mock, assume accuracy is based on response length (poor proxy!)
+    scores[criterion] = min(len(actual) / 100, 1.0)</code></pre>
+    </div>
+    <p>
+      This literally scores "Accuracy" by counting characters in the response,
+      capped at 100. In the sample run above, Accuracy goes from 90.0 (v1) to
+      88.0 (v2) &mdash; a "regression." But v2's responses are also the more
+      helpful, more correct ones (they include specific settings paths and
+      timeframes v1 doesn't). Explain, in your own words: how can a metric
+      literally named "Accuracy" go down when the responses got more
+      informative and no less correct? What is this proxy actually measuring
+      instead of correctness, and what's one concrete case (a long response
+      that's confidently wrong, or a short one that's perfectly right) where
+      this metric would give you the opposite of the right answer?
+    </p>
+    <p>
+      Then propose a fix: rewrite the <code>Accuracy</code> branch so it checks
+      something closer to actual correctness rather than length. You don't need
+      to build a full LLM-as-judge (that's Session 5.2) &mdash; even a stricter
+      keyword/fact-overlap check against <code>expected</code> would be a real
+      improvement over <code>len(actual) / 100</code>. See <code>README.md</code>
+      for a full worked explanation to compare against.
+    </p>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>The Core-path exercise scored one system against a rubric where every
+    criterion, at least in principle, should measure the thing its name claims.
+    This project makes the failure mode from Part 5 of the lesson &mdash;
+    "metrics that don't match goals" &mdash; concrete and runnable: a metric
+    literally named Accuracy that has nothing to do with correctness. That's
+    more dangerous than an obviously broken metric, because the regression
+    table above still runs, still prints clean percentages, and still looks
+    like real evaluation. Catching it requires actually reading what a metric
+    computes, not just trusting its label &mdash; the same instinct Session 5.2
+    formalizes when it covers how to choose (and audit) evaluation methods for
+    real.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.6 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Scenario-based interview prep synthesizing Week 5: eval + safety report shipping decisions, prompt injection via retrieved content, guardrails as layered defense, comparative bias checks, and red-teaming your own system.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-5-6" data-chapter-id="session-5-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 5.6 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Synthesizing Week 5</h1>
+  <p>
+    This is the last session of Week 5, so these questions draw across the
+    whole week's pool rather than staying narrowly scoped to today's build
+    &mdash; the same way a real interviewer, once you've mentioned "I wrote
+    an eval + safety report," will pull on threads from golden datasets,
+    red-teaming, bias testing, and shipping judgment calls all in the same
+    conversation. Each question below includes what a strong answer sounds
+    like, common red flags, and a natural follow-up. Click any question to
+    expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Your team's eval + safety report shows: 88% golden-dataset pass rate, one patched MEDIUM-severity red-team finding, and two bias comparisons run with no gaps found. A PM asks if you can ship today. What do you say?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Give a grounded, qualified answer tied to the specific numbers &mdash; not a flat yes or no. 88% with a patched MEDIUM finding might be acceptable for a lower-stakes internal tool with monitoring in place, but the honest read on "two bias comparisons, no gaps found" is that it's limited evidence, not proof of no bias; two comparisons is a starting point, not a completed bias audit. A strong answer names a concrete next step regardless of the ship decision &mdash; ongoing monitoring, more red-teaming, expanded bias testing across more framings &mdash; and doesn't either block shipping unreasonably or wave away the real gaps that remain.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>An unqualified "yes, ship it" or "no, not safe at all" with no reasoning tied to the actual numbers; treating "no bias gaps found in two comparisons" as proof the system is unbiased; no mention of what should happen after shipping.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What specific metric would you monitor post-launch to catch a problem the golden dataset didn't anticipate?" (Tests whether they think about eval as ongoing, not a one-time gate before launch.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Explain prompt injection, and specifically why an injection hidden inside a retrieved document is a harder problem than one typed directly into a chat box.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Define prompt injection as text crafted to make the model ignore its original instructions and follow the attacker's instead. Then explain the retrieved-document case specifically: the attacker doesn't need any access to the chat box at all &mdash; they just need to get malicious text into any document the retrieval step might pull in, which is a much larger and harder-to-monitor attack surface than the chat interface alone. Note that retrieved content is often treated as trusted context by default and inserted into the prompt with less scrutiny than direct user input gets. Name at least one defense: framing retrieved content explicitly as untrusted reference material rather than instructions, output filtering for leaked-instruction phrases, or index-time scanning for injection signals before a document is ever retrievable.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Treating all injection vectors as equivalent; not recognizing retrieved documents as a distinct, broader attack surface; no mention of any defense at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"If you can't fully sanitize every document in your retrieval index, what's your next line of defense?" (Points toward output-side filtering and framing, since input-side sanitization alone can't be guaranteed complete.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> You add a keyword-based output filter blocking any response containing the phrase "system prompt." A red-team attempt still extracts your instructions using different wording. Did the guardrail fail?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Not a total failure &mdash; it still blocks the literal case it was built for. But it's not a complete fix either, because keyword filters are inherently brittle and bypassable by rephrasing around the exact blocked phrase. The correct response isn't to call the guardrail broken or perfect; it's to document the bypass as an open residual risk in the report and keep testing for further bypasses. State the general principle explicitly: guardrails are layers of defense, not single solutions &mdash; a mature safety approach expects to combine several imperfect layers and to keep probing for gaps between them, rather than treating any one guardrail as "done."</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Calling it either a complete failure or a complete success with no nuance; not mentioning that the bypass needs to be documented; no sense that keyword filters specifically are a brittle, easily-rephrased-around defense.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What additional layer would you add on top of the keyword filter to catch semantically similar bypasses?" (Points toward a second model call that classifies intent/meaning rather than matching literal strings, or a hardened system prompt that reduces what the model is willing to reveal in the first place.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> A stakeholder says, "I tested our hiring tool on a resume from a woman and it gave a fair result &mdash; so we're good on bias." What's wrong with this claim?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Bias is a comparative property &mdash; a single output tells you nothing about whether treatment is unequal, because there's nothing to compare it against. A real bias check requires matched variants: the same underlying qualifications, varied only in a demographic or framing detail, with outputs compared directly. One fair-looking output doesn't rule out disparities that would show up across many comparisons, or in specific edge cases the single test happened not to touch. A strong answer also notes that bias checks should be an explicit, ongoing category of testing built into the eval process, not a one-time spot check run once and considered settled.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Accepting the stakeholder's claim as sufficient evidence; not mentioning the need for a controlled, matched comparison; treating bias testing as a single pass/fail check instead of an ongoing practice.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Design two matched test cases you'd use to check this hiring tool for bias." (Tests whether they can actually construct a controlled comparison, not just describe the concept abstractly.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> You red-team your own system with 5 attack attempts and all 5 fail to break it. What do you conclude, and what would you do next?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A near-perfect defense rate on the first pass is more likely to indicate weak, insufficiently creative attacks than a genuinely hardened system. The right next move is going back to a broader attack catalog &mdash; injection via multiple vectors (documents, tool arguments, user input), different jailbreak framings (roleplay, hypothetical framing, incremental escalation), and scope-escape attempts &mdash; before concluding the system is safe. A strong answer explicitly refuses to treat "5/5 blocked" as sufficient evidence of safety on its own; red-teaming your own system is supposed to feel uncomfortable, and a suspiciously clean result is itself a signal worth investigating rather than celebrating.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Concluding the system is safe and stopping there; not questioning whether the attacks themselves were rigorous enough; treating a clean sweep as validation rather than a prompt to try harder.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me one attack vector you'd try next that's meaningfully different from a typical direct jailbreak attempt." (Tests whether they have a real attack catalog in mind, not just the phrase "try harder.")</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check across the whole week &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A <code>____</code> is a curated set of examples with expected outputs, covering happy path, edge, boundary, and adversarial cases, scored against an explicit rubric.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="golden dataset" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> A <code>____</code> risk is a known, honestly documented risk that remains even after mitigations were added &mdash; guardrails reduce risk, they rarely eliminate it.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="residual" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> One RAG-specific prompt injection vector is malicious instructions embedded inside a <code>____</code> the retrieval step pulls into context.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="document,retrieved document" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> You can't detect bias from a single model output because bias is about unequal treatment, which requires comparing outputs across <code>____</code> variants.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="matched" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Input filtering screens what goes into the model; <code>____</code> filtering screens what the model produces before it ever reaches the user.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="output" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you can talk about Week 5 as a connected system, not five separate facts.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Interviewers will often hand you a live scenario ("here's our eval report, do we ship?") rather than ask you to define terms &mdash; practice giving a grounded, qualified answer tied to specific numbers, not a reflexive yes or no.</li>
+    <li>Guardrail questions specifically reward nuance: strong candidates know a bypassed filter isn't a total failure, and a filter that catches one case isn't a complete fix &mdash; both things are true at once.</li>
+    <li>Bias-testing literacy is a common tell: watch for candidates who understand bias requires a controlled, matched comparison rather than a single spot check.</li>
+    <li>Pair these with Weeks 1&ndash;4's questions for a realistic mixed-topic mock interview as you move into Week 6.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="../../assessments/written-exams/week-05-exam.md">Week 5 Written Exam &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

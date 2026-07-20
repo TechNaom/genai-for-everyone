@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.3 Capstone Build Day I — GenAI for Everyone</title>
+<meta name="description" content="Build a working v1 of your capstone using an MVP-first, milestone-driven approach — a thin, complete end-to-end pipeline first, depth and polish only after.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Week 7 · Session 7.3</span>
+    <span class="badge-difficulty">Capstone</span>
+    <span class="reading-time">15&ndash;20 min read</span>
+  </div>
+  <h1>Capstone Build Day I</h1>
+  <p><em>Build a working v1 of your capstone using an MVP-first, milestone-driven approach &mdash; so that by the end of this session you have something that runs end to end, even if incomplete, rather than several unfinished pieces.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#mvp-first">1. MVP-first, not perfect-first</a>
+    <a href="#milestone-checkpoints">2. Milestone checkpoints</a>
+    <a href="#asking-for-help">3. When to ask for help vs. push through</a>
+  </nav>
+
+  <div class="hook">
+    The single biggest risk on a build day isn't running out of skill
+    &mdash; it's running out of <strong>time with nothing that runs</strong>.
+    The fix is a discipline borrowed directly from real engineering teams:
+    build the thinnest possible end-to-end version first, then layer in
+    depth, rather than perfecting one piece before touching the next.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="mvp-first">
+    <span class="subtopic-label">Part 1 of 3</span>
+    <h2>1. MVP-first, not perfect-first</h2>
+
+    <p>
+      For a RAG-based capstone, "thinnest possible end-to-end version" looks
+      like: hard-code 3 documents, get retrieval-then-generation working with
+      the ugliest possible prompt, and print an answer to the console. That
+      is a complete pipeline, even though every piece of it is crude. Only
+      after that works do you improve chunking, add more documents, improve
+      the prompt, or add a UI.
+    </p>
+
+    <div class="what-is">
+      <span class="label">The alternative to avoid</span>
+      Perfecting your chunking strategy before you've ever generated a single
+      answer risks ending the day with a beautiful chunker and nothing that
+      actually answers a question.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Build the crudest possible complete pipeline first &mdash; hard-coded documents, an ugly prompt, console output.</li>
+        <li>Improve chunking, add documents, refine the prompt, and add a UI only after that pipeline runs end to end.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="milestone-checkpoints">
+    <span class="subtopic-label">Part 2 of 3</span>
+    <h2>2. Milestone checkpoints</h2>
+
+    <p>
+      Break the build into checkpoints with a rough time budget, and treat
+      each checkpoint as a go/no-go decision point, not just a to-do list
+      item:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">checkpoints.txt</span>
+      </div>
+      <pre><code>Checkpoint 1 (≈25% of build time): Thinnest possible end-to-end pipeline runs, however crude
+Checkpoint 2 (≈50%): Core path functionality from your proposal works on your golden dataset examples
+Checkpoint 3 (≈75%): At least one Week 5 eval pass done (does it actually work, not just "did it run")
+Checkpoint 4 (≈100%): Pro path extension attempted, or scope consciously cut if time ran short</code></pre>
+    </div>
+
+    <p>
+      If you're not at Checkpoint 1 by 25% of your time, that's the signal
+      to simplify immediately &mdash; cut a feature, hard-code something you
+      meant to make dynamic, use a smaller document set &mdash; rather than
+      pushing forward on the original plan and hoping time works out.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Four checkpoints, roughly at 25/50/75/100% of your build time: thin pipeline, core path on golden examples, an actual eval pass, pro path or a conscious scope cut.</li>
+        <li>Behind at a checkpoint? Simplify immediately &mdash; that's the point of treating it as go/no-go, not a hope-it-works-out to-do list.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="asking-for-help">
+    <span class="subtopic-label">Part 3 of 3</span>
+    <h2>3. When to ask for help vs. push through</h2>
+
+    <p>
+      Two failure modes are equally costly on a build day: asking for help
+      on something you could solve in 2 more minutes of debugging, and
+      silently struggling for 40 minutes on something a mentor could unblock
+      in 2.
+    </p>
+
+    <div class="what-is">
+      <span class="label">A reasonable rule</span>
+      If you've been stuck on the <em>same</em> specific error for more than
+      10&ndash;15 minutes with no new information, that's the signal to ask
+      &mdash; not a sign of failure, but time-management discipline.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Silently struggling for 40 minutes and asking too early are both costly &mdash; the goal is the right threshold, not "never ask" or "always ask."</li>
+        <li>10&ndash;15 minutes stuck on the same error with no new information is the signal to ask &mdash; treat it as time management, not failure.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>A team building a demo for a Monday board meeting spends three days perfecting the retrieval quality for one document type, then discovers on Friday afternoon that the generation step, never tested end to end, produces malformed output for their actual use case.</li>
+      <li>An MVP-first approach &mdash; thin pipeline working by day one &mdash; would have surfaced that problem three days earlier, when there was still time to fix it.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Build the thinnest possible end-to-end pipeline first;</strong> only then improve individual pieces &mdash; a complete crude system beats a polished incomplete one, every time you're short on time.</li>
+      <li><strong>Treat checkpoints as go/no-go decision points:</strong> if you're behind schedule at a checkpoint, simplify immediately rather than hoping to catch up later.</li>
+      <li><strong>Getting unblocked quickly (asking after 10-15 minutes stuck) is a time-management skill,</strong> not a sign you're behind &mdash; silently struggling for 40 minutes is the actual failure mode to avoid.</li>
+      <li><strong>A capstone v1 that runs end to end, even simplified, is worth more</strong> at the end of a build day than several unfinished, individually-impressive pieces.</li>
+    </ul>
+  </div>
+
+  <p>
+    Using your Session 7.1 proposal, build your capstone's thinnest possible
+    end-to-end version first (Checkpoint 1), then work through Checkpoints
+    2&ndash;3 in order. Ready to check what stuck? Head to the quiz next
+    &mdash; then the exercises page has the checkpoint tracker script for
+    logging your progress and time spent per checkpoint as you build.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../session-7-2-real-world-case-study-day-i/lesson.html">&larr; Session 7.2</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

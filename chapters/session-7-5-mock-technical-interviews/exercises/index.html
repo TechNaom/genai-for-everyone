@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.5 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Core path: write a 'walk me through your project' answer and self-check it for four required elements. Pro path: run a timed mock interview using a system design + live debugging question bank and write structured feedback.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 7.5 Exercises</span>
+    <span class="reading-time">30&ndash;45 min</span>
+  </div>
+  <h1>Exercises: Practice Your Project Answer</h1>
+  <p>
+    Practice a "walk me through your project" answer for your own capstone,
+    then run it against a self-check script that flags whether each of the
+    four required elements is present. There's no core/pro split into
+    separate builds this session &mdash; instead there's one exercise with a
+    harder pro-path extension:
+  </p>
+
+  <ul>
+    <li><strong>Core path</strong> &mdash; write your project answer, run the checker, fix flagged gaps.</li>
+    <li><strong>Pro path</strong> &mdash; run a full timed mock interview (system design + live debugging) using the provided question bank, and write structured feedback.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">How to run this</span>
+    You'll need Python 3 &mdash; that's it. <code>starter.py</code> runs with
+    the standard library only; no API key, no <code>pip install</code> of
+    anything beyond what ships with Python.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Write your project answer</h3>
+    <p>In a plain text file (e.g. <code>my_answer.txt</code>), write a "walk me through your project" answer for your own capstone, following the four-part structure from the lesson: the problem and user, the approach and <em>why</em> that approach over alternatives, one specific hard trade-off you made, and your actual success criteria (how you know it worked).</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Implement the checker</h3>
+    <p>Open <code>starter.py</code> and find <code>check_answer()</code>. For each element in <code>REQUIRED_ELEMENTS</code>, check case-insensitively whether <em>any</em> of its keyword list appears in the answer text, and return a dict of <code>{element_name: True/False}</code>.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Run it against your own answer</h3>
+    <p>Run <code>python3 starter.py my_answer.txt</code>. Fix any element flagged as missing &mdash; either by adding it to your answer if it's genuinely absent, or by rephrasing if you covered it with different wording than the checker's keyword list expects.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    Run <code>python3 starter.py example_answer.txt</code> (the reference
+    example in this folder) once your <code>check_answer()</code> is
+    implemented &mdash; it should report all 4/4 elements present. Compare
+    against <code>solution.py</code> once you've made a genuine attempt.
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Watch out for &mdash; keyword matching is a blunt instrument</h3>
+    <p>The checker only looks for specific keyword strings, so it can produce false negatives on a genuinely good answer that just uses different wording (e.g. "picked" instead of "chose"), and false positives if a keyword appears without the substance behind it (e.g. the word "success" mentioned in passing with no actual criteria named). That's a fair trade for a simple self-check script &mdash; treat a "missing" flag as a prompt to re-read that part of your answer critically, not as an automatic failure.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Pro path &mdash; extended challenge</span>
+    Do a full mock interview with a peer (or self-run using
+    <a href="question_bank.md">question_bank.md</a>): one system design
+    question and one live-debugging question from the provided sets, timed
+    at 15 minutes each. Then write structured feedback for the other person
+    (or yourself) following the "specific, actionable" standard from the
+    lesson &mdash; name the exact moment something went well or poorly, not
+    just "that was good" or "that needs work."
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

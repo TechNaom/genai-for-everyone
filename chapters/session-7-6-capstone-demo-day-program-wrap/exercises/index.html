@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.6 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Capstone exercise for Session 7.6 — write your capstone's portfolio README, run the README checker, and prepare (or deliver) your 5-minute demo script.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 7.6 Exercises</span>
+    <span class="reading-time">30&ndash;45 min, hands-on</span>
+  </div>
+  <h1>Exercises: Write the Portfolio README</h1>
+  <p>
+    One build for this session: write your capstone's portfolio README
+    following the structure from the lesson, and check it against the
+    required elements. There's no core/pro code split &mdash; the checker
+    script is the same either way, and the "pro path" is a harder version
+    of the same task rather than a separate program.
+  </p>
+
+  <ul>
+    <li><strong>Core path</strong> &mdash; write <code>PORTFOLIO_README.md</code> for your capstone, run the checker, and time a written demo script against the five beats.</li>
+    <li><strong>Pro path</strong> &mdash; deliver the actual 5-minute demo (to a peer, mentor, or recorded for self-review), and get feedback on whether the problem was clear in the first 30 seconds, whether the "what went wrong" moment was concrete, and whether success criteria were real numbers.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">How to run this</span>
+    You'll need Python 3 &mdash; that's it. Everything in
+    <code>starter.py</code> runs with the standard library; no API key, no
+    <code>pip install</code> of anything beyond what ships with Python.
+    The checker doesn't grade your writing &mdash; it just confirms the
+    five required sections are present, the same low bar a recruiter's
+    90-second skim effectively applies.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+    <a href="example_portfolio_readme.md">example_portfolio_readme.md (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Write your portfolio README</h3>
+    <p>
+      Write <code>PORTFOLIO_README.md</code> for your actual capstone (or
+      adapt <code>example_portfolio_readme.md</code> as a shape to follow
+      if your capstone isn't finished yet). It needs, in order: what the
+      project does and for whom, a way to see it work (a screenshot, a
+      GIF, or a live demo link), what techniques it uses and why, your
+      actual eval numbers, and how to run it.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Implement the checker</h3>
+    <p>
+      Find <code>check_readme()</code> in <code>starter.py</code> and
+      implement it: for each section in <code>REQUIRED_SECTIONS</code>,
+      check case-insensitively whether any of its keyword list appears in
+      the README text, and return a dict of <code>{section_name:
+      True/False}</code>.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Run it against your own README</h3>
+    <p>
+      Run <code>python3 starter.py PORTFOLIO_README.md</code>. Fix
+      whatever comes back <code>⚠️ missing</code> until all five sections
+      pass. This checker is intentionally shallow (keyword matching, not
+      genuine judgment) &mdash; the real bar is still whether a stranger
+      could understand your project in 90 seconds, not just whether a
+      script matched some words.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Write and time your demo script</h3>
+    <p>
+      Write out your 5-minute demo following the five beats from the
+      lesson: the problem in one sentence, a live example, one real thing
+      that went wrong and how you fixed it, your actual success numbers,
+      and what you'd build next. Read it aloud and time it &mdash; if
+      it's running long, the first thing to cut is anything that sounds
+      like a tour of your codebase rather than the story.
+    </p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 5 &mdash; A README that would pass the checker but still fail a recruiter</h3>
+    <p>
+      The checker is a keyword match, not a judgment call &mdash; it's
+      easy to game and still write a bad README. For example, a README
+      containing the sentence "no screenshot, no eval numbers, just run
+      it" would technically trip the <code>evidence_it_works</code> and
+      <code>eval_numbers</code> keyword checks (it contains the words
+      "screenshot" and "eval") while communicating the exact opposite of
+      what those sections are supposed to prove. Read your own
+      <code>PORTFOLIO_README.md</code> after it passes the checker and ask
+      honestly: does it actually show a screenshot and real numbers, or
+      does it just mention the words? The checker catches missing
+      sections; it can't catch a hollow one.
+    </p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader for the writing itself, the same way
+    there's no automated grader for whether a recruiter is actually
+    convinced. Confirm instead: <code>starter.py</code> reports 5/5 on
+    your real <code>PORTFOLIO_README.md</code>, every section contains
+    genuine content (not just a keyword that happens to match), and your
+    demo script hits all five beats within 5 minutes when read aloud.
+    Compare <code>check_readme()</code> against <code>solution.py</code>
+    once you've made a genuine attempt.
+  </div>
+
+  <div class="what-is">
+    <span class="label">Optional extension (Pro path)</span>
+    Once your README passes and your demo script is timed, actually
+    deliver the demo &mdash; to a peer, a mentor, or recorded for
+    self-review &mdash; and get feedback on three specific things: was
+    the problem statement clear in the first 30 seconds, was the "what
+    went wrong" moment concrete and specific rather than vague, and were
+    the success criteria stated as real numbers rather than impressions.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

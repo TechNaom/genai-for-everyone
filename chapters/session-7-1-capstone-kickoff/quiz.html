@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.1 Quiz — GenAI for Everyone</title>
+<meta name="description" content="Interactive fill-in-the-blank quiz for Session 7.1: Capstone Kickoff — scoping a real-world GenAI capstone project.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-1" data-chapter-id="session-7-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="lesson.html">&larr; Back to the lesson</a></p>
+
+  <span class="chapter-badge">Session 7.1 Quiz</span>
+  <h1>Capstone Kickoff</h1>
+  <p>
+    A short quiz on scoping a capstone project. Fill in each blank, then
+    press its <strong>Check</strong> button (or press Enter) to see instantly
+    if you're right. There's no penalty for guessing again &mdash; try until
+    you get it.
+  </p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="q1"><span class="q-num">1</span> A good capstone scope
+      answers four questions: the specific problem and user, the end-to-end
+      description, the techniques used and why, and how you'll know it
+      <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="q1" class="fib-blank" data-answers="worked" aria-label="Answer for question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q2"><span class="q-num">2</span> "An AI assistant that
+      helps with everything at my job" fails as a capstone scope because it's
+      a <code>____</code>, not a scope &mdash; it names no specific problem
+      or user and gives no way to check if it worked.</label>
+      <div class="fib-row">
+        <input type="text" id="q2" class="fib-blank" data-answers="wish" aria-label="Answer for question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q3"><span class="q-num">3</span> True or False: A strong
+      capstone should be "just a chatbot" so it's simple to demo and
+      explain.</label>
+      <div class="fib-row">
+        <input type="text" id="q3" class="fib-blank" data-answers="false" aria-label="Answer for question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q4"><span class="q-num">4</span> <strong>Scenario:</strong>
+      You have 2-3 sessions left before demo day, but your proposed capstone
+      would realistically take 3 weeks to build well. The right move is to
+      <code>____</code> the idea down to something finishable in the time
+      remaining, rather than attempting the full version.</label>
+      <div class="fib-row">
+        <input type="text" id="q4" class="fib-blank" data-answers="cut,scope down,shrink,narrow" aria-label="Answer for question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q5"><span class="q-num">5</span> Stating what's explicitly
+      <code>____</code> of scope in a proposal is as important as stating
+      what's in &mdash; it's what stops "just one more feature" creep mid-build.</label>
+      <div class="fib-row">
+        <input type="text" id="q5" class="fib-blank" data-answers="out" aria-label="Answer for question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q6"><span class="q-num">6</span> "It correctly triages
+      8/10 golden-dataset emails" beats "it feels good to use" as a success
+      criterion because it's specific, measurable, and <code>____</code>
+      &mdash; you can check it and get a clear answer.</label>
+      <div class="fib-row">
+        <input type="text" id="q6" class="fib-blank" data-answers="falsifiable,checkable,verifiable" aria-label="Answer for question 6">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q7"><span class="q-num">7</span> When a manager gives a new
+      hire a vague "build us an AI feature" request, the highest-leverage
+      first move is to come back with a scoped <code>____</code>, not to
+      start writing code.</label>
+      <div class="fib-row">
+        <input type="text" id="q7" class="fib-blank" data-answers="proposal,one-pager" aria-label="Answer for question 7">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score! Your scoping instincts are ready &mdash; on to the exercises.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="lesson.html">&larr; Back to Lesson</a>
+    <a href="exercises/index.html">Exercises &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

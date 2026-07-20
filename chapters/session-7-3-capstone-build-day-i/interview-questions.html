@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.3 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Scenario-based interview prep on MVP-first build discipline, milestone checkpoints, scoping under a deadline, and knowing when to ask for help vs. push through.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-3" data-chapter-id="session-7-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 7.3 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Build Discipline Under a Deadline</h1>
+  <p>
+    Interviewers ask about build discipline in the exact shape this session
+    practiced &mdash; not "define MVP" but "you have a week, walk me through
+    how you'd spend it," and they listen for whether you actually treat
+    early milestones as decision points or just push forward hoping time
+    works out. Each question below includes what a strong answer sounds
+    like, common red flags, and a natural follow-up. Click any question to
+    expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> You have a week to build a working demo of a GenAI feature. Walk me through how you'd allocate your time.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Build the thinnest possible end-to-end pipeline first, however crude, before polishing any individual piece. Treat early milestones as go/no-go checkpoints &mdash; if behind schedule, simplify immediately rather than pushing forward on the original plan. Reserve real time for an actual evaluation pass, not just "does it run." And mention getting unblocked quickly (asking for help) rather than silently struggling on a single issue for too long.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Planning to perfect one component (e.g., retrieval quality) fully before ever testing the pipeline end to end; no mention of evaluation time in the schedule; no contingency plan if behind schedule partway through.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Day 4 of 5, you're behind schedule and only have a rough end-to-end pipeline with no eval done yet. What do you cut?" (Tests whether the checkpoint discipline is real or just a talking point &mdash; a strong answer cuts scope, not the eval pass.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Your manager says, "Build us an AI feature for the customer portal," with no further detail. What's your first move?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Don't start building &mdash; scope the request first. Ask clarifying questions targeting the specific user and problem, an end-to-end description of what it does, why AI (and which kind) is actually needed, and how success will be measured. Mention writing this down as a short proposal before committing engineering time. This is the same discipline that makes MVP-first build days work: you can't build the thinnest useful pipeline until you know what "useful" means for this specific request.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumping straight to proposing an architecture or technology stack; asking no clarifying questions at all; treating "AI feature" as self-evidently well-defined.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The manager pushes back: 'Just build something, we don't have time for a proposal.' How do you respond?" (Tests whether they can defend scoping discipline under real pushback, not just describe it in the abstract.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Walk me through a GenAI project you built.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Leads with the problem and specific user, not a list of technologies. Explains the approach and <em>why</em> that approach was chosen over alternatives. Names one specific hard trade-off or decision made during building &mdash; the kind of thing a build-day checkpoint justification captures in the moment, rather than a vague after-the-fact summary. States actual success criteria and whether they were met, with real numbers.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"I used LangChain, a vector database, and Claude" with no problem statement or reasoning; no mention of how they know it worked; can't name a single hard decision or trade-off, which suggests limited hands-on ownership of the actual build.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What would you do differently if you rebuilt this from scratch today?" (Tests genuine reflection on the build, not a rehearsed pitch.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> An eval report shows accuracy dropped from 90% to 60% over the past month, with no code changes. Walk me through how you'd diagnose this.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Don't guess at a fix immediately &mdash; investigate the specific failing examples first to find the pattern. Consider drift explicitly: has the input distribution changed, has an underlying model or document set changed. Check whether the golden dataset itself is still representative, or whether it needs updating. Propose a systematic diagnostic process, not a single guess. This is exactly why Checkpoint 3 on a build day requires an actual eval pass rather than "did it run" &mdash; running without measuring is how a silent drop like this goes unnoticed for a month.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Proposing a fix (e.g., "just retrain it" or "switch models") before investigating the actual failure pattern; not mentioning drift as a possible cause; treating this as necessarily a code bug.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You find the drop is concentrated entirely in one specific question category. What does that tell you, and what would you check next?" (Points toward a narrower, more targeted root-cause investigation rather than a system-wide fix.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> A VP says: "Let's put AI on customer support, it's a mess right now." List at least three meaningfully different projects this could mean, and the one question you'd ask first.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Names at least three distinct possible projects (e.g., drafting reply suggestions, auto-routing tickets, predicting escalation risk, summarizing long threads) with different data and eval requirements. Correctly classifies at least one as predictive vs. generative. The clarifying question surfaces which specific pain point (speed, accuracy, agent workload) the VP actually means &mdash; because you can't pick a thin, buildable MVP slice until the actual target problem is pinned down.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Only identifying one possible project, or treating "AI for support" as a single well-defined task; asking a generic clarifying question ("what do you want?") instead of one targeted at surfacing the ambiguity.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The VP says 'all of the above, whatever's fastest.' How do you push back on scoping this into one project first?" (Tests whether they can hold the line on scoping discipline even against pressure to do everything at once.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check on today's session &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> The single biggest risk on a build day is running out of time with nothing that <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="runs" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> Checkpoint 1, at roughly 25% of build time, should be the thinnest possible end-to-end pipeline, however <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="crude" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Checkpoint 3, at roughly 75%, requires an actual Week 5 <code>____</code> pass &mdash; not just confirmation that the pipeline ran.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="eval,evaluation" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> If you've been stuck on the same specific error for more than 10&ndash;15 minutes with no new information, that's the signal to <code>____</code>, not a sign of failure.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="ask,ask for help" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A complete, crude, end-to-end system beats a polished, <code>____</code> one every time you're short on time.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="incomplete,unfinished" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; now go apply it: build the thin pipeline first.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Interviewers often hand you a live scenario ("you have a week, go") rather than ask you to define MVP &mdash; practice giving a concrete time allocation, not a definition.</li>
+    <li>The follow-up question is usually the real test: "you're behind schedule, what do you cut?" A strong candidate cuts scope, not the evaluation step.</li>
+    <li>Naming a specific trade-off or decision from a real build is a reliable signal of hands-on ownership &mdash; vague technology lists are not.</li>
+    <li>Pair this with Weeks 1&ndash;6's questions as you move toward Session 7.5's mock technical interviews.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="../session-7-4-real-world-case-study-day-ii-capstone-build-day-ii/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

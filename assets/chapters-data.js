@@ -300,14 +300,37 @@ window.GFE_MODULES = [
   },
   {
     title: "Week 7 — Capstone, Real-World Case Studies & Career Prep",
-    examPath: null,
+    examPath: "assessments/written-exams/week-07-exam.md",
     chapters: [
-      { id: "session-7-1", num: "7.1", title: "Capstone Kickoff", path: null, subtopics: [] },
-      { id: "session-7-2", num: "7.2", title: "Real-World Case Study Day I", path: null, subtopics: [] },
-      { id: "session-7-3", num: "7.3", title: "Capstone Build Day I", path: null, subtopics: [] },
-      { id: "session-7-4", num: "7.4", title: "Real-World Case Study Day II + Capstone Build Day II", path: null, subtopics: [] },
-      { id: "session-7-5", num: "7.5", title: "Mock Technical Interviews", path: null, subtopics: [] },
-      { id: "session-7-6", num: "7.6", title: "Capstone Demo Day & Program Wrap", path: null, subtopics: [] }
+      { id: "session-7-1", num: "7.1", title: "Capstone Kickoff", path: "chapters/session-7-1-capstone-kickoff/lesson.html", subtopics: [
+        { id: "scoping-trap", title: "The Scoping Trap" },
+        { id: "sizing-the-time", title: "Sizing It to the Time You Have" },
+        { id: "the-one-pager", title: "The One-Pager" }
+      ] },
+      { id: "session-7-2", num: "7.2", title: "Real-World Case Study Day I", path: "chapters/session-7-2-real-world-case-study-day-i/lesson.html", subtopics: [
+        { id: "reading-someone-elses-system", title: "Reading Someone Else's System" },
+        { id: "case-study-support-ticket-triage", title: "Case Study: Support Ticket Triage at a Mid-Size SaaS Company" }
+      ] },
+      { id: "session-7-3", num: "7.3", title: "Capstone Build Day I", path: "chapters/session-7-3-capstone-build-day-i/lesson.html", subtopics: [
+        { id: "mvp-first", title: "MVP-First, Not Perfect-First" },
+        { id: "milestone-checkpoints", title: "Milestone Checkpoints" },
+        { id: "asking-for-help", title: "When to Ask for Help vs. Push Through" }
+      ] },
+      { id: "session-7-4", num: "7.4", title: "Real-World Case Study Day II + Capstone Build Day II", path: "chapters/session-7-4-real-world-case-study-day-ii-capstone-build-day-ii/lesson.html", subtopics: [
+        { id: "two-halves-one-skill", title: "Two Halves, One Skill" },
+        { id: "case-study-contract-review-assistant", title: "Case Study: Contract Review Assistant" }
+      ] },
+      { id: "session-7-5", num: "7.5", title: "Mock Technical Interviews", path: "chapters/session-7-5-mock-technical-interviews/lesson.html", subtopics: [
+        { id: "walk-me-through-your-project", title: "Format 1: \"Walk Me Through a Project You Built\"" },
+        { id: "system-design", title: "Format 2: System Design" },
+        { id: "live-problem-solving", title: "Format 3: Live Problem-Solving" },
+        { id: "giving-and-receiving-feedback", title: "Giving and Receiving Feedback Well" }
+      ] },
+      { id: "session-7-6", num: "7.6", title: "Capstone Demo Day & Program Wrap", path: "chapters/session-7-6-capstone-demo-day-program-wrap/lesson.html", subtopics: [
+        { id: "the-demo", title: "The Demo: Structure Beats Improvisation" },
+        { id: "the-portfolio-readme", title: "The Portfolio README: Written for Someone Who Will Never Talk to You" },
+        { id: "career-next-steps", title: "Career Next Steps" }
+      ] }
     ]
   }
 ];

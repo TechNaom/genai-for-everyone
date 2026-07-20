@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.1 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Write a one-page capstone proposal and run a scope-checker script against it that flags vague scoping before you show it to anyone else.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 7.1 Exercises</span>
+    <span class="reading-time">30&ndash;45 min, mostly writing</span>
+  </div>
+  <h1>Exercises: Write &amp; Stress-Test a Capstone One-Pager</h1>
+  <p>
+    This exercise is pure writing plus a small Python checklist script &mdash;
+    no API calls, no cost. Write a one-page capstone proposal using the
+    template provided, then run a scope-checker script against it that flags
+    common vagueness red flags before you show it to anyone else.
+  </p>
+
+  <ul>
+    <li><strong>Core path</strong> &mdash; fill in <code>proposal_template.md</code> for a project you can realistically build using 2-3 techniques from this program, then get it passing the checks in <code>starter.py</code>.</li>
+    <li><strong>Pro path</strong> &mdash; write two competing proposals for the same underlying problem (one narrow-and-finishable, one ambitious-and-risky) and make an explicit written case for which you'd actually choose to build.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">How to run this</span>
+    You'll need Python 3 &mdash; that's it. Everything in
+    <code>starter.py</code> runs with the standard library; no API key, no
+    <code>pip install</code> of anything beyond what ships with Python.
+  </div>
+
+  <div class="download-links">
+    <a href="proposal_template.md">proposal_template.md</a>
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+    <a href="example_proposal.md">example_proposal.md (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Fill in the proposal template</h3>
+    <p>Copy <code>proposal_template.md</code> and fill in all five sections for your own capstone idea: problem + user, solution sketch, techniques used (and why), success criteria, and out of scope. Aim for something realistically buildable using 2-3 techniques from this program in the 2-3 sessions remaining before demo day.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Implement the scope checker</h3>
+    <p>Find <code>check_required_sections()</code>, <code>check_vague_phrases()</code>, and <code>check_success_criteria_has_number()</code> in <code>starter.py</code> and implement each. Together they catch missing sections, filler phrases like "everything"/"helps with", and a success criterion with no measurable number in it.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Run it against your own proposal</h3>
+    <p>Run <code>python3 starter.py your_proposal.md</code>. Fix anything it flags, then get a peer (or yourself, a day later) to re-read the one-pager and check that a stranger could picture the end-to-end system in two minutes.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Don't let the checker be the whole bar</h3>
+    <p>The scope checker only catches mechanical red flags &mdash; a missing section, a filler phrase, a success-criteria sentence with no digit in it. A proposal can pass all three checks and still describe an unrealistically large project, or a success criterion that's technically numeric but not actually meaningful (e.g. "works 100% of the time" is a number, but not a credible one). Passing the checker is necessary, not sufficient &mdash; the real test is still whether a mentor reading it in two minutes could immediately spot an over-scoped idea.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader for the writing itself, the same way there's
+    no automated grader for a real project proposal review. Confirm: your
+    proposal passes all three scope-checker checks, your success criterion
+    names an actual number tied to a concrete test (not just any digit), and
+    your "out of scope" section names at least one thing a reader might
+    otherwise assume was included. Compare against <code>example_proposal.md</code>
+    and <code>solution.py</code> once you've made a genuine attempt.
+  </div>
+
+  <div class="what-is">
+    <span class="label">Pro path &mdash; extended challenge</span>
+    Write two competing proposals for the same underlying problem &mdash;
+    one narrow-and-finishable, one ambitious-and-risky &mdash; and make an
+    explicit written case for which you'd actually choose to build given the
+    time remaining, using the same scope-vs-time-vs-risk reasoning a real
+    team would use in a project kickoff meeting. Both proposals should still
+    pass the scope checker cleanly; the challenge is the trade-off reasoning,
+    not looser scoping discipline.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

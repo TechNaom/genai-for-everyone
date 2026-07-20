@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.5 Mock Technical Interviews — GenAI for Everyone</title>
+<meta name="description" content="Practice the three GenAI interview formats — walk-me-through-your-project, system design, and live problem-solving — plus how to give and receive feedback that's actually actionable.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Week 7 · Session 7.5</span>
+    <span class="badge-difficulty">Capstone</span>
+    <span class="reading-time">~15&ndash;20 min read</span>
+  </div>
+  <h1>Mock Technical Interviews</h1>
+  <p><em>A GenAI interview isn't one format &mdash; it's usually a mix of three, and each one rewards a different kind of preparation. Today you practice all three, using the vocabulary and judgment you've built across this entire program.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#walk-me-through-your-project">1. Format 1: "Walk me through a project you built"</a>
+    <a href="#system-design">2. Format 2: System design</a>
+    <a href="#live-problem-solving">3. Format 3: Live problem-solving</a>
+    <a href="#giving-and-receiving-feedback">4. Giving and receiving feedback well</a>
+  </nav>
+
+  <div class="hook">
+    Answering real GenAI interview questions well isn't about having memorized
+    the right vocabulary &mdash; it's about demonstrating the same judgment
+    you've been building since Week 1. Today's session walks through the
+    three formats you're most likely to see &mdash; "walk me through your
+    project," system design, and live problem-solving &mdash; and what
+    separates a strong answer from a weak one in each. It closes with the
+    skill that makes mock interviews actually useful: giving feedback that's
+    specific enough for someone to act on.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="walk-me-through-your-project">
+    <span class="subtopic-label">Part 1 of 4</span>
+    <h2>1. Format 1: "Walk me through a project you built"</h2>
+
+    <p>
+      This is where your capstone (and your Session 7.1 proposal discipline)
+      pays off directly. A strong answer follows a clear shape:
+    </p>
+
+    <div class="what-is">
+      <span class="label">The four elements of a strong answer</span>
+      The problem and user (not "I built a RAG thing"); the approach and
+      <em>why</em> that approach over alternatives; one specific hard
+      decision or trade-off you made; and how you know it works &mdash; your
+      actual success criteria, not "it seemed to work."
+    </div>
+
+    <p>
+      Interviewers are listening for judgment, not just that you can list
+      technologies you used. "I used LangChain and a vector database" tells
+      an interviewer nothing about why those were the right choices or what
+      problem was actually being solved &mdash; describing the problem and a
+      specific reasoned decision (why you chose that chunking strategy, for
+      instance) demonstrates the judgment they're actually screening for.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A strong project answer names the problem/user, the approach and why, one hard trade-off, and real success criteria.</li>
+        <li>Listing a tech stack with no reasoning behind it is a weak answer, no matter how sophisticated the stack sounds.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="system-design">
+    <span class="subtopic-label">Part 2 of 4</span>
+    <h2>2. Format 2: System design ("design a GenAI feature for X")</h2>
+
+    <p>
+      These questions are rarely testing whether you know a specific API.
+      They're testing whether you reach for the right <em>questions</em>
+      before designing:
+    </p>
+
+    <div class="what-is">
+      <span class="label">Ask these before describing any architecture</span>
+      What's the actual user and problem? Does this need retrieval, or is it
+      a pure prompting problem (Session 3.1's "RAG or not?")? What's the
+      eval plan &mdash; how would you know if this design is working (Week
+      5)? What breaks at scale, and what's the cost model (Week 6)?
+    </div>
+
+    <p>
+      A candidate who immediately starts describing an architecture without
+      first asking these questions is optimizing for the wrong signal &mdash;
+      the interviewer wants to see scoping instincts as much as technical
+      knowledge.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>System design questions test whether you ask the right questions first, not whether you know API syntax.</li>
+        <li>The four things to reach for: the real user/problem, RAG-or-not, an eval plan, and a cost/scale story.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="live-problem-solving">
+    <span class="subtopic-label">Part 3 of 4</span>
+    <h2>3. Format 3: Live problem-solving</h2>
+
+    <p>
+      "Here's a broken prompt/pipeline, fix it" or "here's an eval showing
+      60% accuracy, diagnose why." This tests the debugging instincts from
+      Sessions 2.1&ndash;2.3 and 3.5 directly.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What this is actually testing</span>
+      Reading an example and its failure output for the <em>pattern</em>
+      (formatting issue? missing context? wrong retrieval? ambiguous
+      instructions?) rather than guessing at random fixes. Diagnosing the
+      actual failure mode first is what separates a real debugging answer
+      from a lucky guess.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Live-debugging questions test pattern recognition in failures, not trial-and-error fixing.</li>
+        <li>Read the specific symptom carefully before proposing any fix.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="giving-and-receiving-feedback">
+    <span class="subtopic-label">Part 4 of 4</span>
+    <h2>4. Giving and receiving feedback well</h2>
+
+    <p>
+      A mock interview is only useful if the feedback afterward is specific.
+      "That was good" teaches nothing.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Specific, actionable feedback</span>
+      "You jumped straight to describing your architecture before asking
+      who the user was &mdash; that's the first thing a real interviewer
+      would want to hear" is feedback someone can actually act on. When
+      you're the interviewer in a mock session, hold yourself to that same
+      standard.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Vague praise or criticism ("that was good/bad") gives the other person nothing to work with.</li>
+        <li>Good feedback names the specific moment and what should have happened instead.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <p>
+      Two candidates both built a similar RAG project. Candidate A describes
+      it as "I used LangChain and a vector database to build a chatbot."
+      Candidate B describes it as "Support agents were spending 12 minutes
+      per ticket searching docs manually; I built a retrieval system over
+      the internal wiki, chose chunking by section rather than fixed-size
+      because the wiki's structure made that more accurate, and validated it
+      against a 15-question golden set before considering it done."
+      Candidate B is describing judgment; Candidate A is describing a tech
+      stack. Interviewers remember the difference.
+    </p>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>"Walk me through your project" rewards judgment and trade-offs,</strong> not a list of technologies used &mdash; lead with the problem and the <em>why</em> behind your decisions.</li>
+      <li><strong>System design questions are testing whether you ask the right questions first</strong> (RAG or not, eval plan, cost/scale) before describing an architecture.</li>
+      <li><strong>Live debugging questions test pattern recognition in failures</strong> &mdash; read the specific symptom before guessing at a fix.</li>
+      <li><strong>Feedback is only useful if it's specific and actionable</strong> &mdash; practice giving feedback you could actually act on, not just "that was good."</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next. The exercise after it
+    has you practice a "walk me through your project" answer for your own
+    capstone and run it against a self-check script that flags whether each
+    of the four required elements is present &mdash; the pro path adds a
+    full timed mock interview using a system-design and live-debugging
+    question bank.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../session-7-4-real-world-case-study-day-ii-capstone-build-day-ii/lesson.html">&larr; Session 7.4</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

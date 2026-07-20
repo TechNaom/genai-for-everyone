@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.4 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 7.4: reading an unfamiliar GenAI system, the human-in-the-loop trade-off, diagnosing a silent accuracy drop, and evaluating someone else's project honestly.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-4" data-chapter-id="session-7-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 7.4 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Reading Systems, Human-in-the-Loop, and Peer Review</h1>
+  <p>
+    These questions draw on today's case study and build-day themes:
+    reading an unfamiliar system critically, the trade-off behind keeping a
+    human in the loop, diagnosing a problem in someone else's system, and
+    evaluating a project honestly &mdash; the exact muscle both today's case
+    study and today's peer review exercise. Each question below includes
+    what a strong answer sounds like, common red flags, and a natural
+    follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> I'm going to describe a system to you that you've never seen before: it's a support-ticket triage tool that classifies tickets and drafts suggested responses, gated by a confidence score. What would you want to know before you trusted this system?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Ask where evaluation happens and against what dataset. Ask what the fallback/review path is for low-confidence or uncertain cases. Ask how drift would be detected &mdash; is the confidence calibration re-validated over time. Ask whether guardrails or review requirements are applied consistently across all risk levels, or unevenly. This is the same posture the contract-review case study rewards: don't take a system's stated behavior at face value, probe specifically for where the review gate might be inconsistent or where confidence might be miscalibrated for a subset of high-stakes cases.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Looks good to me" with no probing questions; only asking about the model or technology, never about evaluation or failure handling; not asking what happens when the system is wrong.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Given what you now know about this exact system, what's the single most likely place for a hidden failure to be hiding?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> A stakeholder asks: "Why do we need a human to review every flagged output if the model is usually right?" How do you answer?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Reframe "usually right" as not the relevant bar &mdash; the value of human review is specifically in catching the rare, confidently wrong cases. Explain that in high-stakes domains, the cost of a rare miss can vastly outweigh the cost of routine review time. Point to a concrete category of failure &mdash; like the contract-review case study's near-miss, where a model treated a small wording difference as insignificant when it was actually legally significant &mdash; where confidence alone would have been misleading.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"If it's usually right, we probably don't need review" (misses the entire point of human-in-the-loop design); no concrete example of what a confident-but-wrong failure looks like; not distinguishing stakes or domain as a factor in the decision.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Under what conditions would you feel comfortable removing the human review step for a subset of cases?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> An eval report shows accuracy dropped from 90% to 60% over the past month, with no code changes. Walk me through how you'd diagnose this.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Don't guess at a fix immediately &mdash; investigate the specific failing examples first to find the pattern. Consider drift explicitly: has the input distribution changed, has an underlying model or document set changed. Check whether the golden dataset itself is still representative, or needs updating. Propose a systematic diagnostic process, not a single guess &mdash; the same discipline the contract-review case study's severity-scoring fix required: identify exactly what's failing and why, before deciding what to change.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Proposing a fix ("just retrain it" or "switch models") before investigating the actual failure pattern; not mentioning drift as a possible cause; treating this as necessarily a code bug.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You find the drop is concentrated entirely in one specific question category. What does that tell you, and what would you check next?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Two candidates have technically similar projects. One's GitHub README is a single line: "RAG chatbot, run python app.py." The other has a paragraph on the problem, a screenshot, eval numbers, and run instructions. Does this matter, and why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Yes, it matters &mdash; a recruiter or hiring manager skimming for under two minutes needs the value made instantly visible. The fuller README demonstrates the same judgment and communication skill being assessed in "walk me through your project," just in written form. Note the README's real audience: a stranger with zero shared context, not someone who already knows the project &mdash; the same reason a peer-review checklist has to be legible to someone who didn't build the thing being reviewed.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"The code is what matters, not the README" (misses that unreviewed code has zero signal to a time-constrained reviewer); no mention of the README's actual audience.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What's the one thing you'd cut from a README if you only had room for 4 of the 5 recommended sections?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Walk me through a GenAI project you built.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Lead with the problem and specific user, not a list of technologies. Explain the approach and why that approach was chosen over alternatives. Name one specific hard trade-off or decision made during building. State actual success criteria and whether they were met, with real numbers &mdash; the exact thing a peer-review checklist is designed to catch if it's missing.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"I used LangChain, a vector database, and Claude" with no problem statement or reasoning; no mention of how they know it worked; can't name a single hard decision or trade-off.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What would you do differently if you rebuilt this from scratch today?"</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check on today's case study and build-day themes &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A model can treat a
+      legally or factually significant edit as insignificant when it relies
+      on <code>____</code> similarity instead of similarity in meaning.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="lexical" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> In a high-stakes domain, a
+      <code>____</code>-in-the-loop review gate is designed to catch the rare
+      cases a model gets confidently wrong, not to double-check the many
+      cases it already gets right.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="human" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> Before adding more
+      features to a capstone, check whether your <code>____</code> criteria
+      from the original proposal are actually being measured &mdash; not
+      just whether the system runs.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="success" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> A peer review of a
+      capstone should name a specific <code>____</code> to address, not just
+      offer vague reassurance that everything looks fine.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="risk" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Diagnosing a sudden
+      accuracy drop starts with examining specific failing
+      <code>____</code>, not guessing at a fix first.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="examples,cases" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about human-in-the-loop design and honest project review in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Interviewers testing this material often hand you an unfamiliar system description rather than ask you to define terms &mdash; practice asking targeted probing questions (evaluation, fallback path, drift detection) instead of giving a generic "looks fine."</li>
+    <li>The human-in-the-loop question rewards naming a concrete failure category, not just repeating "safety is important."</li>
+    <li>When asked to evaluate someone else's project or README, remember the real audience is a stranger with zero shared context &mdash; the same standard your own capstone's peer review should be judged against.</li>
+    <li>Pair these with Session 7.2's questions for a fuller mock interview on reading and critiquing GenAI systems.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="../session-7-5-mock-technical-interviews/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

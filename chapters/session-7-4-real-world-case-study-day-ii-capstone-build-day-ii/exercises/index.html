@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.4 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Session 7.4 exercises: fill in the Contract Review Assistant case study worksheet, then implement and run a peer-review checklist against your own capstone v1.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 7.4 Exercises</span>
+    <span class="reading-time">30&ndash;45 min</span>
+  </div>
+  <h1>Exercises: Case Study Worksheet + Peer Review</h1>
+  <p>
+    One exercise, two paths. The <strong>core path</strong> is the second
+    Case Study Analysis Worksheet, applied to the Contract Review Assistant
+    from today's lesson. The <strong>pro path</strong> is a harder, writing
+    variant of the same underlying skill: instead of analyzing someone
+    else's system on paper, you run a peer-review checklist against your
+    own capstone (or a classmate's) and write up real findings.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run this</span>
+    Everything here is Python standard library and plain text &mdash; no
+    API key, no <code>pip install</code>. The core path is pure writing (no
+    code to run at all); the pro path has one small script,
+    <code>starter.py</code>, to implement and run.
+  </div>
+
+  <div class="download-links">
+    <a href="case_study_worksheet.md">case_study_worksheet.md</a>
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+    <a href="filled_worksheet_example.md">filled_worksheet_example.md (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Core path &mdash; fill in the case study worksheet</h3>
+    <p>Open <code>case_study_worksheet.md</code> and answer all four questions in your own words, based on the Contract Review Assistant case study from the lesson: why no auto-approval path exists, what actually caused the near-miss, the fix and its trade-off, and one lesson applied concretely to your own capstone's design. Compare against <code>filled_worksheet_example.md</code> once you've made a genuine attempt.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Pro path &mdash; run the peer-review checklist</h3>
+    <p>Find <code>peer_review()</code> in <code>starter.py</code> and implement it: given a project name and a dict mapping each <code>CHECKLIST_ITEMS</code> entry to <code>True</code>/<code>False</code>, return a formatted report showing which items pass, which need attention, and an overall readiness percentage. Fill in <code>example_answers</code> with your own honest answers about your actual capstone v1 &mdash; or hand the same checklist to a peer and use theirs &mdash; then run:</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">terminal</span>
+      </div>
+      <pre><code>python3 starter.py</code></pre>
+    </div>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Write up your findings</h3>
+    <p>Beyond the printed report, write down: one thing that's working well in the reviewed capstone, one specific risk you'd want addressed before it went further, and whether the success criteria from the Session 7.1 proposal are actually being measured yet &mdash; or just assumed.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader for either path, the same way there's no
+    automated grader for a real case study analysis or a real peer review.
+    Confirm instead: your worksheet answers are specific to this case study
+    (not generic restatements of "human review is good"), your
+    <code>peer_review()</code> output correctly separates ✅ items from
+    ⚠️ items and computes the right readiness percentage, and your written
+    findings name one concrete risk rather than a vague "looks fine."
+    Compare against <code>solution.py</code> and
+    <code>filled_worksheet_example.md</code> once you've made a genuine
+    attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

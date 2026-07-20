@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.5 Quiz — GenAI for Everyone</title>
+<meta name="description" content="Interactive fill-in-the-blank quiz for Session 7.5: Mock Technical Interviews — the three GenAI interview formats and giving actionable feedback.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-5" data-chapter-id="session-7-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="lesson.html">&larr; Back to the lesson</a></p>
+
+  <span class="chapter-badge">Session 7.5 Quiz</span>
+  <h1>Mock Technical Interviews</h1>
+  <p>
+    A short quiz on the three GenAI interview formats and giving actionable
+    feedback. Fill in each blank, then press its <strong>Check</strong>
+    button (or press Enter) to see instantly if you're right. There's no
+    penalty for guessing again &mdash; try until you get it.
+  </p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="q1"><span class="q-num">1</span> A strong "walk me through
+      your project" answer needs four elements: the problem and user, the
+      approach and why, one hard <code>____</code>, and your actual success
+      criteria.</label>
+      <div class="fib-row">
+        <input type="text" id="q1" class="fib-blank" data-answers="trade-off,tradeoff,decision,trade-off or decision" aria-label="Answer for question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q2"><span class="q-num">2</span> "I used LangChain and a
+      vector database" is a weaker answer than describing the problem and a
+      specific reasoned decision, because it lists a tech stack without
+      demonstrating <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="q2" class="fib-blank" data-answers="judgment" aria-label="Answer for question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q3"><span class="q-num">3</span> True or False: A system
+      design question about "design a GenAI feature for X" is primarily
+      testing whether you know the right API calls. <code>____</code></label>
+      <div class="fib-row">
+        <input type="text" id="q3" class="fib-blank" data-answers="false" aria-label="Answer for question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q4"><span class="q-num">4</span> Given a system design
+      prompt, one of your very first questions back should be whether this
+      problem actually needs retrieval, or whether it's a pure
+      <code>____</code> problem instead.</label>
+      <div class="fib-row">
+        <input type="text" id="q4" class="fib-blank" data-answers="prompting" aria-label="Answer for question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q5"><span class="q-num">5</span> Given an eval report
+      showing 60% accuracy and asked to diagnose why, you should read the
+      specific failing examples for the <code>____</code> before proposing
+      any fix.</label>
+      <div class="fib-row">
+        <input type="text" id="q5" class="fib-blank" data-answers="pattern" aria-label="Answer for question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q6"><span class="q-num">6</span> "That was good" is weak
+      feedback because it gives the other person nothing to
+      <code>____</code> on &mdash; good feedback names the specific moment
+      and what should have happened instead.</label>
+      <div class="fib-row">
+        <input type="text" id="q6" class="fib-blank" data-answers="act,work,act or work" aria-label="Answer for question 6">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="q7"><span class="q-num">7</span> A live-debugging interview
+      question is actually testing <code>____</code> recognition in
+      failures, not trial-and-error guessing.</label>
+      <div class="fib-row">
+        <input type="text" id="q7" class="fib-blank" data-answers="pattern" aria-label="Answer for question 7">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 Perfect score! You're ready to run the mock interview exercise next.
+    </div>
+
+  </form>
+
+  <div class="chapter-nav">
+    <a href="lesson.html">&larr; Back to Lesson</a>
+    <a href="exercises/index.html">Exercises &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

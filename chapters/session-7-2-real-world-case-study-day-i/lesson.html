@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.2 Real-World Case Study Day I — GenAI for Everyone</title>
+<meta name="description" content="Analyze a real-shaped GenAI deployment end to end — a support-ticket triage system's classifier, RAG-drafted responses, confidence gating, drift, and a data-loss incident — using the vocabulary this program has built.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Week 7 · Session 7.2</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">15&ndash;20 min read</span>
+  </div>
+  <h1>Real-World Case Study Day I</h1>
+  <p><em>Everything so far has been building and evaluating your own small systems. Today is the reverse skill: reading someone else's GenAI system &mdash; in a design doc, a postmortem, or a live Q&amp;A &mdash; and asking sharp, specific questions about it.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#reading-someone-elses-system">1. Reading Someone Else's System</a>
+    <a href="#case-study-support-ticket-triage">2. Case Study: Support Ticket Triage at a Mid-Size SaaS Company</a>
+  </nav>
+
+  <div class="hook">
+    Analyze a real-shaped GenAI deployment end to end &mdash; problem,
+    architecture, failure modes, and outcome &mdash; using the same vocabulary
+    this program has built (RAG, evaluation, guardrails, cost, monitoring) to
+    critique a system you didn't build.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="reading-someone-elses-system">
+    <span class="subtopic-label">Part 1 of 2</span>
+    <h2>1. Reading Someone Else's System</h2>
+
+    <p>
+      Everything so far has been building and evaluating your own small
+      systems. Interviews and real jobs also require the reverse skill:
+      reading someone <em>else's</em> GenAI system &mdash; in a design doc, a
+      postmortem, or a live Q&amp;A &mdash; and asking sharp, specific
+      questions about it. Case study days build that muscle.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Building your own system and critiquing someone else's are distinct, separately practicable skills.</li>
+        <li>Case studies exercise the second skill directly, using the same vocabulary (RAG, evaluation, guardrails, drift) built across Weeks 1&ndash;6.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="case-study-support-ticket-triage">
+    <span class="subtopic-label">Part 2 of 2</span>
+    <h2>2. Case Study: Support Ticket Triage at a Mid-Size SaaS Company</h2>
+
+    <p>
+      <em>(A composite, realistic scenario built from common patterns across
+      the industry &mdash; not a specific real company.)</em>
+    </p>
+
+    <div class="what-is">
+      <span class="label">The problem</span>
+      A SaaS company's support team receives ~2,000 tickets/day. Human
+      triage (routing to billing, technical, or account teams) takes an
+      average of 12 minutes per ticket and is the #1 complaint in customer
+      satisfaction surveys: "it took forever to reach the right person."
+    </div>
+
+    <div class="what-is">
+      <span class="label">The system they built</span>
+      <ol>
+        <li>Incoming ticket text &rarr; embedded and classified into one of 6 categories (predictive AI, Week 1's distinction &mdash; this part isn't generative at all).</li>
+        <li>For technical tickets specifically, a RAG layer retrieves relevant internal documentation and drafts a suggested first-response for the human agent to review and send (generative, grounded).</li>
+        <li>A confidence score gates the workflow: high-confidence classifications auto-route with no human check; low-confidence ones get flagged for a human to manually triage.</li>
+      </ol>
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">what-went-right.txt</span>
+      </div>
+      <pre><code>Average triage time: 12 min -> 40 sec for auto-routed tickets
+Suggested-response draft cut average technical ticket
+  first-response time by 60% (agents editing, not writing from scratch)</code></pre>
+    </div>
+
+    <p>
+      Three months in, two things went wrong. First: the classifier's
+      confidence scores were well-calibrated at launch, but silently drifted
+      as the company added two new product lines &mdash; new ticket types
+      didn't fit any of the 6 original categories, so they got force-fit
+      into the closest wrong bucket with <em>high</em> confidence (a
+      category the eval-at-launch process never saw, exactly Session 6.4's
+      drift lesson). Second, one documented incident: the RAG-drafted
+      response layer, for a niche technical question, retrieved an outdated
+      internal doc (superseded 2 months earlier) and confidently drafted a
+      response with incorrect setup instructions; an agent, trusting the
+      tool, sent it without fully reading it &mdash; a customer executed the
+      wrong steps and lost data.
+    </p>
+
+    <p>
+      Root cause traced to two compounding gaps: no process for retiring
+      outdated docs from the retrieval index (Session 3.5's
+      chunking/retrieval hygiene), and no review-gate requirement
+      specifically for responses touching data-loss-risk topics (Session
+      5.5's guardrails, applied unevenly).
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">the-fix.txt</span>
+      </div>
+      <pre><code>+ Lightweight "is this doc still current" tag, checked at retrieval time
++ Mandatory human review (no auto-send) for any response touching a
+  defined list of high-risk topics, regardless of confidence score
++ A "new/unrecognized ticket type" category that routes to a human by
+  default, instead of force-fitting into an existing bucket</code></pre>
+    </div>
+
+    <p>
+      That last fix trades a little automation coverage for a lot less
+      silent misclassification &mdash; a small efficiency cost in exchange
+      for closing a specific safety gap.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The classifier is predictive AI; the suggested-response drafter is generative and RAG-grounded &mdash; two different failure modes live in the same system.</li>
+        <li>Confidence scores can be well-calibrated at launch and silently wrong later as the input distribution drifts.</li>
+        <li>The data-loss incident had two compounding root causes &mdash; a stale retrieval index and an unevenly-applied guardrail &mdash; not one single cause.</li>
+        <li>The fix for a classifier's blind spot was a new "I don't recognize this" category, not a smarter classifier.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <p>
+      In an interview, you're shown a system diagram you've never seen
+      before and asked "what would you worry about here?" The candidates
+      who stand out don't just say "looks good" &mdash; they immediately
+      probe: where's the eval happening, what's the fallback if this fails,
+      how do you know if this drifts. That's precisely the skill this case
+      study exercises.
+    </p>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Reading and critiquing someone else's GenAI system is a distinct, practicable skill</strong> from building your own &mdash; case studies exercise it directly.</li>
+      <li><strong>Confidence scores can be well-calibrated at launch and silently wrong later</strong> as the input distribution shifts (drift) &mdash; a system needs an explicit path for "I don't recognize this" rather than force-fitting everything into existing categories.</li>
+      <li><strong>Stale retrieved documents and inconsistent guardrail coverage often compound</strong> to cause the worst incidents &mdash; postmortems are rarely one root cause, they're two or three small gaps intersecting.</li>
+      <li><strong>The fix for a classification system's blind spot is often a new "I'm not sure" category</strong>, not a smarter classifier.</li>
+    </ul>
+  </div>
+
+  <p>
+    The core path is a Case Study Analysis Worksheet: identify which Week
+    1&ndash;6 concepts show up where (predictive vs. generative, RAG
+    grounding, confidence-based gating, drift, guardrails), and write your
+    own one-paragraph root-cause analysis of the data-loss incident. The pro
+    path is the same worksheet's hardest section written up as a real design
+    note: propose a specific, concrete redesign of the confidence-gating
+    logic that would have caught the drift problem earlier. Take the quiz
+    next, then head to the exercises page for the worksheet and the
+    completeness checker.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../session-7-1-capstone-kickoff/lesson.html">&larr; Session 7.1</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

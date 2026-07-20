@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.5 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Scenario-based interview prep for Session 7.5: walk-me-through-your-project answers, system design scoping, live-debugging diagnosis, ambiguous-request scoping, and portfolio presentation.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-5" data-chapter-id="session-7-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 7.5 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Mock Technical Interviews</h1>
+  <p>
+    Since this whole session is about mock interviews, these questions draw
+    from across the program's full interview-question pool rather than
+    staying narrowly scoped to today's lesson &mdash; the same way a real
+    interview mixes project walkthroughs, system design, live debugging, and
+    scoping judgment in a single conversation. Each question below includes
+    what a strong answer sounds like, common red flags, and a natural
+    follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> "Walk me through a GenAI project you built."</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Leads with the problem and specific user, not a list of technologies. Explains the approach and <em>why</em> that approach was chosen over alternatives. Names one specific hard trade-off or decision made during building. States actual success criteria and whether they were met, with real numbers.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"I used LangChain, a vector database, and Claude" with no problem statement or reasoning; no mention of how they know it worked; can't name a single hard decision or trade-off, suggesting limited hands-on ownership.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What would you do differently if you rebuilt this from scratch today?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> "Your manager says, 'Build us an AI feature for the customer portal,' with no further detail. What's your first move?"</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Doesn't start building &mdash; scopes the request first. Asks clarifying questions targeting the specific user/problem, an end-to-end description, why AI (and which kind) is actually needed, and how success will be measured. Mentions writing this down (a short proposal) before committing engineering time.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumps straight to proposing an architecture or technology stack; doesn't ask any clarifying questions; treats "AI feature" as self-evidently well-defined.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The manager pushes back: 'Just build something, we don't have time for a proposal.' How do you respond?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> "Design a GenAI feature that helps new employees find answers in company documentation. Walk me through your approach."</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Starts with clarifying questions (who exactly, what documentation, how is this failing today) before describing architecture. Correctly identifies this as a RAG use case and explains why (need for grounding in real, current documents, not general knowledge). Addresses an eval plan: how would you know if answers are actually correct and helpful. Mentions at least one operational concern: cost, latency, or what happens when the docs change (drift).</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumps directly into describing a specific tech stack with no scoping questions; no eval plan mentioned at all; doesn't consider what happens as underlying documents change over time.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you know if this system is getting worse over time, without anyone filing a complaint?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> "An eval report shows accuracy dropped from 90% to 60% over the past month, with no code changes. Walk me through how you'd diagnose this."</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Doesn't guess at a fix immediately &mdash; investigates the specific failing examples first to find the pattern. Considers drift explicitly: has the input distribution changed, has an underlying model or document set changed. Checks whether the golden dataset itself is still representative, or whether it needs updating. Proposes a systematic diagnostic process, not a single guess.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Proposes a fix (e.g., "just retrain it" or "switch models") before investigating the actual failure pattern; doesn't mention drift as a possible cause; treats this as necessarily a code bug.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You find the drop is concentrated entirely in one specific question category. What does that tell you, and what would you check next?"</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> "Two candidates have technically similar projects. One's GitHub README is a single line: 'RAG chatbot, run python app.py.' The other has a paragraph on the problem, a screenshot, eval numbers, and run instructions. Does this matter, and why?"</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Yes, it matters &mdash; a recruiter/hiring manager skimming for under 2 minutes needs the value made instantly visible. The fuller README demonstrates the same judgment/communication skill being assessed in "walk me through your project," just in written form. Notes the README's real audience: a stranger with zero shared context, not someone who already knows the project.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"The code is what matters, not the README" &mdash; misses that unreviewed code has zero signal to a time-constrained reviewer; no mention of the README's actual audience.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What's the one thing you'd cut from a README if you only had room for 4 of the 5 recommended sections?"</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check on today's session &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A strong "walk me through
+      your project" answer leads with the problem and the
+      <code>____</code>, not a list of technologies used.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="user" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> System design questions
+      test whether you ask the right <code>____</code> before describing
+      an architecture, not whether you know specific API syntax.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="questions" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A live-debugging question
+      tests recognition of the <code>____</code> in a failure, not
+      trial-and-error guessing at a fix.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="pattern" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Useful mock-interview
+      feedback is specific and <code>____</code>, not vague praise like
+      "that was good."</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="actionable" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A portfolio README's real
+      audience is a <code>____</code> with no shared context, not someone
+      who already knows the project.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="stranger" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to run a real mock interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li><strong>Listen for judgment over jargon:</strong> a strong candidate explains <em>why</em> they made a choice, not just what tools they used.</li>
+    <li><strong>Probe scoping instincts:</strong> do they ask clarifying questions before proposing a solution to an ambiguous request?</li>
+    <li><strong>Check for eval-mindset carryover:</strong> does "how do you know it worked" come up naturally when they describe their own project?</li>
+    <li><strong>Watch for case-study-style critical thinking:</strong> can they read an unfamiliar system description and immediately identify what they'd want to know?</li>
+    <li><strong>Assess communication, not just correctness:</strong> a candidate who can explain a trade-off clearly to a non-technical stakeholder is demonstrating a distinct, valuable skill.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="../session-7-6-capstone-demo-day-program-wrap/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

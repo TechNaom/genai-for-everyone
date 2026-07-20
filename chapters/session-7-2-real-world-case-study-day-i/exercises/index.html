@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.2 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Fill in the Case Study Analysis Worksheet for the support-ticket triage system, then run a completeness checker script against it — Session 7.2's core and pro paths.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 7.2 Exercises</span>
+    <span class="reading-time">30&ndash;45 min</span>
+  </div>
+  <h1>Exercises: Case Study Analysis Worksheet</h1>
+  <p>
+    Analyze the support-ticket-triage case study from the lesson using a
+    structured worksheet, then run a small script that scores your worksheet
+    for completeness. This is pure analysis and writing &mdash; no API calls,
+    no cost, just Python 3 for the checker script.
+  </p>
+
+  <div class="download-links">
+    <a href="case_study_worksheet.md">case_study_worksheet.md</a>
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+    <a href="filled_worksheet_example.md">filled_worksheet_example.md (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Core path &mdash; fill in the worksheet</h3>
+    <p>
+      Fill in <code>case_study_worksheet.md</code> for the support-ticket
+      triage case study, identifying where each Week 1&ndash;6 concept shows
+      up: predictive vs. generative components, at least 4 concepts from the
+      program (e.g. RAG grounding, confidence-based gating, drift,
+      guardrails) and where each appears, a one-paragraph root-cause
+      analysis of the data-loss incident, and one thing you'd have flagged
+      as a risk before launch.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Run the completeness checker</h3>
+    <p>
+      Find <code>split_sections()</code> in <code>starter.py</code> and
+      implement it: split the worksheet text into a dict of
+      <code>{section_header: section_body}</code> for each header in
+      <code>REQUIRED_SECTIONS</code>, where a section's body is the text
+      between its header and the next one (or end of file). Then run:
+    </p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">terminal</span>
+      </div>
+      <pre><code>python3 starter.py case_study_worksheet.md</code></pre>
+    </div>
+    <p>
+      The script checks that every required section is present and has at
+      least 15 words &mdash; enough to catch a skipped section or a
+      one-sentence non-answer, not enough to enforce any particular
+      "correct" analysis. This is a completeness check, not a correctness
+      check &mdash; a worksheet can pass every check here and still contain
+      a shallow or wrong analysis. The value is in actually writing the
+      analysis, not in passing the script.
+    </p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Pro path &mdash; extended challenge</h3>
+    <p>
+      Propose a specific, concrete redesign of the confidence-gating logic
+      that would have caught the drift problem earlier (new/unrecognized
+      ticket types being force-fit with high confidence). Write it as a
+      short design note, as if proposing this change to the team that owns
+      this system &mdash; not a separate code file, a piece of writing with
+      the same rigor as the worksheet's root-cause section.
+    </p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader for the analysis itself, the same way a real
+    case-study critique doesn't get graded by a script. Confirm instead: the
+    checker reports all four sections present with 15+ words each, your
+    root-cause paragraph names <em>both</em> compounding gaps (not just the
+    stale doc), and your pro-path design note proposes something concrete
+    enough that a teammate could actually implement it &mdash; not just "add
+    better monitoring." Compare against
+    <code>filled_worksheet_example.md</code> once you've made a genuine
+    attempt, and check your <code>split_sections()</code> implementation
+    against <code>solution.py</code>.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.4 Real-World Case Study Day II + Capstone Build Day II — GenAI for Everyone</title>
+<meta name="description" content="Session 7.4: a contract-review case study on why high-stakes GenAI systems keep a human in the loop, paired with continued capstone build time and a peer review of your v1.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Week 7 · Session 7.4</span>
+    <span class="badge-difficulty">Capstone</span>
+    <span class="reading-time">15&ndash;20 min read</span>
+  </div>
+  <h1>Real-World Case Study Day II + Capstone Build Day II</h1>
+  <p><em>A second, higher-stakes industry case study &mdash; legal document review, where a mistake carries real consequences &mdash; paired with continued build time where you apply that same scrutiny to your own capstone.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#two-halves-one-skill">1. Two halves, one skill</a>
+    <a href="#case-study-contract-review-assistant">2. Case Study: Contract Review Assistant</a>
+  </nav>
+
+  <div class="hook">
+    Today pairs two things deliberately. First, a case study from a domain
+    where GenAI mistakes carry serious consequences: legal contract review.
+    Then, continued build time on your own capstone &mdash; moving from
+    Checkpoint 2 toward Checkpoint 3, a real eval pass &mdash; where you're
+    asked to apply the same scrutiny to a project with real stakes: yours.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="two-halves-one-skill">
+    <span class="subtopic-label">Part 1 of 2</span>
+    <h2>1. Two halves, one skill</h2>
+
+    <p>
+      This session has two halves, deliberately paired: a case study in a
+      domain where GenAI mistakes carry serious consequences, followed by
+      continued build time where you apply the same scrutiny to your own
+      project. The case study isn't just a story &mdash; it's a worked
+      example of the exact kind of critical reading you'll do on your own
+      capstone (and on a peer's) in the second half of today's session.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Today's case study and today's build time are paired on purpose &mdash; the scrutiny you apply to someone else's system is the same scrutiny to apply to your own.</li>
+        <li>The goal of the build half is to move from Checkpoint 2 toward Checkpoint 3: a real eval pass, not just more features.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="case-study-contract-review-assistant">
+    <span class="subtopic-label">Part 2 of 2</span>
+    <h2>2. Case Study: Contract Review Assistant at a Mid-Size Law Firm</h2>
+
+    <p><em>(A composite, realistic scenario &mdash; not a specific real firm.)</em></p>
+
+    <div class="what-is">
+      <span class="label">The problem</span>
+      Associates spend hours per contract manually checking for non-standard
+      clauses (unusual indemnification terms, missing termination clauses,
+      non-market payment terms) before partner review. The firm wants an AI
+      assistant that flags likely-problematic clauses for an associate to
+      verify &mdash; explicitly <em>not</em> an AI that makes legal
+      judgments unsupervised.
+    </div>
+
+    <div class="what-is">
+      <span class="label">The system</span>
+      A RAG-based pipeline retrieves the firm's internal "standard clause"
+      library, compares each contract clause against it, and flags
+      deviations with a suggested severity (low/medium/high) and a one-line
+      explanation of what's unusual. Every flagged clause requires a
+      licensed associate's sign-off before the contract moves forward &mdash;
+      there is no auto-approval path, by design, given the stakes.
+    </div>
+
+    <div class="what-is">
+      <span class="label">What went right</span>
+      Associates report the tool catches nearly all the "boilerplate
+      deviation" cases they used to find by tedious manual comparison,
+      cutting review time roughly in half, while every actual legal
+      judgment still runs through a human.
+    </div>
+
+    <div class="what-is">
+      <span class="label">What went wrong</span>
+      In one incident, the tool flagged a clause as "low severity, minor
+      wording difference" when it was actually a <strong>significant
+      departure</strong> in indemnification liability &mdash; the flagging
+      model under-weighted a legally significant word substitution because
+      it looked lexically similar to the standard clause (a near-miss in
+      phrasing, not in meaning). The associate, trusting the "low severity"
+      label, gave it a quick glance instead of the careful read a "high
+      severity" flag would have gotten, and nearly missed it &mdash; caught
+      only because a partner happened to review that specific contract
+      personally.
+    </div>
+
+    <div class="what-is">
+      <span class="label">The fix</span>
+      The firm added a rule: severity scoring for indemnification and
+      liability clauses specifically is <em>never</em> fully automated
+      &mdash; those clause types are always flagged at minimum "medium"
+      severity regardless of the model's lexical-similarity score, forcing a
+      closer associate read every time, because the cost of a missed
+      high-stakes clause vastly outweighs the cost of a few extra careful
+      reads on clauses that turn out to be fine.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The system's human-sign-off gate is a deliberate design choice, not a stopgap &mdash; there is no auto-approval path.</li>
+        <li>The near-miss wasn't a bug: lexical similarity (looks alike) was mistaken for a reliable proxy for semantic/legal similarity (means the same thing).</li>
+        <li>The fix trades a small, recurring cost (more careful reads on clauses that are usually fine) to close off a rare but catastrophic failure mode.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>A stakeholder asks "why does this need a human in the loop if the AI is usually right?" The contract-review case study is the answer: "usually right" isn't the bar for a domain where a rare miss is catastrophic &mdash; the value of the human-in-the-loop design is precisely in the cases the model gets subtly, confidently wrong, not the many cases it gets right.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Severity scoring can be deliberately overridden.</strong> In high-stakes domains, specific high-risk categories should sometimes never be trusted to uniform automated scoring &mdash; "usually accurate" isn't the same as "safe to automate everywhere."</li>
+      <li><strong>Lexical similarity isn't semantic similarity.</strong> A near-miss in phrasing is not the same as a near-miss in meaning &mdash; a model comparing text similarity can under-weight a legally or factually critical distinction that looks small on the surface.</li>
+      <li><strong>Peer review applies a real skill to real stakes.</strong> Reviewing your own capstone uses the same "read someone else's system critically" skill from Session 7.2, now applied to a project with stakes that are actually yours.</li>
+      <li><strong>Check your success criteria, not just your feature list.</strong> Continuing to build without checking your success criteria against reality risks a demo day that looks impressive but can't answer "does it work?"</li>
+    </ul>
+  </div>
+
+  <p>
+    Core path: complete the second Case Study Analysis Worksheet, then
+    return to your capstone and move from Checkpoint 2 toward Checkpoint 3,
+    incorporating one specific lesson from either case study (this one, or
+    Session 7.2's) into your own project's design. Pro path: exchange your
+    capstone v1 with a peer (or self-review using the provided checklist)
+    and write up what's working, what risk you'd want addressed, and
+    whether your stated success criteria are actually being measured yet.
+    Ready to check what stuck? Head to the quiz next &mdash; then the
+    exercises page has both pieces to work through.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7.2 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep drawn from Session 7.2: reading someone else's GenAI system, diagnosing a silent accuracy drop, the human-in-the-loop trade-off, and predictive vs. generative scoping.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-7-2" data-chapter-id="session-7-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 7.2 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Reading Someone Else's System</h1>
+  <p>
+    Case study day exercises a distinct interview skill: reading an
+    unfamiliar system description and immediately probing its eval,
+    fallback, and drift story &mdash; instead of just saying "looks good."
+    These questions pull from the Week 7 pool, chosen for how directly they
+    connect to today's support-ticket-triage case study. Each includes what
+    a strong answer sounds like, common red flags, and a natural follow-up.
+    Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> I'm going to describe a system to you that you've never seen before: it's a support-ticket triage tool that classifies tickets and drafts suggested responses, gated by a confidence score. What would you want to know before you trusted this system?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Ask where evaluation happens and against what dataset. Ask what the fallback/review path is for low-confidence or uncertain cases. Ask how drift would be detected &mdash; is the confidence calibration re-validated over time, or was it only checked once at launch. Ask whether guardrails/review requirements are applied consistently across all risk levels, or unevenly &mdash; exactly the gap that let the case study's data-loss incident happen.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Looks good to me" with no probing questions; only asking about the model/technology, not evaluation or failure handling; never asking what happens when the system is wrong.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Given what you now know about this exact system, what's the single most likely place for a hidden failure to be hiding?" (Points toward the retrieval index's document freshness and the inconsistently-applied review gate.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> An eval report shows accuracy dropped from 90% to 60% over the past month, with no code changes. Walk me through how you'd diagnose this.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Don't guess at a fix immediately &mdash; investigate the specific failing examples first to find the pattern. Consider drift explicitly: has the input distribution changed, has an underlying model or document set changed. Check whether the golden dataset itself is still representative, or needs updating. This is precisely what happened to the ticket classifier: the model never changed, but new product lines shifted the input distribution until confidence scores no longer meant what they used to.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Proposing a fix ("just retrain it" or "switch models") before investigating the actual failure pattern; not mentioning drift as a possible cause; treating this as necessarily a code bug.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You find the drop is concentrated entirely in one specific ticket category. What does that tell you, and what would you check next?" (Points toward a new, unrecognized input type rather than a general model failure.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> A stakeholder asks: "Why do we need a human to review every flagged output if the model is usually right?" How do you answer?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Reframe "usually right" as not the relevant bar &mdash; the value of human review is specifically in catching the rare, confidently wrong cases. Explain that in high-stakes domains, the cost of a rare miss can vastly outweigh the cost of routine review time. Point to a concrete example: the case study's classifier was well-calibrated on average, but the RAG layer confidently drafted a data-loss-causing response for exactly the kind of rare, high-stakes case a review gate exists to catch.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"If it's usually right, we probably don't need review" (misses the entire point of human-in-the-loop design); no concrete example of what a confident-but-wrong failure looks like; not distinguishing stakes/domain as a factor.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Under what conditions would you feel comfortable removing the human review step for a subset of cases?" (Tests whether they'd ever remove review from a defined high-risk-topic list, versus only from genuinely low-stakes categories.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Design a GenAI feature that helps new employees find answers in company documentation. Walk me through your approach.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Start with clarifying questions before describing architecture. Correctly identify this as a RAG use case and explain why (grounding in real, current documents, not general knowledge). Address an eval plan: how would you know if answers are actually correct and helpful. Mention at least one operational concern &mdash; cost, latency, or what happens when the docs change, which is exactly the stale-document gap that caused the case study's incident.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumping directly into a tech stack with no scoping questions; no eval plan mentioned; not considering what happens as underlying documents change over time.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you know if this system is getting worse over time, without anyone filing a complaint?" (Tests for a monitoring/drift-detection instinct, not just a launch-time eval.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> A VP says: "Let's put AI on customer support, it's a mess right now." List at least three meaningfully different projects this could mean, and the one question you'd ask first.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Name at least 3 distinct possible projects &mdash; e.g., drafting reply suggestions, auto-routing tickets (the case study's classifier), predicting escalation risk, or summarizing long threads &mdash; with different data/eval requirements. Correctly classify at least one as predictive vs. generative, the same distinction that splits the case study's own classifier from its response-drafter. The clarifying question should surface which specific pain point (speed, accuracy, agent workload) the VP actually means.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Naming only one possible project, or treating "AI for support" as a single well-defined task; a generic clarifying question ("what do you want?") instead of one targeted at the ambiguity.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The VP says 'all of the above, whatever's fastest.' How do you push back on scoping this into one project first?"</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check on today's case study &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> The ticket classifier is <code>____</code> AI; the RAG-drafted response for technical tickets is generative.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="predictive" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> New ticket types getting force-fit into an existing wrong category, with high confidence, is an example of <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="drift,input drift" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> The data-loss incident had two compounding root causes: a stale, un-retired document in the retrieval index, and an inconsistently-applied <code>____</code> requirement.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="human review,review,guardrail" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> The team's fix added a "new/unrecognized ticket type" category instead of relying purely on a smarter <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="classifier" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Shown an unfamiliar system diagram, the strongest interview answers ask about eval, fallback paths, and how <code>____</code> would be detected over time.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="drift" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you can read a system you've never seen before and know exactly what to ask.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Interviewers will often hand you a live, unfamiliar system description rather than ask you to define terms &mdash; practice probing eval, fallback, and drift immediately rather than saying "looks good."</li>
+    <li>Postmortem questions reward naming <em>all</em> compounding root causes, not just the first, most obvious one &mdash; the case study's incident needed two separate gaps to actually reach a customer.</li>
+    <li>When a stakeholder pushes back on a review gate with "it's usually right," the strong response reframes the question around the cost of rare, confident failures, not average accuracy.</li>
+    <li>Pair these with earlier weeks' questions for a realistic mixed-topic mock interview as you move toward Week 7's mock interview session.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="../session-7-3-capstone-build-day-i/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.5 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercises for Session 4.5: Automation Workflows — build a hybrid email categorizer where a free simple rule handles the obvious cases and an LLM agent only gets called when the rule is unsure.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-5" data-chapter-id="session-4-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.5 Exercises</span>
+    <span class="reading-time">25 min, hands-on</span>
+  </div>
+  <h1>Exercises: Hybrid Email Categorizer</h1>
+  <p>
+    Build the core-path version of the hybrid pattern from the lesson: a free,
+    instant <strong>simple rule</strong> catches the obvious cases, and an
+    <strong>LLM agent</strong> only gets called when the rule genuinely doesn't
+    know &mdash; exactly the "rule &rarr; agent if unsure &rarr; action" shape
+    from Part 4. <code>starter.py</code> already contains a fully worked
+    implementation (marked with <code>TODO 1&ndash;4</code> comments showing
+    where each concern lives) so you can study a complete, working hybrid
+    workflow end to end &mdash; the tasks below have you trace it, then extend
+    it, rather than fill in blanks from scratch.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run this</span>
+    You'll need Python 3 installed (check with <code>python --version</code>)
+    and the Anthropic SDK, since <code>agent_categorize()</code> makes a real
+    API call:
+    <pre><code>export ANTHROPIC_API_KEY=your-key-here
+pip install anthropic --break-system-packages
+python starter.py</code></pre>
+    No key yet? <code>simple_categorize()</code> and <code>take_action()</code>
+    are pure logic with no API dependency &mdash; you can trace and modify both
+    of those, and the workflow's overall shape, without ever calling the model.
+    Only the emails that fall through to <code>agent_categorize()</code> need a
+    live key.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. It defines three mock emails and a four-part
+    workflow: <code>simple_categorize</code>, <code>agent_categorize</code>,
+    <code>take_action</code>, and <code>workflow</code> (which wires the first
+    three together).
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Trace the simple rule (TODO 1)</h3>
+    <p><code>simple_categorize</code> checks for urgent keywords
+    (<code>URGENT</code>, <code>ASAP</code>, <code>ERROR</code>, <code>DOWN</code>,
+    <code>CRITICAL</code>) in the subject or body, then checks whether the sender
+    is a VIP client, returning <code>"urgent"</code> on a match and
+    <code>None</code> otherwise. By hand, trace which of the three
+    <code>MOCK_EMAILS</code> the rule catches on its own, and which one it has
+    to hand off to the agent. Then add one more keyword and one more VIP
+    address of your choosing, and confirm your addition changes the outcome for
+    at least one email you construct yourself.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Read the agent's categorization prompt (TODO 2)</h3>
+    <p><code>agent_categorize</code> only runs for emails the rule couldn't
+    resolve. Read its prompt: it asks for exactly one of
+    <code>urgent</code>/<code>important</code>/<code>normal</code> as plain
+    text, with a fallback to <code>"normal"</code> if the model's response
+    doesn't match one of those three words exactly. Rewrite the prompt to also
+    ask the model for a one-sentence <code>reason</code> alongside the category
+    (you'll need to update the parsing below it too, since the response is no
+    longer a single bare word).</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Add a fourth action category (TODO 3)</h3>
+    <p><code>take_action</code> currently handles <code>"urgent"</code> and
+    <code>"important"</code> explicitly, with everything else falling into the
+    <code>"normal"</code>/skip branch. Add a distinct action for a new
+    <code>"spam"</code> category (e.g. <code>[ARCHIVE]</code>), and update
+    <code>agent_categorize</code>'s prompt so the model knows spam is now a
+    valid fourth option.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Confirm the hand-off contract (TODO 4)</h3>
+    <p><code>workflow</code> is the piece that actually implements the hybrid
+    pattern: it tries the rule first, and only calls the agent if the rule
+    returned <code>None</code>. Add a fourth mock email designed to force the
+    hand-off (no keywords, not a VIP sender), run the file, and confirm in the
+    printed output that <code>simple_result</code> is <code>None</code> for
+    that email while <code>agent_result</code> is populated &mdash; that's the
+    hybrid contract working as intended.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 5 &mdash; Debug the Code</h3>
+    <p><code>agent_categorize</code> validates the model's answer with
+    <code>if result not in ["urgent", "important", "normal"]: result = "normal"</code>.
+    A teammate says this is a safe fallback. Explain why it's actually a subtle
+    bug risk: what happens if the model answers with something like
+    <code>"Urgent."</code> (a trailing period) or <code>"urgent, based on the
+    VIP sender"</code> (extra text) instead of the bare word the prompt asked
+    for? Walk through what category that email would silently end up with, and
+    why that's worse than the fallback crashing loudly.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">fragile_validation.py</span>
+      </div>
+      <pre><code>result = response.content[0].text.strip().lower()
+&#35; Bug: any deviation from an EXACT match on one of the three words --
+&#35; trailing punctuation, extra explanation text, a capitalized variant
+&#35; the .lower() doesn't catch -- silently downgrades a genuinely urgent
+&#35; email to "normal", which is the single worst category to guess wrong.
+if result not in ["urgent", "important", "normal"]:
+    result = "normal"
+return result</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>def simple_categorize(email: Dict) -> Optional[str]:
+    """Returns "urgent" if matched, None if unsure."""
+    VIP_CLIENTS = ["boss@company.com", "ceo@company.com"]
+    urgent_keywords = ["URGENT", "ASAP", "ERROR", "DOWN", "CRITICAL"]
+    &#35; ... keyword + VIP checks, returns None if nothing matches ...
+
+def agent_categorize(email: Dict) -> str:
+    """Only called when simple_categorize returns None."""
+    prompt = f"""Categorize this email as one of: urgent, important, normal ..."""
+    &#35; ... calls the Anthropic API, falls back to "normal" on a bad response ...
+
+def workflow(email: Dict) -> Dict:
+    """Simple rule -> Agent if unsure -> Action."""
+    simple_result = simple_categorize(email)
+    if simple_result is None:
+        agent_result = agent_categorize(email)
+        final_category = agent_result
+    else:
+        final_category = simple_result
+    &#35; ... take_action(email, final_category) ...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader. What matters is that the hand-off contract
+    holds &mdash; the agent is <em>never</em> called for an email the rule
+    already resolved &mdash; and that every category you add (spam, or any
+    other) has both a rule/agent path that can produce it and a
+    <code>take_action</code> branch that handles it. Compare your changes
+    against <code>solution.py</code> (run it with <code>python solution.py</code>)
+    once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

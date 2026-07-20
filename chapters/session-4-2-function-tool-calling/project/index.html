@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.2 Project: A Third, Deliberately Ambiguous Tool — GenAI for Everyone</title>
+<meta name="description" content="Pro-path challenge for Session 4.2: add a third tool with a deliberately ambiguous boundary against the calculator, then observe, fix, and verify the model's tool-choice behavior.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-2" data-chapter-id="session-4-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.2 Project</span>
+    <span class="badge-difficulty">Pro path</span>
+    <span class="reading-time">30&ndash;40 min build</span>
+  </div>
+  <h1>A Third, Deliberately Ambiguous Tool</h1>
+  <p>
+    The Pro-path build for this session &mdash; add a third tool with a
+    deliberately ambiguous boundary against one of the two from the core
+    exercise, watch the model's real tool-choice behavior on questions that
+    straddle that boundary, and practice the fix-then-verify loop for
+    unreliable tool-calling behavior.
+  </p>
+
+  <div class="what-is">
+    <span class="label">Needs a real API key</span>
+    Same as the core exercise: this project's entire point is watching a live
+    model make a real, sometimes-ambiguous tool-choice decision, so there's no
+    free or open substitute for running it end to end. If you don't have a key,
+    read through <code>solution.py</code> to see the finished descriptions and
+    the reasoning behind them &mdash; the schema design itself is real,
+    verifiable work you can review without spending anything.
+  </div>
+
+  <h2>The setup</h2>
+  <p>
+    You'll add a <code>unit_converter</code> tool alongside the core
+    exercise's <code>calculator</code> and <code>weather_lookup</code>. A
+    question like <em>"What's 68 degrees Fahrenheit in Celsius?"</em> is
+    genuinely ambiguous against <code>calculator</code> &mdash; it's pure
+    arithmetic under the hood, and a human might just as easily call it "a
+    conversion" or "some math." <code>convert_units()</code>, a real working
+    function supporting Fahrenheit/Celsius and miles/kilometers conversions,
+    is already provided in <code>starter.py</code>; your job is the tool
+    schema, the dispatch wiring, and the actual investigation.
+  </p>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Write unit_converter's schema</h3>
+    <p>Fill in <code>unit_converter_schema</code> inside <code>build_tool_schemas()</code>. Start with something plausible but not yet fully disambiguated from <code>calculator</code>'s existing description &mdash; you want to actually observe the ambiguity before you fix it.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Wire up the dispatch</h3>
+    <p>Add the <code>"unit_converter"</code> branch to <code>execute_tool()</code>, calling <code>convert_units(tool_input["value"], tool_input["from_unit"], tool_input["to_unit"])</code> and returning the JSON-serialized result.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Observe, then fix, then verify</h3>
+    <p>Run <code>run_ambiguity_test()</code> against the three ambiguous questions in <code>AMBIGUOUS_QUESTIONS</code>, printing which tool actually got called each time. For any case where the model picks the "wrong" tool or hesitates, rewrite the relevant description(s) with an explicit "use this for X, not for Y" clause &mdash; then re-run the <em>exact same question</em> and confirm the tool choice actually changed. A description that reads more clearly to you is not the same thing as a description that changes the model's decision &mdash; check.</p>
+  </div>
+
+  <h2>Example run (with a real API key)</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>======================================================================
+Q: What's 68 degrees Fahrenheit in Celsius?
+  [tool call] unit_converter({'value': 68, 'from_unit': 'fahrenheit', 'to_unit': 'celsius'})
+
+A: 68 degrees Fahrenheit is 20 degrees Celsius.
+
+======================================================================
+Q: If it's 30 degrees Celsius, what's that times 2?
+  [tool call] unit_converter({'value': 30, 'from_unit': 'celsius', 'to_unit': 'fahrenheit'})
+  [tool call] calculator({'expression': '86 * 2'})
+
+A: 30C is 86F, and 86 times 2 is 172.
+
+======================================================================
+Q: How many kilometers is 10 miles?
+  [tool call] unit_converter({'value': 10, 'from_unit': 'miles', 'to_unit': 'kilometers'})
+
+A: 10 miles is about 16.09 kilometers.</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Why this matters</span>
+    Adding a third tool with a deliberately overlapping boundary is the most
+    direct way to practice the debugging instinct from the lesson: unreliable
+    tool-calling behavior is a specification gap, not a model failure. The
+    interesting outcome here isn't "did the model get it right the first
+    time" &mdash; it's whether you can reliably diagnose a wrong or hesitant
+    choice, fix the description, and prove the fix worked by re-running the
+    exact same question rather than assuming clearer-sounding wording did the
+    job.
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>Two well-specified tools rarely collide in practice &mdash; the interesting failure mode shows up once a third, genuinely overlapping capability enters the picture, which is exactly what happens as real tool-calling systems grow past a toy two-tool demo. Practicing the observe &rarr; fix &rarr; verify loop on a small, safe example here is the same discipline you'd apply at much higher stakes once a production agent has a dozen tools with real boundary cases between them.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

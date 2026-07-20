@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.6 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Capstone build for Session 4.6 — a four-phase research agent (Core Path) plus a fact-checking layer on top of it (Pro Path), pulling together everything from Week 4.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.6 Exercises</span>
+    <span class="reading-time">60&ndash;90 min, hands-on</span>
+  </div>
+  <h1>Exercises: Build the Research Agent</h1>
+  <p>
+    The capstone for Week 4: a research agent that takes a topic, plans what
+    to search for, executes those searches, analyzes what it found, and
+    drafts a structured, cited report. It's the single build that needs tool
+    use (4.2), multi-step planning and execution (4.3), and a clear-eyed sense
+    of what an agent should and shouldn't be trusted to do unsupervised (4.5)
+    all at once. There are two paths, and it's worth doing both:
+  </p>
+
+  <ul>
+    <li><strong>Core Path</strong> &mdash; the four-phase research agent itself: plan &rarr; research &rarr; analyze &rarr; draft.</li>
+    <li><strong>Pro Path</strong> &mdash; a fact-checking layer on top: draft &rarr; fact-check &rarr; revise with uncertainty notes.</li>
+  </ul>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 and the <code>anthropic</code> package installed
+    (<code>pip install anthropic</code>), plus a valid
+    <code>ANTHROPIC_API_KEY</code> set in your environment. Unlike some
+    earlier exercises, there's no offline stub here &mdash; the point of this
+    capstone is watching a real multi-turn agent actually carry context across
+    four live phases, which an offline stand-in can't convincingly fake. Both
+    paths use a small, fixed <code>MOCK_SEARCH_DB</code> instead of a live
+    search API, so the "search" step itself stays free, deterministic, and
+    debuggable while you focus on the workflow.
+  </div>
+
+  <h2>Core Path: the four-phase research agent</h2>
+
+  <div class="download-links">
+    <a href="core_path_starter.py">core_path_starter.py</a>
+    <a href="core_path_solution.py">core_path_solution.py (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Write the planning prompt</h3>
+    <p>Find <code>phase_1_plan()</code> and its <code>TODO 1</code>. Ask the agent for 4-5 specific searches it intends to run, what would make a source credible for this particular topic, and how it plans to structure the eventual report. Specific beats vague here &mdash; "search for remote work stuff" is exactly the failure mode this prompt needs to avoid.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Extract and execute the searches</h3>
+    <p>Find <code>phase_2_research()</code> and its <code>TODO 2</code>. Build a list of search queries (either parsed from the plan text, or a reasonable fixed set derived from the topic) and call <code>mock_search()</code> for each, storing every result in <code>self.findings</code> so later phases can reference it.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Write the analysis prompt</h3>
+    <p>Find <code>phase_3_analyze()</code> and its <code>TODO 3</code>. Ask the agent to identify key themes across the findings, note where sources contradict each other, flag remaining gaps, and rank which sources seem most credible. This phase is what keeps the draft from being a raw dump of search results.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Write the drafting prompt</h3>
+    <p>Find <code>phase_4_draft_report()</code> and its <code>TODO 4</code>. Ask for an executive summary, a sectioned main body, key findings, implications, and citations that reference the actual searches &mdash; targeting 1000+ words. Because every phase shares <code>self.messages</code> through <code>call_llm()</code>, this prompt doesn't need to repeat the findings from scratch; it can lean on the model's own memory of the conversation so far.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 5 &mdash; Debug the Code</h3>
+    <p><code>mock_search()</code> is supposed to return the entry from <code>MOCK_SEARCH_DB</code> that actually matches the country or topic in the query &mdash; but run the four searches from Phase 2 and look closely: do they really return four <em>different</em> results, or does something else happen? Reduced to its essentials, here's the matching logic:</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_match.py</span>
+      </div>
+      <pre><code>DB = {
+    "ai regulation united states": "US_DATA",
+    "ai regulation european union": "EU_DATA",
+}
+
+def mock_search(query):
+    query_lower = query.lower()
+    for key, value in DB.items():
+        if any(word in query_lower for word in key.split()):
+            return value
+    return "no results"
+
+print(mock_search("AI regulation trends 2024-2025 european union"))
+&#35; prints "US_DATA" -- for a query that's clearly asking about the EU</code></pre>
+    </div>
+    <p><em>Hint:</em> <code>any(word in query_lower for word in key.split())</code> matches on <em>any single shared word</em>, not the whole phrase. Since every query in this agent is built from the same topic string ("AI regulation trends 2024-2025"), every query contains the words "ai" and "regulation" &mdash; which are also the first two words of <em>every key</em> in the dictionary. Because the loop returns on the very first match and dictionaries preserve insertion order, the first key ("ai regulation united states") wins for every single query, regardless of which country is actually being searched. The fix has to check for the phrase actually unique to each key (e.g. "united states" vs. "european union"), not just any overlapping word.</p>
+  </div>
+
+  <h2>Pro Path: research + fact-checking</h2>
+  <p>
+    Once the Core Path runs end to end, this extends it with a second layer:
+    the agent drafts a report, then fact-checks its own claims against a
+    known-answers database, then revises the report to flag whatever it
+    couldn't verify. It's intentionally less scaffolded &mdash; you're
+    designing more of the architecture yourself here.
+  </p>
+
+  <div class="download-links">
+    <a href="pro_path_starter.py">pro_path_starter.py</a>
+    <a href="pro_path_solution.py">pro_path_solution.py (reference)</a>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">6</span> Trace the fact-checking loop</h3>
+    <p>Open <code>pro_path_starter.py</code> and follow <code>run()</code> through all four steps: <code>research_phase()</code>, <code>draft_phase()</code>, <code>fact_check_phase()</code>, and <code>incorporate_feedback()</code>. Notice that <code>fact_check_phase()</code> asks the model to extract claims worth verifying, then checks those claims against a small fixed <code>FACT_CHECK_DB</code> &mdash; a stand-in for a real fact-checking source or search call.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">7</span> Confirm the uncertainty makes it into the final report</h3>
+    <p>Run <code>python3 pro_path_starter.py</code> and read the final output. Confirm that any claim <em>not</em> found in <code>FACT_CHECK_DB</code> is left unmarked as "verified" rather than silently trusted, and that <code>incorporate_feedback()</code>'s prompt explicitly instructs the model to tag unverified claims with <code>[⚠️ UNVERIFIED]</code> and add a "Verification Notes" section &mdash; not just quietly revise the wording.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">8</span> Extend it: track a fact-check rate</h3>
+    <p>Add a small summary metric after <code>run()</code> completes: what fraction of extracted claims were found in <code>FACT_CHECK_DB</code> at all (verified <em>or</em> flagged), versus claims the agent made that never got checked in the first place. That gap &mdash; claims made vs. claims actually checked &mdash; is closer to the real risk in a production fact-checking layer than the verified/unverified split alone.</p>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader for either path &mdash; that's intentional. For
+    the Core Path, confirm the plan names specific searches, the analysis
+    genuinely synthesizes findings rather than repeating them, and the final
+    report is well-structured, cites its sources, and lands around 1000+
+    words. For the Pro Path, confirm the fact-check phase actually catches the
+    claims seeded in <code>FACT_CHECK_DB</code>, and that the revised report
+    visibly flags what it couldn't verify instead of presenting every claim
+    with equal confidence. Compare against the <code>*_solution.py</code>
+    files once you've made a genuine attempt &mdash; and try to spot the
+    <code>mock_search()</code> bug in Task 5 on your own before reading the
+    hint, since it's the part most worth struggling with.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

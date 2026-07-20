@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.3 Project: Fact-Checking Agent — GenAI for Everyone</title>
+<meta name="description" content="Build a fact-checking agent that plans searches, gathers supporting and contradicting evidence, handles conflicting sources, and scores a claim's veracity with a confidence level.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-3" data-chapter-id="session-4-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.3 Project</span>
+    <span class="reading-time">90&ndash;120 min build</span>
+  </div>
+  <h1>Fact-Checking Agent</h1>
+  <p>
+    The Pro-path build for this session &mdash; a harder version of the
+    plan-execute-stop loop from the exercises, where "enough evidence" is a
+    judgment call instead of a fixed number of searches, and the agent has to
+    deal honestly with sources that disagree with each other.
+  </p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>Fact-checking: Python is the most popular programming language
+
+Fact-check plan:
+This claim depends heavily on how "most popular" is measured (index
+methodology, use case). I'll search for: (1) general popularity rankings,
+(2) rankings broken down by domain, (3) any sources that explicitly compare
+Python against a leading alternative like JavaScript.
+
+--- Iteration 1 ---
+  Search: python most popular language 2024
+--- Iteration 2 ---
+Evidence-gathering complete (agent stopped calling tools).
+
+Judgment:
+{
+  "veracity_score": 55,
+  "confidence": 65,
+  "supporting_evidence": ["TIOBE index (2024) ranks Python as most popular overall"],
+  "contradicting_evidence": ["JavaScript is more popular specifically in web development"],
+  "conflicts": ["Sources disagree depending on whether 'popular' means overall index rank or domain-specific usage"],
+  "reasoning": "The claim is true by one common ranking (TIOBE) but domain-specific data complicates a flat 'most popular' claim, so this lands as partially true with moderate confidence."
+}
+
+======================================================================
+FACT-CHECK RESULT
+======================================================================
+Claim:      Python is the most popular programming language
+Veracity:   55/100
+Confidence: 65/100
+...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    You'll need Python 3, the Anthropic SDK (<code>pip install anthropic</code>),
+    and an API key set as <code>ANTHROPIC_API_KEY</code> (the free tier is
+    enough). Download <code>starter.py</code> below and run <code>python
+    starter.py</code>. The evidence sources are simulated &mdash; a small
+    lookup table that deliberately includes disagreeing statements &mdash; so
+    the point of this project is the <strong>evidence-handling and judgment
+    logic</strong>, not live search results.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>Fill in the three <code># TODO</code> sections in <code>starter.py</code>:</p>
+  <ul>
+    <li><strong>TODO 1</strong> &mdash; the planning prompt: have the agent break the claim into verifiable parts and plan searches for both supporting <em>and</em> contradicting evidence, without searching yet.</li>
+    <li><strong>TODO 2</strong> &mdash; the evidence-gathering loop: same tool-calling shape as the exercises/ research agent, but log every raw <code>{query, result}</code> pair rather than guessing whether each one is "supporting" or "contradicting" as it arrives.</li>
+    <li><strong>TODO 3</strong> &mdash; the final judgment: ask for one JSON verdict (<code>veracity_score</code>, <code>confidence</code>, <code>supporting_evidence</code>, <code>contradicting_evidence</code>, <code>conflicts</code>, <code>reasoning</code>), parse it defensively, and build a <code>FactCheckResult</code>.</li>
+  </ul>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Handle a genuinely conflicting claim</h3>
+    <p>Run your agent on <code>"Python is the most popular programming language"</code>. The simulated sources for this topic deliberately disagree depending on context (overall index vs. web-development specifically). Your final report should surface that conflict explicitly in the <code>conflicts</code> field &mdash; not silently average it away.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Add a confidence-based safeguard</h3>
+    <p>Have <code>run_fact_checker</code> print a warning line if <code>confidence</code> comes back below some threshold (e.g. 40) &mdash; a low-confidence verdict should be visibly flagged as needing a human to look closer, not presented with the same authority as a well-supported one.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 3 &mdash; Debug the Code</h3>
+    <p>A teammate's fact-checker categorized each search result the moment it came back, using this function. It looks reasonable, but it mislabels almost every claim in this project's test set. What's wrong, and why is the final-judgment approach used in <code>solution.py</code> more robust?</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_categorizer.py</span>
+      </div>
+      <pre><code>def categorize(result: str) -> str:
+    &#35; Bug: this only ever looks at ONE keyword and assumes the whole search
+    &#35; result agrees or disagrees uniformly. But a single simulated source in
+    &#35; this project often contains BOTH a supporting statement and a hedge or
+    &#35; disagreement in the same string (e.g. "TIOBE ranks Python most popular...
+    &#35; Some rankings show JavaScript more popular in web development"). A
+    &#35; per-result keyword check can't split a mixed result into its supporting
+    &#35; and contradicting parts -- it just picks whichever keyword appears first.
+    if "some" in result.lower() or "however" in result.lower():
+        return "contradicting"
+    return "supporting"</code></pre>
+    </div>
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Swap the simulated <code>SOURCES</code> lookup for a real search API and see how the agent handles genuinely messy, real-world disagreement instead of a scripted one.</li>
+    <li>Add a rule: if <code>confidence</code> is below a threshold, automatically re-run one more targeted search before finalizing the judgment, instead of just flagging it.</li>
+    <li>Log the full evidence trail (plan, every query, every raw result, final JSON) to a file per claim, so you can build a small "fact-check audit log" across multiple runs.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>A research agent that just gathers facts and summarizes them is only doing half the job a real fact-checker does. The harder, more valuable part is handling <em>disagreement</em> honestly &mdash; noticing when sources conflict, resisting the urge to average away the tension, and reporting a confidence level instead of false certainty. That's also exactly the shape of judgment a multi-agent reviewer system (Session 4.4) formalizes further, with separate agents specializing in different angles instead of one agent doing all of it.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

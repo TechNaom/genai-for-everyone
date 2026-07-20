@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.4 Project: Multi-Reviewer System with Convergence Checking — GenAI for Everyone</title>
+<meta name="description" content="Build a four-agent writer-plus-three-reviewers system with convergence checking, so the revision loop stops once feedback stabilizes instead of always running a fixed number of rounds.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-4" data-chapter-id="session-4-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.4 Project</span>
+    <span class="reading-time">40 min build</span>
+  </div>
+  <h1>Multi-Reviewer System with Convergence Checking</h1>
+  <p>The Pro-path build for this session &mdash; a four-agent reviewer-pattern system (writer, fact-checker, style-checker, impact-checker) where the revision loop stops once feedback genuinely stabilizes, instead of always running a fixed number of rounds.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>Topic: The ethics of AI in hiring
+
+=== Revision Round 1 ===
+Fact-checking...
+  → AI hiring systems have documented bias issues [sources needed]...
+
+Checking style...
+  → Strong opening, but paragraph 3 is dense...
+
+Checking impact...
+  → Good ethical framing, but missing a call-to-action...
+
+Convergence score: 0.42
+Writer revising...
+
+=== Revision Round 2 ===
+[More feedback, higher convergence...]
+
+Convergence score: 0.68
+Feedback converged (> 0.65). Stopping.
+
+RESULTS SUMMARY
+Topic: The ethics of AI in hiring
+Total revisions: 2
+Stopped because: convergence</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    This project makes real model calls &mdash; you'll need Python 3, the
+    <code>anthropic</code> package (<code>pip install anthropic</code>), and an
+    <code>ANTHROPIC_API_KEY</code> in your environment. Download <code>starter.py</code>
+    below and run <code>python starter.py</code>. The writer and all three reviewers
+    are already implemented; the point of this build is understanding how they
+    coordinate, then extending the system through the challenges below.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>Run <code>starter.py</code> as-is first and study how it works, then take on these challenges:</p>
+  <ul>
+    <li><strong>Challenge 1</strong> &mdash; change <code>convergence_threshold</code> to <code>0.5</code> or <code>0.8</code>. Does the loop stop after more or fewer revision rounds? Why does that direction make sense given what the threshold controls?</li>
+    <li><strong>Challenge 2</strong> &mdash; add a 4th reviewer, such as an audience-relevance checker. <code>solution.py</code> shows one worked version of this: an <code>audience_relevance_agent</code> added alongside the other three, folded into both the convergence check and the writer's revision prompt.</li>
+    <li><strong>Challenge 3</strong> &mdash; replace <code>similarity_score()</code>, which is a crude word-overlap heuristic, with an LLM-based similarity check (ask the model directly: "are these two pieces of feedback raising substantially the same issues?").</li>
+  </ul>
+
+  <h2>How convergence checking works</h2>
+  <p>
+    <code>similarity_score()</code> compares this round's combined reviewer feedback
+    against last round's, using word overlap (intersection over union of the two
+    feedback strings' word sets). Once that score crosses <code>convergence_threshold</code>,
+    the loop treats the feedback as stabilized &mdash; reviewers are largely repeating
+    the same points rather than raising new ones &mdash; and stops, even before
+    <code>max_revisions</code> is reached. This is the "define your stopping condition
+    before building" idea from Part 6 of the lesson, made concrete and runnable.
+  </p>
+
+  <p>
+    Worth noticing: convergence here is a placeholder heuristic, not a rigorous
+    similarity measure. Word overlap can be fooled by feedback that's paraphrased
+    differently but means the same thing &mdash; exactly the gap Challenge 3 above asks
+    you to close.
+  </p>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Try an <strong>orchestrator pattern</strong> instead: an orchestrator agent assigns "researcher, find data" to a researcher agent, then hands results to a writer agent to synthesize.</li>
+    <li>Try a <strong>debate pattern</strong>: a pro agent and a con agent argue opposing positions, and a moderator agent synthesizes the disagreement.</li>
+    <li>Persist each run's drafts and feedback history to JSON (<code>json.dump(result, f, indent=2)</code>) so you can inspect it after the fact.</li>
+    <li>Have the writer rank which piece of feedback, across all reviewers, was most important to address first.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>A single reviewer catches some errors; three independent reviewers, each specializing in one concern, catch more &mdash; but only if the system also knows when to stop asking for more feedback. Convergence checking is what keeps a multi-reviewer loop from either quitting too early (missing real issues) or running forever (burning API calls on feedback that's stopped meaningfully changing). This is the exact shape of a production reviewer-pattern system: specialized agents, aggregated feedback, and an explicit, testable stopping condition &mdash; not just "loop three times and hope."</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

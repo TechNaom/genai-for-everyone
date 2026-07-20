@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.6 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Scenario-based interview prep synthesizing Week 4: designing multi-step research agents, choosing agents vs. automation, multi-agent patterns, cost trade-offs, and a real-world email triage agent.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-6" data-chapter-id="session-4-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.6 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Synthesizing Week 4</h1>
+  <p>
+    This is the last session of Week 4, so these questions draw across the
+    whole week's pool rather than staying narrowly scoped to today's build
+    &mdash; the same way a real interviewer, once you've mentioned "I built an
+    agent," will pull on threads from tool calling, multi-agent design, and
+    the agent-vs-automation judgment call all in the same conversation. Each
+    question below includes what a strong answer sounds like, common red
+    flags, and a natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Design a multi-step agent that researches a topic and writes a report. How would you structure it, what could go wrong, and how would you debug it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Name the phase structure explicitly: a planning phase where the agent decides what to search for, an execution phase that loops on calling search tools and reading results, and a synthesis phase where the agent stops calling tools and writes the final report. Mention concrete implementation details: working memory so the agent doesn't forget early findings by the time it drafts, a hard iteration limit as a safety net, and a clear stopping condition (no more tool_use blocks in the response = done). Name real failure modes &mdash; infinite loops calling the same tool repeatedly, an early stop that quits with a half-finished report, forgotten context once token limits are hit, or searching for conclusions before gathering the underlying data. For debugging, describe logging every iteration (what tool was called, what came back), printing the plan to sanity-check it, and verifying the stopping condition logic directly.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just call search tools until you have enough data" with no structure, no mention of working memory or iteration limits, or no debugging plan at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your agent researches 5 topics but only cites the last 2 in the report. Why?" (Tests whether they think about context/token limits pushing early findings out of the working memory the drafting phase can see.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> You're building three systems: (A) a Monday-morning reminder email, (B) a tool that researches a topic and answers questions about it dynamically, (C) structured data extraction from PDFs. For each, would you use an agent or simple automation, and why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>(A) Simple automation &mdash; no reasoning is required, it's a scheduled action; an agent here is pure overkill and needless cost. (B) An agent &mdash; the topic changes every time, genuinely requires reasoning and tool use, which is exactly where agents earn their cost. (C) It depends: a fixed, predictable template is a job for plain automation, but variable or messy document structures are where an agent's judgment adds real value. The underlying decision framework: reach for an agent when the task is complex, requires reasoning, or has variable inputs; reach for automation when the task is simple, predictable, and high-frequency enough that cost matters. A strong answer is explicit about cost consciousness, not just capability.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Always use agents" (misses the cost/complexity trade-off entirely), or treating all three systems the same way without distinguishing what's actually driving the decision.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You used an agent for (A) and it costs $1,000/month. How do you fix it?" (Tests whether they'll actually walk back an over-engineered choice, not just defend it.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> You're building a system for legal document review. How would you structure it as a multi-agent system, and which pattern (orchestrator-worker, debate, reviewer) would you pick?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The reviewer pattern is the strongest fit here: a writer agent drafts a summary, then separate fact-checker, risk-assessor, and compliance-checker agents each review that draft from their own specialized angle, and the writer synthesizes the feedback. The reasoning matters more than the pattern name: legal work is high-stakes and errors are expensive, so having multiple specialized reviewers catch different categories of mistakes is worth the extra cost and latency in a way it might not be for a low-stakes task. A strong answer also names the practical mechanics &mdash; structured feedback (e.g. JSON with categorized error types), a stopping condition based on convergence (review rounds stop once feedback stabilizes), and a plan for what happens when reviewer agents disagree (escalate to a human, don't let the system silently pick a side).</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just use one agent" (misses the entire point of adding review), picking a pattern without justifying why it fits this specific domain, or no answer at all for what happens when reviewers disagree.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You ran three review rounds and still missed an error. What went wrong?" (Good answers question whether the reviewers were actually checking different things, or all catching the same category of mistake.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Your agent-based research system costs $0.50 per query and takes 30 seconds across 5 API calls. A user says it's too slow. Options: (A) a faster model, (B) fewer search iterations, (C) parallelize the agent calls, (D) cache results. What do you recommend?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Walk through the real trade-off in each option rather than picking one reflexively: a faster model reduces latency but may hurt output quality, so it needs testing first, not blind adoption; fewer iterations is faster but is a direct quality risk, since it means less thorough research; parallelizing independent calls is close to a free win &mdash; same total cost, much lower wall-clock time, if the tasks genuinely don't depend on each other; caching is close to free too, but only helps when queries actually repeat. The real answer depends on diagnosis, not a fixed ranking: is the system slow for every query, or only some (points toward caching vs. parallelizing)? Are the five calls sequential because they have to be, or just because no one parallelized them yet? A strong candidate proposes measuring latency and quality with A/B tests before committing to a fix.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just use a faster model" without weighing the quality trade-off, not noticing that some of the calls might be independently parallelizable, or recommending a fix with no plan to measure whether it actually worked.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You parallelize and latency drops to 8 seconds, but quality also drops. Why?" (Points toward: parallel calls may have lost access to context that sequential calls built up turn by turn &mdash; the same shared-message-history issue this session's research agent depends on.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Design an agent that processes incoming emails, categorizes them by urgency, and drafts responses automatically. Walk through the architecture, what could go wrong, and how you'd test it.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Lay out a phased architecture: the agent reads and categorizes an email and extracts action items, drafts a response for anything urgent, then decides whether that draft needs human review before a human actually approves and sends it. Name concrete tools: <code>read_email</code>, <code>categorize</code>, <code>draft_response</code>, a <code>send_email</code> that sits behind an explicit approval gate, and a <code>flag_for_review</code> for anything the agent isn't confident about. The non-negotiable safety mechanism is a human-in-the-loop step before anything is actually sent &mdash; not an afterthought, a hard requirement, exactly the same principle Session 4.5 raised about not automating a step just because you technically can. Also worth naming: a confidence threshold that escalates uncertain cases, an audit trail logging what the agent did and why, and testing against historical emails with sending disabled before ever running live.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>No human review loop at all (genuinely dangerous for anything email-adjacent), no consideration of what happens when the agent gets it wrong, or treating this as a simple classification problem while glossing over how much can go wrong in the response-generation step specifically.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The agent flags everything as urgent. How do you debug and retune it?" (Points toward inspecting the categorization prompt and threshold, and checking whether the training/example emails it saw were skewed toward urgent cases.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check across the whole week &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A <code>____</code> block is the structured output an LLM produces to specify which tool it wants called and with what arguments &mdash; the model never calls the tool directly itself.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="tool_use,tool use" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> An agent typically knows to stop iterating when its response contains no more tool_use blocks, or when it hits a hard <code>____</code> limit set as a safety net.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="iteration,iteration limit,loop" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> In a multi-agent review loop, <code>____</code> checking is a natural stopping condition: rounds stop once feedback stabilizes and reviewers stop finding new issues.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="convergence" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> <code>____</code> an agent means making sure its outputs are based on real tool results and actual findings, not on hallucinated content that merely sounds plausible.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="grounding" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> For anything that sends real messages or takes real-world actions on someone's behalf, a <code>____</code> step before execution isn't optional polish &mdash; it's the core safety mechanism.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="human review,human-in-the-loop,human in the loop,approval" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you can talk about Week 4 as a connected system, not five separate facts.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Interviewers will often hand you a live scenario ("design an agent for X") rather than ask you to define terms &mdash; practice narrating a phase structure (plan, execute, synthesize) out loud, the same way you'd sketch it on a whiteboard.</li>
+    <li>Cost and safety come up constantly in agent interviews specifically, because agents are more expensive and less predictable than plain automation &mdash; always be ready to say when you'd <em>not</em> use one, not just how you'd build one.</li>
+    <li>Pair these with Weeks 1&ndash;3's questions for a realistic mixed-topic mock interview as you move further into the program.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="exercises/index.html">&larr; Back to Exercises</a>
+    <a href="../../assessments/written-exams/week-04-exam.md">Week 4 Written Exam &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

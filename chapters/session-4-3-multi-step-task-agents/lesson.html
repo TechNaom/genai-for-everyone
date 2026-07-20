@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.3 Multi-Step Task Agents — GenAI for Everyone</title>
+<meta name="description" content="Move from one-tool-call agents to real multi-step task agents: implicit vs. explicit planning, the plan-execute-observe-stop loop, stopping conditions, working memory, and how to debug an agent that loops, stops early, or forgets what it found.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.3</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">35&ndash;40 min read</span>
+  </div>
+  <h1>Multi-Step Task Agents</h1>
+  <p><em>Every agent you've built so far made one tool call and stopped. Real work isn't one tool call &mdash; it's plan, act, observe, decide whether to continue, and (eventually, reliably) stop. This chapter builds that loop, and teaches you how to debug it when it inevitably goes sideways.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#anatomy-of-a-multi-step-task">1. The Anatomy of a Multi-Step Task</a>
+    <a href="#implicit-vs-explicit-planning">2. Planning in Agents: Implicit vs. Explicit</a>
+    <a href="#building-the-agent-loop">3. Building a Multi-Step Task Agent</a>
+    <a href="#stopping-conditions">4. Stopping Conditions and the Stopping Problem</a>
+    <a href="#debugging-gotchas">5. Real-World Gotchas: Debugging Multi-Step Agents</a>
+    <a href="#memory-and-safeguards">6. Building a More Resilient Agent</a>
+  </nav>
+
+  <div class="hook">
+    You've learned what agents are (Session 4.1) and how to make them call functions
+    (Session 4.2). But so far, every task you've given your agent has been trivial:
+    "Get today's weather" or "Calculate 15 &times; 8." The agent makes one tool call,
+    gets a result, and you're done. Real work doesn't work that way. Your manager
+    asks: <em>"Research our three biggest competitors' pricing strategies for Q3 and
+    tell me how we compare."</em> Your partner asks: <em>"Find three good vegan
+    restaurants near me that have outdoor seating and are open after 9pm."</em> A
+    journalist needs: <em>"Investigate whether this politician's claim about
+    unemployment rates is accurate &mdash; find current data, historical context, and
+    any conflicting sources."</em> These aren't one-tool-call problems. They're
+    <strong>multi-step tasks</strong>, and they're where agents start to earn their
+    keep. To solve them, an agent needs to <strong>break down the problem</strong>
+    (what steps does this actually require?), <strong>execute in sequence</strong>
+    (search, observe, adapt, search again), and <strong>know when it's done</strong>
+    (when is there enough information to stop?). This is what separates a toy chatbot
+    from something that can actually <em>do work</em>. And unlike simple agents,
+    multi-step agents can break in interesting ways &mdash; they get stuck in loops,
+    forget what they found, stop too early, or reason backward (trying to conclude
+    before gathering data). This chapter teaches you how to build one <em>and</em>
+    how to debug it when it inevitably goes sideways.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="anatomy-of-a-multi-step-task">
+    <span class="subtopic-label">Sub-topic 1 of 6</span>
+    <h2>1. The Anatomy of a Multi-Step Task</h2>
+
+    <p>
+      Let's start with a concrete example: <strong>research the cost of cloud
+      storage across providers.</strong> A human would break this down roughly like
+      this:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">how-a-human-would-do-it.txt</span>
+      </div>
+      <pre><code>1. Plan:     "I'll search for pricing from AWS, Google Cloud, and Azure.
+              Then I'll compare the data. Once I have all three, I'll summarize."
+2. Execute:  Search for AWS S3 pricing -> get a page with pricing tiers
+3. Observe:  I see the data, but it's complex. Do I have enough?
+4. Execute:  Search for Google Cloud Storage pricing -> get their pricing page
+5. Observe:  Okay, I have two. AWS is cheaper for small amounts, Google is
+              better for egress. I need Azure to complete the picture.
+6. Execute:  Search for Azure Blob Storage pricing
+7. Observe:  Now I have all three. I can summarize.
+8. Stop:     Hand back the comparison.</code></pre>
+    </div>
+
+    <p>
+      Notice the flow: <strong>plan &rarr; do something &rarr; observe &rarr; decide
+      whether to continue &rarr; loop back or stop.</strong> An agent does the same
+      thing. The difference is that the agent needs to <em>learn</em> when to plan,
+      when to take action, and when to stop &mdash; because it doesn't start with a
+      human-written step-by-step guide the way you just read one.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a multi-step task?</span>
+      A multi-step task is one that can't be solved with a single tool call and a
+      single observation. It requires gathering multiple pieces of information,
+      noticing what's still missing, deciding what to do about that gap, and
+      eventually recognizing that enough has been gathered to stop. Every technique
+      in this chapter exists to give an agent a reliable version of that judgment.
+    </div>
+
+    <div class="real-world">
+      <span class="label">Why this is the real dividing line</span>
+      <ul>
+        <li>A single-tool-call agent (Session 4.2) is impressive the first time you see it, but it's still fundamentally a lookup: one question in, one answer out.</li>
+        <li>A multi-step agent has to hold a goal in mind across several actions, notice partial progress, and decide for itself when the goal is satisfied &mdash; that's a qualitatively different (and much harder) problem.</li>
+        <li>This is also exactly where agents start failing in new, interesting ways &mdash; loops, premature stops, forgotten context &mdash; because there's now a multi-step process to go wrong in, not just one call.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A multi-step task requires plan &rarr; execute &rarr; observe &rarr; decide whether to continue &rarr; loop back or stop.</li>
+        <li>An agent has to learn this flow itself &mdash; it doesn't get a human-written step-by-step guide.</li>
+        <li>This is the dividing line between a toy chatbot and something that can actually do work.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="implicit-vs-explicit-planning">
+    <span class="subtopic-label">Sub-topic 2 of 6</span>
+    <h2>2. Planning in Agents: Implicit vs. Explicit</h2>
+
+    <p>There are two ways agents plan: <strong>implicit</strong> and <strong>explicit.</strong></p>
+
+    <div class="what-is">
+      <span class="label">What is... implicit planning?</span>
+      Implicit planning means the agent doesn't explicitly write out a plan.
+      Instead, it reasons step-by-step and the language model's own reasoning
+      handles the planning. In Session 4.2, your agent did this implicitly &mdash;
+      the prompt said something like <em>"You are a helpful assistant. When the
+      user asks for information, use the available tools to find it. Reason
+      step-by-step."</em> The model, just by being prompted to "reason
+      step-by-step," naturally figures out what to do next. For simple tasks, this
+      works well.
+    </div>
+
+    <p>
+      <strong>Pros:</strong> simple, less prompt overhead, fewer API calls.
+      <strong>Cons:</strong> can get stuck in loops, harder to control, less
+      predictable on very complex tasks.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... explicit planning?</span>
+      Explicit planning means you ask the agent to write out a plan
+      <em>before</em> it starts executing. It looks like this:
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">explicit_planning_flow.txt</span>
+      </div>
+      <pre><code>1. User asks:          "Research competitor pricing for cloud storage."
+
+2. Agent thinks
+   (via LLM call 1):   "Okay, I'll need to:
+                         - Search for AWS S3 pricing
+                         - Search for Google Cloud Storage pricing
+                         - Search for Azure Blob Storage pricing
+                         - Compare them and summarize"
+
+3. Agent executes
+   (loop over steps):  For each step in the plan, call the tool and
+                         record the result.
+
+4. Agent reflects:     "I've done all three searches. I have the data
+                         I need. I can now summarize."</code></pre>
+    </div>
+
+    <p>
+      <strong>Pros:</strong> more structured, easier to debug (you can see the
+      plan), better for tasks with 5+ steps. <strong>Cons:</strong> extra API call
+      upfront, and if the plan is wrong, the agent is locked into it.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Which one should you reach for?</span>
+      <ul>
+        <li>Implicit planning is fine for tasks that are still fairly simple, or where the loop of "search, look, decide" is obviously short (2&ndash;3 steps).</li>
+        <li>Explicit planning earns its extra API call once a task has real structure &mdash; five or more steps, or steps that genuinely depend on each other in a specific order.</li>
+        <li>The rest of this chapter builds an agent with explicit planning, because it's the version that's actually debuggable &mdash; you can literally read the plan and see whether the agent understood the task correctly before a single tool call happens.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>Implicit planning:</strong> the model reasons step-by-step with no separate plan &mdash; simple, but can loop or wander on complex tasks.</li>
+        <li><strong>Explicit planning:</strong> the agent writes a plan first, then executes it &mdash; more structured and debuggable, at the cost of an extra API call and the risk of being locked into a wrong plan.</li>
+        <li>Explicit planning is the better default once a task needs 5+ steps or has real dependencies between steps.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="building-the-agent-loop">
+    <span class="subtopic-label">Sub-topic 3 of 6</span>
+    <h2>3. Building a Multi-Step Task Agent &mdash; the Code</h2>
+
+    <p>
+      Let's code a multi-step agent that researches a topic and writes a summary.
+      We'll use explicit planning.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">multi_step_agent.py</span>
+      </div>
+      <pre><code>from anthropic import Anthropic
+
+client = Anthropic()
+MODEL_ID = "claude-3-5-sonnet-20241022"
+
+# Define tools -- same as Session 4.2
+tools = [
+    {
+        "name": "search_web",
+        "description": "Search the web for information. Returns top results as plain text.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search query"
+                }
+            },
+            "required": ["query"]
+        }
+    },
+    {
+        "name": "get_current_date",
+        "description": "Get today's date.",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+    }
+]
+
+# Simulate tool calls (in real use, these'd call actual APIs)
+def search_web(query: str) -> str:
+    """Fake search -- in real use, call a real search API."""
+    results = {
+        "aws s3 pricing": "AWS S3: $0.023/GB for standard storage, $0.0125/GB for infrequent access.",
+        "google cloud storage pricing": "GCS: $0.020/GB for standard, $0.010/GB for nearline.",
+        "azure blob storage pricing": "Azure: $0.0184/GB for hot tier, $0.01/GB for cool tier.",
+        "python libraries for web scraping": "Beautiful Soup, Scrapy, Selenium, Playwright.",
+        "when did openai release gpt-4": "OpenAI released GPT-4 on March 14, 2023."
+    }
+    query_lower = query.lower()
+    for key, value in results.items():
+        if key in query_lower:
+            return value
+    return f"No results found for '{query}'. Assume the model would return real data in production."
+
+def get_current_date() -> str:
+    from datetime import date
+    return str(date.today())
+
+def process_tool_call(tool_name: str, tool_input: dict) -> str:
+    """Process a tool call and return the result."""
+    if tool_name == "search_web":
+        return search_web(tool_input["query"])
+    elif tool_name == "get_current_date":
+        return get_current_date()
+    else:
+        return f"Unknown tool: {tool_name}"
+
+# The core multi-step agent loop
+def run_multi_step_agent(user_task: str) -> str:
+    """
+    Run an agent that:
+    1. Plans the steps (explicit planning)
+    2. Executes each step
+    3. Stops when done
+    """
+    messages = []
+
+    # Step 1: Ask the LLM to make a plan
+    plan_prompt = f"""You are a research agent. The user has asked:
+
+"{user_task}"
+
+First, write out a clear plan of the steps you will take to complete this task.
+Be specific: list the searches you'll do, what data you need, and how you'll summarize.
+Do NOT execute yet -- just plan."""
+
+    messages.append({"role": "user", "content": plan_prompt})
+
+    response = client.messages.create(
+        model=MODEL_ID,
+        max_tokens=1024,
+        tools=tools,
+        messages=messages
+    )
+
+    # Extract the plan text
+    plan_text = ""
+    for block in response.content:
+        if hasattr(block, "text"):
+            plan_text += block.text
+
+    print(f"Agent's plan:\n{plan_text}\n")
+    messages.append({"role": "assistant", "content": response.content})
+
+    # Step 2: Tell the agent to execute the plan
+    messages.append({"role": "user", "content": "Now execute the plan step by step. Use the available tools."})
+
+    # Step 3: Agentic loop -- execute tools until the agent says it's done
+    max_iterations = 10
+    iteration = 0
+
+    while iteration < max_iterations:
+        iteration += 1
+        print(f"--- Iteration {iteration} ---")
+
+        response = client.messages.create(
+            model=MODEL_ID,
+            max_tokens=2048,
+            tools=tools,
+            messages=messages
+        )
+
+        # Check if the agent is done (no tool calls, just text)
+        tool_calls = [block for block in response.content if hasattr(block, "type") and block.type == "tool_use"]
+        text_blocks = [block for block in response.content if hasattr(block, "text")]
+
+        if not tool_calls:
+            # Agent is done -- collect all text as the final answer
+            print("Agent determined it's done.")
+            final_response = " ".join([block.text for block in text_blocks])
+            return final_response
+
+        # Agent made tool calls -- process them
+        print(f"Agent made {len(tool_calls)} tool call(s).")
+        messages.append({"role": "assistant", "content": response.content})
+
+        # Process each tool call
+        tool_results = []
+        for tool_call in tool_calls:
+            print(f"  Calling {tool_call.name}...")
+            result = process_tool_call(tool_call.name, tool_call.input)
+            print(f"    Result: {result[:80]}...")  # Show first 80 chars
+            tool_results.append({
+                "type": "tool_result",
+                "tool_use_id": tool_call.id,
+                "content": result
+            })
+
+        # Add tool results back to messages
+        messages.append({"role": "user", "content": tool_results})
+
+    return "Max iterations reached without completion."
+
+# Run the agent
+if __name__ == "__main__":
+    task = "Research the cost of cloud storage across AWS, Google Cloud, and Azure. Compare and summarize."
+    result = run_multi_step_agent(task)
+    print(f"\n=== FINAL RESULT ===\n{result}")</code></pre>
+    </div>
+
+    <p>This code shows the key pattern:</p>
+    <ol>
+      <li><strong>Plan phase:</strong> the LLM writes out the steps.</li>
+      <li><strong>Execute phase:</strong> a loop that calls tools, processes results, and checks for stopping conditions.</li>
+      <li><strong>Stopping condition:</strong> when the LLM stops calling tools and returns text instead, it's done.</li>
+    </ol>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A multi-step agent has three phases: <strong>plan</strong>, <strong>execute</strong> (loop over tool calls), and a <strong>stop</strong> check.</li>
+        <li>The execute loop appends the assistant's tool-use response, processes every tool call, and feeds the results back in as a new user message &mdash; every iteration.</li>
+        <li>The simplest stopping signal used here: no tool calls in the response means the agent is done and ready to answer.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="stopping-conditions">
+    <span class="subtopic-label">Sub-topic 4 of 6</span>
+    <h2>4. Stopping Conditions and the Stopping Problem</h2>
+
+    <p>Here's a tricky question: <strong>how does the agent know when to stop?</strong> There are several approaches.</p>
+
+    <div class="what-is">
+      <span class="label">1. Token-based stopping</span>
+      Stop when the model produces text that says something like "I'm done" or
+      "Summary:". <strong>Pro:</strong> simple. <strong>Con:</strong> unreliable
+      &mdash; the model might say "I need one more search" and then output text
+      anyway.
+    </div>
+
+    <div class="what-is">
+      <span class="label">2. Tool-call absence</span>
+      Stop when the model doesn't call any tools in its response &mdash; just
+      outputs text. <strong>Pro:</strong> works well in practice; if the model
+      calls tools, it needs more data, and if it doesn't, it's summarizing.
+      <strong>Con:</strong> doesn't guarantee the task is complete (the agent
+      might just give up).
+    </div>
+
+    <div class="what-is">
+      <span class="label">3. Explicit stop tool</span>
+      Add a tool called <code>stop_and_summarize</code> that the agent must call
+      when done.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">stop_and_summarize_tool.py</span>
+      </div>
+      <pre><code>{
+    "name": "stop_and_summarize",
+    "description": "Call this when you have gathered enough information and are ready to provide your final answer.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "summary": {
+                "type": "string",
+                "description": "Your final summary or answer."
+            }
+        },
+        "required": ["summary"]
+    }
+}</code></pre>
+    </div>
+
+    <p>
+      <strong>Pro:</strong> explicit &mdash; it forces the agent to decide it's
+      done. <strong>Con:</strong> requires retraining/prompting the agent to use it.
+    </p>
+
+    <div class="what-is">
+      <span class="label">4. Iteration limit + human-in-the-loop</span>
+      Stop after N iterations. If the agent hasn't finished, let a human review and
+      decide. <strong>Pro:</strong> safe &mdash; prevents infinite loops.
+      <strong>Con:</strong> expensive if called every time.
+    </div>
+
+    <div class="real-world">
+      <span class="label">In practice</span>
+      Use approach #2 (tool-call absence) as your default. It's simple and works.
+      Add iteration limits (#4) as a safety net &mdash; the iteration limit isn't
+      meant to be your primary stopping signal, it's the seatbelt for when the
+      primary signal fails.
+    </div>
+
+    <p>
+      Try it yourself below: a tiny simulated agent loop that demonstrates the
+      tool-call-absence stopping condition plus an iteration-limit safety net,
+      entirely offline (no API key needed) &mdash; edit
+      <code>fake_model_step()</code>'s canned responses and re-run to see how the
+      stopping logic reacts.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">stopping_condition_demo.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="26"># A tiny stand-in for an LLM's response each iteration: either it "calls a
+# tool" (needs more data) or it returns plain text (it's done). Edit this
+# list and re-run to see the stopping logic react differently.
+fake_model_responses = [
+    {"tool_calls": ["search_web('aws s3 pricing')"], "text": None},
+    {"tool_calls": ["search_web('google cloud storage pricing')"], "text": None},
+    {"tool_calls": ["search_web('azure blob storage pricing')"], "text": None},
+    {"tool_calls": [], "text": "Here's the comparison: AWS is cheapest for small amounts, GCS wins on egress, Azure is competitive on the hot tier."},
+]
+
+def fake_model_step(iteration):
+    """Simulate one LLM turn -- returns the pre-scripted response for this iteration."""
+    if iteration < len(fake_model_responses):
+        return fake_model_responses[iteration]
+    # If we ran past the scripted responses, keep "calling tools" forever --
+    # this simulates a model that never stops, so you can see the safety net.
+    return {"tool_calls": ["search_web('something')"], "text": None}
+
+def run_agent_loop(max_iterations=10):
+    iteration = 0
+    while iteration < max_iterations:
+        response = fake_model_step(iteration)
+        print(f"--- Iteration {iteration + 1} ---")
+
+        if not response["tool_calls"]:
+            print("Stopping condition met: no tool calls in this response.")
+            print(f"Final answer: {response['text']}")
+            return "completed"
+
+        print(f"Agent called: {response['tool_calls']}")
+        iteration += 1
+
+    print("Safety net triggered: max iterations reached without stopping.")
+    return "max_iterations_reached"
+
+status = run_agent_loop()
+print(f"\nStatus: {status}")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" &mdash; then try deleting the last entry in <code>fake_model_responses</code> and re-running to see the safety net trigger instead.</div>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Four stopping approaches: token-based text (unreliable), tool-call absence (the practical default), an explicit stop tool (forces a decision), and an iteration limit (a safety net, not a primary signal).</li>
+        <li>In practice: use tool-call absence as the default, and always keep an iteration limit as backup.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="debugging-gotchas">
+    <span class="subtopic-label">Sub-topic 5 of 6</span>
+    <h2>5. Real-World Gotchas: Debugging Multi-Step Agents</h2>
+
+    <p>Multi-step agents fail in predictable ways. Here's how to debug them.</p>
+
+    <div class="what-is">
+      <span class="label">Gotcha 1 &mdash; the agent goes in circles</span>
+      <strong>Symptom:</strong> the agent calls the same tool over and over with
+      slightly different queries. <strong>Cause:</strong> the agent thinks it's
+      learning something new, but it's not. <strong>Fix:</strong> add an explicit
+      stopping rule ("If you've called the same tool twice with similar queries,
+      stop"), or add memory &mdash; pass a summary of prior results back to the
+      agent so it knows what it's already found.
+    </div>
+
+    <div class="what-is">
+      <span class="label">Gotcha 2 &mdash; the agent stops too early</span>
+      <strong>Symptom:</strong> the agent returns a partial answer and stops.
+      <strong>Cause:</strong> the prompt doesn't emphasize thoroughness &mdash; the
+      agent is satisficing (good-enough) instead of optimizing (best).
+      <strong>Fix:</strong> rewrite the system prompt to say "You must verify all
+      aspects of the task before stopping. Don't settle for partial answers."
+    </div>
+
+    <div class="what-is">
+      <span class="label">Gotcha 3 &mdash; the agent calls tools in the wrong order</span>
+      <strong>Symptom:</strong> the agent searches for conclusions before
+      gathering data. <strong>Cause:</strong> the plan was vague, or the agent
+      deviated from it. <strong>Fix:</strong> explicit planning (Part 2) helps.
+      Alternatively, add dependencies: "You must do step A before step B."
+    </div>
+
+    <div class="what-is">
+      <span class="label">Gotcha 4 &mdash; tool results are ignored</span>
+      <strong>Symptom:</strong> the agent calls tools and gets results, but the
+      summary doesn't include them. <strong>Cause:</strong> context window limit
+      &mdash; the agent forgot earlier results. <strong>Fix:</strong> summarize
+      results as you go (after each tool call, have the agent note what it
+      learned), use smaller models to save context per iteration, or implement a
+      "working memory" that the agent updates (e.g., a dict of key findings).
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why does Gotcha 4 (forgetting) happen even when the context window is technically big enough?</summary>
+      <p>
+        It's rarely that the tokens literally fall off the end of the window.
+        More often, a long tool result buries the important fact in the middle of
+        a wall of text, and the model's attention simply doesn't weight it as
+        highly as the most recent turn when it writes the final summary. This is
+        why "summarize results as you go" works even on tasks that technically fit
+        in context: a short, explicit note like <em>"Key finding: GCS is cheapest
+        for egress"</em> is far more likely to survive into the final answer than
+        the same fact sitting inside a 400-word raw search result three turns
+        back.
+      </p>
+    </details>
+
+    <div class="real-world">
+      <span class="label">A debugging habit that catches most of this</span>
+      <ul>
+        <li>Log every iteration: which tool was called, with what query, and what came back.</li>
+        <li>Print the plan before execution starts &mdash; does it actually make sense for the task?</li>
+        <li>When the final answer is missing something, trace it backward: is the missing fact present anywhere in the messages sent to the model? If yes, it's a summarization/prompt problem. If no, it's a search/extraction problem further upstream.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>Loops:</strong> the agent doesn't realize repeated searches aren't yielding new information &mdash; fix with an explicit stopping rule or memory of prior queries.</li>
+        <li><strong>Early stopping:</strong> the prompt doesn't push for thoroughness &mdash; fix by rewriting it to require full verification.</li>
+        <li><strong>Wrong order:</strong> a vague plan or a deviation from it &mdash; fix with explicit planning or explicit step dependencies.</li>
+        <li><strong>Forgotten results:</strong> context window pressure &mdash; fix with running summaries or a working-memory structure.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 6 ============ -->
+  <div class="subtopic" id="memory-and-safeguards">
+    <span class="subtopic-label">Sub-topic 6 of 6</span>
+    <h2>6. Building a More Resilient Agent: Memory and Safeguards</h2>
+
+    <p>
+      Here's a refactor that adds a <strong>working memory</strong> and
+      <strong>stopping safeguards</strong> directly into the loop from Part 3:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">multi_step_agent_v2.py</span>
+      </div>
+      <pre><code>def run_multi_step_agent_v2(user_task: str, max_iterations: int = 10) -> dict:
+    """
+    Improved multi-step agent with working memory and safeguards.
+    """
+    messages = []
+    working_memory = {
+        "task": user_task,
+        "findings": [],  # List of (step, result) tuples
+        "iterations": 0
+    }
+
+    # Plan phase
+    plan_prompt = f"""You are a research agent. Task: {user_task}
+
+Write a detailed plan. Include:
+1. Specific searches or information you need
+2. Order of execution
+3. How you'll know when you're done
+"""
+
+    messages.append({"role": "user", "content": plan_prompt})
+    response = client.messages.create(model=MODEL_ID, max_tokens=1024, tools=tools, messages=messages)
+
+    plan_text = "".join([block.text for block in response.content if hasattr(block, "text")])
+    print(f"Plan:\n{plan_text}\n")
+    working_memory["plan"] = plan_text
+    messages.append({"role": "assistant", "content": response.content})
+
+    # Execution phase with memory updates
+    messages.append({"role": "user", "content": "Execute the plan. For each step, call the tools and then state what you learned."})
+
+    for iteration in range(max_iterations):
+        working_memory["iterations"] = iteration + 1
+        print(f"--- Iteration {iteration + 1} ---")
+
+        # Add context about what we've found so far
+        if working_memory["findings"]:
+            context = "Findings so far:\n" + "\n".join([f"- {f[0]}: {f[1][:100]}" for f in working_memory["findings"][-3:]])
+            # Optionally insert this into the latest message to reinforce memory
+
+        response = client.messages.create(
+            model=MODEL_ID,
+            max_tokens=2048,
+            tools=tools,
+            messages=messages
+        )
+
+        tool_calls = [b for b in response.content if hasattr(b, "type") and b.type == "tool_use"]
+        text_blocks = [b for b in response.content if hasattr(b, "text")]
+
+        # Check stopping condition
+        if not tool_calls:
+            # Agent is done
+            result_text = " ".join([b.text for b in text_blocks])
+            working_memory["final_result"] = result_text
+            working_memory["status"] = "completed"
+            return working_memory
+
+        messages.append({"role": "assistant", "content": response.content})
+
+        # Process tools and record findings
+        tool_results = []
+        for tool_call in tool_calls:
+            result = process_tool_call(tool_call.name, tool_call.input)
+            working_memory["findings"].append((tool_call.name, result))
+            tool_results.append({
+                "type": "tool_result",
+                "tool_use_id": tool_call.id,
+                "content": result
+            })
+            print(f"  {tool_call.name}: {result[:80]}...")
+
+        messages.append({"role": "user", "content": tool_results})
+
+    working_memory["status"] = "max_iterations_reached"
+    return working_memory</code></pre>
+    </div>
+
+    <p>Key improvements over the Part 3 version:</p>
+    <ul>
+      <li><strong>Working memory:</strong> tracks findings and the plan so the agent (and you, when debugging) can refer back to them.</li>
+      <li><strong>Clear stopping:</strong> returns a dict with a <code>status</code> field, so the caller knows whether the agent actually succeeded or hit the iteration limit.</li>
+      <li><strong>Iteration tracking:</strong> makes it much easier to see exactly where things went wrong when they do.</li>
+    </ul>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill in this session's exercise isn't asking an assistant to "build a research agent" &mdash; it's specifying the <em>loop contract</em>: an explicit plan phase that doesn't execute yet, an execution loop with a correctly-implemented tool-call-absence stopping condition, and a working-memory structure that records every finding as it happens (not just at the end). A vague request gets you a loop that looks right but silently drops the stopping check or the memory tracking.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python research agent with an explicit planning phase, a tool-calling execution loop with a working memory dict, and a stopping condition based on tool-call absence..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you
+          use, and compare what it builds against this session's exercise &mdash;
+          does it correctly extract <code>tool_use</code> blocks, does it stop
+          exactly when there are no tool calls (not on a text keyword), and does it
+          track findings in a structure you could actually inspect afterward? That
+          comparison is the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python function run_research_agent(user_task: str, max_iterations: int = 10) -> dict that uses the Anthropic API with one tool (search_web). It must: (1) first send a planning prompt that explicitly tells the model to write out its research steps WITHOUT calling any tools yet, and store that plan text; (2) then send an execution prompt telling the model to carry out the plan using the search_web tool; (3) run a loop up to max_iterations that on each turn calls the API, extracts tool_use blocks and text blocks from response.content, and if there are NO tool_use blocks treats that as the stopping condition and returns a dict with status "completed" and the joined text as final_result; (4) if there ARE tool_use blocks, appends the assistant turn to messages, processes each tool call, appends every {tool, query, result} to a findings list in a working_memory dict, and sends the tool_results back as a new user turn; (5) if the loop exhausts max_iterations without the model stopping, returns working_memory with status "max_iterations_reached". Keep the tool simulated (no real network calls) so it's testable offline.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Working memory is a plain dict tracking the task, the plan, and every finding &mdash; it's what lets you debug (and what lets the agent avoid forgetting) after the fact.</li>
+        <li>Returning a structured status ("completed" vs. "max_iterations_reached") lets the caller distinguish a real answer from a safety-net bailout.</li>
+        <li>None of this replaces good stopping-condition logic (Part 4) &mdash; it complements it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Production research and support agents almost always combine explicit planning, tool-call-absence stopping, an iteration limit, and some form of working memory &mdash; no single technique from this chapter is a complete solution on its own.</li>
+      <li>The debugging habit from Part 5 (log every iteration, trace a missing fact backward through the messages) is the same instinct that debugs any stateful system &mdash; agents just make the "state" a running conversation instead of a database row.</li>
+      <li>Session 4.4 builds directly on this loop: once a single agent can reliably plan, execute, and stop, the next step is running <em>several</em> of them together (orchestrator-worker decomposition, debate, reviewer patterns) for tasks too large for one agent's context or expertise.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Multi-step agents require planning</strong> &mdash; either implicit (let the model figure it out) or explicit (ask for a plan first). Explicit planning is worth its extra API call once a task needs 5+ steps.</li>
+      <li><strong>Stopping is hard.</strong> Use tool-call absence as your default stopping signal, and add an iteration limit as a safety net &mdash; not as the primary signal.</li>
+      <li><strong>Memory matters.</strong> Keep a working memory of findings so the agent (and you, debugging it later) doesn't lose track of what it already learned.</li>
+      <li><strong>Debug systematically.</strong> When an agent fails, check: is the plan wrong? Is it ignoring tool results? Is it looping? Trace a missing fact backward through the actual messages sent to the model.</li>
+      <li><strong>Test offline first.</strong> Mock your tools before spending real API calls &mdash; it catches planning and loop-logic bugs far faster and for free.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a Check
+    button, so you'll know instantly if you've got it. Then the Multi-Step Research
+    Agent exercise puts the plan-execute-stop loop into practice, and the
+    Fact-Checking Agent project pushes it further with conflicting evidence and a
+    veracity score.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

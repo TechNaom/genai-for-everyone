@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.4 Multi-Agent Patterns — GenAI for Everyone</title>
+<meta name="description" content="Go from a single agent to multiple collaborating agents: orchestrator-worker, debate, and reviewer patterns, a working writer + critic build, and how to design communication and stopping conditions for production systems.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.4</span>
+    <span class="badge-difficulty">Advanced</span>
+    <span class="reading-time">35&ndash;40 min read</span>
+  </div>
+  <h1>Multi-Agent Patterns</h1>
+  <p><em>In Session 4.3 you built one agent that planned, searched, and summarized, all by itself. This chapter is about what happens once you stop asking one agent to do everything, and start running several agents that specialize, collaborate, and check each other's work.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#why-multiple-agents">1. Why Go From One Agent to Many?</a>
+    <a href="#three-patterns">2. Three Multi-Agent Patterns</a>
+    <a href="#writer-critic-code">3. The Code: Writer + Critic Pattern</a>
+    <a href="#real-world-patterns">4. Real-World Patterns in Production</a>
+    <a href="#tradeoffs">5. Trade-offs and When NOT to Use Multi-Agent</a>
+    <a href="#resilient-systems">6. Building Resilient Multi-Agent Systems</a>
+  </nav>
+
+  <div class="hook">
+    In Session 4.3, you built a <em>single</em> agent that planned, executed tools, and
+    summarized &mdash; all its own thinking, all in one place. Powerful, but limited in
+    the same way one person doing every job on a project is limited. Real intelligence
+    tends to emerge from <strong>collaboration</strong>: when you have a hard problem, you
+    don't solve it alone &mdash; you get a colleague to challenge your reasoning, you
+    assign specialized tasks to different people, you have one person drive while another
+    navigates and watches for hazards. <strong>Multi-agent systems</strong> apply this
+    same principle to AI. Instead of one big agent doing everything, you run
+    <em>multiple</em> agents that specialize, collaborate, and critique each other. One
+    agent drafts a blog post, another reviews it for accuracy. One agent proposes a plan,
+    another argues against it to surface flaws. One agent gathers data, another
+    synthesizes it. This chapter teaches you three patterns for this &mdash;
+    orchestrator-worker, debate, and reviewer &mdash; and, just as important, when
+    <em>not</em> to reach for any of them.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="why-multiple-agents">
+    <span class="subtopic-label">Sub-topic 1 of 6</span>
+    <h2>1. Why Go From One Agent to Many?</h2>
+
+    <p>
+      A single multi-step agent, of the kind you built in Session 4.3, runs into real
+      limits once tasks get large or quality bars get high.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Three problems a single agent runs into</span>
+      <strong>Context window limits</strong> &mdash; when an agent runs for many
+      iterations, the token count grows. By iteration 10, earlier observations are buried
+      in context; the agent effectively forgets what it learned in step 2.
+      <strong>Specialization</strong> &mdash; some tasks need different reasoning styles.
+      Writing needs creativity and flow. Fact-checking needs rigor and skepticism. One
+      agent trying to do both trades off quality in each.
+      <strong>No verification</strong> &mdash; a single agent can confidently output
+      nonsense, and nothing catches it. If a second agent reviews the output
+      independently, errors surface that the original agent would never have noticed in
+      its own work.
+    </div>
+
+    <p>
+      The fix is straightforward to state: multiple agents, each with a role, instead of
+      one agent doing everything.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">one_agent_vs_many.txt</span>
+      </div>
+      <pre><code>Instead of:
+[Single Agent: Plan -> Search -> Search -> Search -> Summarize]
+
+You run:
+[Agent A: Researcher] -> [Agent B: Writer] -> [Agent C: Critic] -> [Agent D: Fact-Checker]</code></pre>
+    </div>
+
+    <p>
+      Each agent in the second version has fewer iterations, a cleaner context window,
+      and specialized reasoning to work with. Each can do one thing exceptionally well,
+      rather than one agent doing four things adequately.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A single multi-step agent hits three walls as tasks grow: context window limits, the trade-off of needing different reasoning styles at once, and having no independent check on its own output.</li>
+        <li>Multi-agent systems address this by giving each agent fewer iterations, cleaner context, and one specialized job.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="three-patterns">
+    <span class="subtopic-label">Sub-topic 2 of 6</span>
+    <h2>2. Three Multi-Agent Patterns</h2>
+
+    <p>
+      Most multi-agent systems you'll encounter in production reduce down to one of
+      three shapes. They're not mutually exclusive &mdash; real systems sometimes combine
+      them &mdash; but each has a distinct idea behind it, a distinct "when to use it,"
+      and a distinct set of trade-offs.
+    </p>
+
+    <h3>Pattern 1: Orchestrator-Worker</h3>
+
+    <div class="what-is">
+      <span class="label">What is... the orchestrator-worker pattern?</span>
+      One "boss" agent (the orchestrator) coordinates. Other agents (the workers) execute
+      specialized tasks. Use it when a task is naturally decomposable (e.g. "research the
+      market, research competitors, analyze risks"), when the sub-tasks are independent or
+      only loosely coupled, and when you want one clear entity managing the overall flow.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">orchestrator_worker_example.txt</span>
+      </div>
+      <pre><code>User: "Prepare a competitive analysis for Q3"
+
+Orchestrator Agent:
+  "I'll break this into 3 tasks:
+   1. Task A (Research): Analyze Market Trends -> Worker 1
+   2. Task B (Execution): Research Competitors -> Worker 2
+   3. Task C (Integration): Synthesize findings -> Worker 3"
+
+Worker 1: Calls search tools, returns market data
+Worker 2: Calls search tools, returns competitor data
+Worker 3: Integrates both, writes summary
+
+Orchestrator: "Great! Here's the final report..."</code></pre>
+    </div>
+
+    <p>
+      <strong>Pros:</strong> clear separation of concerns; easy to parallelize, since
+      workers can often run at the same time; simple to understand and debug.
+      <strong>Cons:</strong> it requires explicit task decomposition &mdash; you (or the
+      orchestrator) have to figure out how to split the work &mdash; and it has a single
+      point of failure: if the orchestrator itself fails or mis-plans, the whole system
+      fails with it.
+    </p>
+
+    <h3>Pattern 2: Debate</h3>
+
+    <div class="what-is">
+      <span class="label">What is... the debate pattern?</span>
+      Multiple agents argue opposing positions; truth (or at least a well-explored answer)
+      emerges from the disagreement. Use it when a problem has no obvious right answer,
+      when you want to explore multiple perspectives deliberately, and when truth
+      genuinely emerges from healthy disagreement &mdash; e.g. "is this marketing claim
+      true?"
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">debate_example.txt</span>
+      </div>
+      <pre><code>Query: "Is remote work more productive than office work?"
+
+Agent 1 (Pro-Remote):
+  "Studies show: fewer distractions, no commute, flexible hours.
+   Remote workers are 13% more productive (Stanford 2020)."
+
+Agent 2 (Pro-Office):
+  "Counter-evidence: collaboration, mentorship, serendipitous meetings.
+   Office workers have 40% higher engagement (Microsoft survey)."
+
+Agent 3 (Synthesizer):
+  "Context matters: remote is better for focused, individual work;
+   office is better for brainstorming and mentorship."</code></pre>
+    </div>
+
+    <p>
+      <strong>Pros:</strong> it explores trade-offs naturally, it's harder to get stuck in
+      one narrow perspective, and it models how humans actually reason through
+      genuinely uncertain questions. <strong>Cons:</strong> it can spiral into circular
+      arguments, it requires an explicit stopping condition (when do you declare
+      "done debating?"), and it's computationally more expensive than a single pass.
+    </p>
+
+    <h3>Pattern 3: Reviewer</h3>
+
+    <div class="what-is">
+      <span class="label">What is... the reviewer pattern?</span>
+      One or more agents create; others verify independently. Use it when output quality
+      is critical (writing, code, legal documents), when you want genuinely independent
+      verification, and when errors would be costly.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">reviewer_example.txt</span>
+      </div>
+      <pre><code>Task: "Write blog post about LLM safety"
+
+Writer Agent:
+  "Here's a draft about alignment, RLHF, and robustness..."
+
+Fact-Checker Agent:
+  "Fact-check: RLHF acronym is correct, date of GPT-4 release is correct...
+   But this claim about alignment is unsupported by the cited paper."
+
+Style Reviewer Agent:
+  "The tone is too academic. Simplify technical jargon in paragraphs 2-4."
+
+Synthesizer:
+  "Updated draft incorporating feedback..."</code></pre>
+    </div>
+
+    <p>
+      <strong>Pros:</strong> it catches errors the original agent missed; quality scales
+      with the number of reviewers; and each reviewer can specialize (one checks facts,
+      one checks style, and so on). <strong>Cons:</strong> it's expensive &mdash; multiple
+      agents means multiple API calls &mdash; it's slower than a single agent, and
+      reviewers can generate conflicting feedback that someone (or something) has to
+      resolve.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>Orchestrator-worker</strong> suits naturally decomposable, loosely-coupled tasks &mdash; easy to parallelize, but a single point of failure.</li>
+        <li><strong>Debate</strong> suits questions with no obvious right answer &mdash; explores perspectives, but needs an explicit stopping condition.</li>
+        <li><strong>Reviewer</strong> suits high-stakes output &mdash; catches errors independently, but costs more in latency and API calls, and reviewers can disagree.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="writer-critic-code">
+    <span class="subtopic-label">Sub-topic 3 of 6</span>
+    <h2>3. The Code: Writer + Critic Pattern</h2>
+
+    <p>
+      Let's build a <strong>Reviewer pattern</strong> in code: one agent writes, another
+      critiques, and the writer revises. This is the smallest possible multi-agent
+      system &mdash; just two agents &mdash; and it's the shape the Core Path exercise
+      for this session asks you to complete.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">writer_critic_loop.py</span>
+      </div>
+      <pre><code>from anthropic import Anthropic
+
+client = Anthropic()
+MODEL_ID = "claude-3-5-sonnet-20241022"
+
+def writer_agent(topic: str, previous_feedback: str = None) -> str:
+    """
+    Agent 1: Writer. Writes a short essay on a topic.
+    If given feedback, revises based on it.
+    """
+    if previous_feedback:
+        prompt = f"""You are an expert writer.
+Topic: {topic}
+
+Here is previous feedback on your draft:
+{previous_feedback}
+
+Please revise your essay addressing this feedback. Keep it to 3-4 paragraphs."""
+    else:
+        prompt = f"""You are an expert writer.
+Write a clear, engaging essay on: {topic}
+Keep it to 3-4 paragraphs. Use accessible language."""
+
+    messages = [{"role": "user", "content": prompt}]
+    response = client.messages.create(
+        model=MODEL_ID,
+        max_tokens=1024,
+        messages=messages
+    )
+
+    return "".join([block.text for block in response.content if hasattr(block, "text")])
+
+def critic_agent(essay: str) -> str:
+    """
+    Agent 2: Critic. Reviews the essay for clarity, accuracy, and impact.
+    Returns feedback, not a revised essay.
+    """
+    prompt = f"""You are a harsh but fair critic. Your job is to improve writing.
+
+Read this essay:
+{essay}
+
+Provide 2-3 specific, actionable pieces of feedback. Be constructive but direct.
+Focus on: clarity, accuracy, impact, and engagement."""
+
+    messages = [{"role": "user", "content": prompt}]
+    response = client.messages.create(
+        model=MODEL_ID,
+        max_tokens=512,
+        messages=messages
+    )
+
+    return "".join([block.text for block in response.content if hasattr(block, "text")])
+
+def multi_agent_writing_loop(topic: str, num_iterations: int = 2) -> dict:
+    """
+    Two-agent loop: Writer -> Critic -> Revision -> Critic -> Done
+    """
+    result = {"topic": topic, "drafts": [], "feedback_rounds": [], "final_essay": None}
+
+    draft = writer_agent(topic)
+    result["drafts"].append(draft)
+
+    for iteration in range(num_iterations):
+        feedback = critic_agent(draft)
+        result["feedback_rounds"].append(feedback)
+
+        draft = writer_agent(topic, previous_feedback=feedback)
+        result["drafts"].append(draft)
+
+    result["final_essay"] = draft
+    return result</code></pre>
+    </div>
+
+    <p>
+      <strong>What's happening, step by step:</strong> the writer creates an initial
+      essay; the critic reviews it and gives feedback (not a rewrite &mdash; just
+      feedback); the writer revises based on that feedback; and the loop repeats,
+      typically one or two times. The beauty of this split is that each agent is
+      <em>simpler</em> than the single multi-step agent from Session 4.3. The writer
+      doesn't have to critique itself &mdash; a genuinely hard thing for any writer, human
+      or AI, to do well. The critic doesn't have to write. They each specialize, and each
+      does its one job better as a result.
+    </p>
+
+    <p>
+      Since this is a real API call to a live model, it isn't something we can safely run
+      directly in a browser playground. But the <em>shape</em> of the loop &mdash; and in
+      particular, the convergence idea that shows up again in the Pro Path exercise &mdash;
+      is worth seeing run. The playground below simulates the writer and critic with
+      canned strings standing in for real model calls, so you can see the loop structure
+      execute without needing an API key.
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">writer_critic_demo.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="24">
+# A mocked stand-in for the real writer_agent()/critic_agent() functions above,
+# so the LOOP STRUCTURE is visible without an API key or network access.
+
+CANNED_DRAFTS = [
+    "AI is transforming education by personalizing learning at scale.",
+    "AI is transforming education by personalizing learning at scale, with concrete examples like adaptive practice sets and instant feedback loops for students.",
+]
+CANNED_FEEDBACK = [
+    "Add a concrete example -- right now this is all assertion, no evidence.",
+]
+
+def mock_writer_agent(topic, previous_feedback=None, draft_index=[0]):
+    draft = CANNED_DRAFTS[draft_index[0]]
+    draft_index[0] = min(draft_index[0] + 1, len(CANNED_DRAFTS) - 1)
+    return draft
+
+def mock_critic_agent(essay, feedback_index=[0]):
+    fb = CANNED_FEEDBACK[min(feedback_index[0], len(CANNED_FEEDBACK) - 1)]
+    feedback_index[0] += 1
+    return fb
+
+def multi_agent_writing_loop(topic, num_iterations=1):
+    result = {"topic": topic, "drafts": [], "feedback_rounds": [], "final_essay": None}
+
+    draft = mock_writer_agent(topic)
+    result["drafts"].append(draft)
+    print(f"=== Initial draft ===\n{draft}\n")
+
+    for i in range(num_iterations):
+        feedback = mock_critic_agent(draft)
+        result["feedback_rounds"].append(feedback)
+        print(f"=== Critic feedback (round {i + 1}) ===\n{feedback}\n")
+
+        draft = mock_writer_agent(topic, previous_feedback=feedback)
+        result["drafts"].append(draft)
+        print(f"=== Revised draft (round {i + 1}) ===\n{draft}\n")
+
+    result["final_essay"] = draft
+    return result
+
+result = multi_agent_writing_loop("The future of AI in education", num_iterations=1)
+print("=== FINAL ESSAY ===")
+print(result["final_essay"])</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" to see the mocked writer + critic loop execute.</div>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The writer + critic loop is a two-agent Reviewer pattern: writer drafts, critic gives feedback (not a rewrite), writer revises, repeat.</li>
+        <li>Each agent is simpler than a single agent trying to write and critique itself &mdash; specialization is the whole point.</li>
+        <li>The mocked playground demo shows the loop's <em>shape</em> without needing a live API call.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="real-world-patterns">
+    <span class="subtopic-label">Sub-topic 4 of 6</span>
+    <h2>4. Real-World Patterns in Production</h2>
+
+    <p>
+      Each pattern from Part 2 shows up, largely unchanged, in real production systems.
+      Seeing them applied to concrete domains makes the abstractions click.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Orchestrator-Worker in the wild &mdash; a hiring pipeline</span>
+      <ul>
+        <li><strong>Orchestrator</strong> &rarr; Recruiter Agent: screen r&eacute;sum&eacute;s</li>
+        <li><strong>Orchestrator</strong> &rarr; Interview Agent: conduct a technical interview</li>
+        <li><strong>Orchestrator</strong> &rarr; Reference Agent: check references</li>
+        <li><strong>Orchestrator</strong> &rarr; Decision Agent: synthesize everything into a hiring decision</li>
+      </ul>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Debate in the wild &mdash; risk assessment</span>
+      <ul>
+        <li><strong>Bull Agent:</strong> "Stock price will rise because..."</li>
+        <li><strong>Bear Agent:</strong> "No, it will fall because..."</li>
+        <li><strong>Moderator:</strong> "Given both arguments, the risk is..."</li>
+      </ul>
+    </div>
+
+    <div class="real-world">
+      <span class="label">Reviewer in the wild &mdash; code review</span>
+      <ul>
+        <li><strong>CodeWriter Agent:</strong> writes Python code</li>
+        <li><strong>SecurityReviewer:</strong> "This has a SQL injection vulnerability"</li>
+        <li><strong>StyleReviewer:</strong> "This variable name is unclear"</li>
+        <li><strong>PerformanceReviewer:</strong> "This loop is O(n&sup2;), can be O(n)"</li>
+        <li>&rarr; <strong>CodeWriter</strong> revises based on all three</li>
+      </ul>
+    </div>
+
+    <p>
+      Notice the same shape recurring across very different domains: hiring, financial
+      risk, and code review all reduce to one of the three patterns from Part 2, once you
+      strip away the domain-specific vocabulary. That's a useful diagnostic when you're
+      designing a new system &mdash; ask "which of these three shapes does my problem
+      actually have?" before reaching for a more exotic architecture.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A hiring pipeline is orchestrator-worker: one coordinator, several specialized workers.</li>
+        <li>A bull/bear/moderator risk assessment is the debate pattern applied to finance.</li>
+        <li>A code review pipeline with a security, style, and performance reviewer is the reviewer pattern applied to engineering.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="tradeoffs">
+    <span class="subtopic-label">Sub-topic 5 of 6</span>
+    <h2>5. Trade-offs and When NOT to Use Multi-Agent</h2>
+
+    <p>
+      Multi-agent systems are not a strict upgrade over a single agent. They trade
+      latency and cost for quality, and that trade isn't always worth making.
+    </p>
+
+    <div class="real-world">
+      <span class="label">The honest trade-off</span>
+      <ul>
+        <li><strong>Single-agent is better</strong> when the task is simple (one step, one answer), when cost matters (more agents means more API calls), when latency matters (agents typically run sequentially), or when consistency is critical (multiple agents might disagree with each other).</li>
+        <li><strong>Multi-agent is worth it</strong> when output quality is critical, when the task naturally decomposes into distinct sub-problems, when different specialized reasoning genuinely helps, and when you have the budget and time for multiple calls.</li>
+      </ul>
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: how do you decide, for a specific task, which side of that line it falls on?</summary>
+      <p>
+        A useful test, borrowed from the same instinct behind prompt chaining: could you
+        describe the task's quality bar in one sentence without the phrase "it depends"?
+        If a wrong answer is merely inconvenient, a single agent is probably fine. If a
+        wrong answer is expensive &mdash; a legal document with a wrong claim, marketing
+        copy with an unsupported number, code with a security hole &mdash; that's the
+        signal that paying for a second (or third) independent pass is worth it. The
+        mistake to avoid in either direction: don't add agents "because it's more
+        advanced," and don't skip them "to save money" on a task where a real error
+        would cost far more than the extra API calls.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Multi-agent systems trade latency and cost for quality &mdash; not a free upgrade.</li>
+        <li>Favor a single agent for simple, cheap, fast, or consistency-critical tasks.</li>
+        <li>Favor multi-agent when quality is critical, the task decomposes naturally, and you have budget for it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 6 ============ -->
+  <div class="subtopic" id="resilient-systems">
+    <span class="subtopic-label">Sub-topic 6 of 6</span>
+    <h2>6. Building Resilient Multi-Agent Systems</h2>
+
+    <p>
+      Once you decide multi-agent is the right call, three design questions determine
+      whether the system is genuinely resilient or just a more expensive way to produce
+      the same fragility.
+    </p>
+
+    <h3>1. Communication protocol</h3>
+    <p>Agents need to understand each other's output format.</p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">communication_protocol.py</span>
+      </div>
+      <pre><code># Good: Structured output
+feedback = {
+    "clarity_issues": ["Paragraph 2 is confusing"],
+    "factual_errors": ["Date of GPT-4 release is wrong"],
+    "impact_improvements": ["Add a concrete example"]
+}
+
+# Bad: Unstructured
+"This is okay but could be better in some ways"</code></pre>
+    </div>
+
+    <h3>2. Stopping conditions</h3>
+    <p>When does the multi-agent loop end?</p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">stopping_condition.py</span>
+      </div>
+      <pre><code># Example: Stop after feedback converges (no new issues)
+previous_feedback = "..."
+current_feedback = "..."
+
+if are_similar(previous_feedback, current_feedback):
+    print("Feedback converged, stopping.")
+else:
+    continue_loop()</code></pre>
+    </div>
+
+    <p>
+      "Converged" here means the feedback pattern has stabilized &mdash; reviewers are no
+      longer surfacing new issues &mdash; not that every agent literally agrees on
+      everything. It's a stopping condition for the loop, not a consensus requirement.
+      The Pro Path exercise for this session implements exactly this idea with a
+      similarity-based convergence score.
+    </p>
+
+    <h3>3. Conflict resolution</h3>
+    <p>When agents disagree, who wins?</p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">conflict_resolution.py</span>
+      </div>
+      <pre><code># Option A: First agent wins
+use_agent_a_output()
+
+# Option B: Majority vote (if 3+ agents)
+if vote_majority(agents):
+    use_majority_output()
+
+# Option C: Human decides
+ask_human_to_choose()</code></pre>
+    </div>
+
+    <p>
+      None of these three is universally "correct" &mdash; the right choice depends on
+      the stakes. For a low-stakes internal tool, first-agent-wins or majority vote is
+      often fine. For a legal or financial system, routing genuine disagreement to a
+      human reviewer is usually the responsible default.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><strong>Communication protocol:</strong> use structured formats (dicts/JSON with named fields), not free-form prose, so agents can reliably parse each other's output.</li>
+        <li><strong>Stopping conditions:</strong> define them before building &mdash; convergence (feedback stabilizes) is one common approach.</li>
+        <li><strong>Conflict resolution:</strong> decide in advance whether disagreement is resolved by first-agent-wins, majority vote, or a human in the loop &mdash; and let the stakes of the task drive that choice.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Multi-agent systems trade latency for quality.</strong> More agents means more API calls means slower, but potentially much better output.</li>
+      <li><strong>Orchestrator-worker</strong> suits decomposable tasks. <strong>Debate</strong> suits exploring perspectives. <strong>Reviewer</strong> suits verification.</li>
+      <li><strong>Agents must communicate clearly</strong> &mdash; use structured formats, not prose, so feedback is unambiguous and parsable.</li>
+      <li><strong>Define stopping conditions before building</strong> &mdash; know when the loop ends before you write the loop.</li>
+      <li><strong>Cost and latency matter in production.</strong> Don't add agents unless they add real value.</li>
+      <li><strong>Test with mocked agents first</strong>, before spending real API calls on a system whose structure you haven't verified yet.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a Check
+    button, so you'll know instantly if you've got it. Then the Core Path exercise has
+    you complete a real writer + critic loop, and the Pro Path project extends it into a
+    three-reviewer system with convergence checking.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.2 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 4.2: function/tool calling — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-2" data-chapter-id="session-4-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.2 Interview Prep</span>
+    <span class="reading-time">9 min read</span>
+  </div>
+  <h1>Interview Questions: Function / Tool Calling</h1>
+  <p>
+    Tool calling shows up in almost every "have you actually built an agent"
+    interview question, and interviewers can tell within thirty seconds whether
+    a candidate has the mental model right or is repeating "the AI decides to
+    run code" without understanding what that sentence hides. Each question
+    below includes what a strong answer sounds like, common red flags, and a
+    natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> A junior engineer says, "I gave the model a tool, so now it can run code." What's wrong with that statement, and how would you correct it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The model still can't run anything &mdash; it has no execution environment, no hands, no permissions. Giving it a tool means giving it a name, a description, and an input schema; when the model "calls" the tool, it just generates a structured request naming the tool and the arguments it wants to use. Your application is entirely responsible for actually executing the real function and reporting the result back. A strong candidate reframes this precisely: tool calling is a communication protocol between a model that can reason but can't act, and code that can act but can't decide when to.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Agreeing with the junior engineer's framing, or being unable to name concretely what step your own code is responsible for (executing the function, and reporting real success/failure back).</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What happens if the model requests a tool call for a tool name that doesn't exist in your schema list?" (Strong answer: your code should handle this defensively &mdash; return an explicit error result rather than crashing, the same honest-failure-reporting principle that applies to any other tool failure.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Walk me through what happens, step by step, between a model deciding to call a tool and that tool's result reaching the model again.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>You send the model a message plus a list of tool definitions (name, description, schema). The model decides a tool call is the best response and returns a structured signal &mdash; the tool's name, the arguments, and an identifier for this specific call &mdash; instead of ordinary text. Your code executes the real function with those arguments. You send the actual output back as a new message, tagged with that same identifier, and it must come immediately after the tool-use message with nothing in between, since the model reads the conversation sequentially. The model then reads the result and either calls another tool or produces a final answer incorporating it.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Skipping the ordering constraint entirely, or describing the tool result as "sent to the model" without mentioning it must be tagged to the specific call it answers.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"What would go wrong if you appended the tool result two messages later instead of immediately after the request?" (The model has no reliable way to connect the result to the original request &mdash; especially once more than one tool call is in flight &mdash; and its next response becomes unpredictable.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Your tool-calling agent sometimes calls the wrong tool, or doesn't call a tool when it should. Where do you look first to fix this, and why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Start with the tool's description and input schema, not the model. A model decides to call a tool through the same next-token-prediction process behind all of its other output &mdash; there's no separate "decision module" to debug. Unreliable or unexpected tool-calling behavior is almost always a sign that the description is vague about when to use the tool, or that the schema doesn't clearly specify what's expected &mdash; the same way a vague prompt produces a vague or inconsistent response. Concluding "the model is unreliable" skips past the much more common and far more fixable explanation: the specification under-determined the behavior.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Jumping straight to "switch to a bigger/different model" without first inspecting the tool definitions, or treating the fix as a mysterious prompt-engineering art rather than the same clarity work used on any other prompt.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You clarified the description and it still misfires on one specific question. What's your next move?" (Add a concrete example to the conversation showing the kind of question that should &mdash; or shouldn't &mdash; trigger this tool, and re-test that exact question to confirm the fix actually worked.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Why does a failed tool call need to report failure back to the model explicitly, instead of just being skipped or left out of the conversation?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The model has no other way to know a tool call failed &mdash; it isn't watching your code execute, so if you skip the result or return nothing, the model is left reasoning as if the call is still pending, or worse, may fabricate a plausible-sounding outcome. Returning an explicit error result (e.g. a dict with an <code>"error"</code> key) lets the model see exactly what happened and respond honestly &mdash; telling the user weather data isn't available, for instance, rather than guessing a forecast. This is the same defensive design principle from structured outputs and graceful failure design earlier in the course, applied to tool results specifically.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Suggesting the program should just crash on a tool failure, or that silently omitting a result is acceptable because "the model will figure it out."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me a concrete example of a tool call failing silently causing a worse outcome than an honest error." (e.g. a weather tool returning nothing for an unlisted city, and the model then guessing a plausible-sounding but fabricated forecast instead of saying data isn't available.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> Design a tool schema for a "search_web" function that an agent will use. What arguments would you include, and how would you prevent the model from using the tool incorrectly?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A schema with a required <code>query</code> string field (with a description guiding query shape, e.g. "1-10 words recommended") and an optional <code>num_results</code> integer with sane bounds and a default. Clarity in the field descriptions actively guides the model's behavior &mdash; the same way a tool's top-level description does &mdash; and type/required-field constraints reduce the space of malformed calls your code has to defend against. A strong candidate also flags what your code still needs to handle even with a good schema: what happens if the model sends a 500-word query, or an out-of-range <code>num_results</code> &mdash; reject, clamp, or truncate, and test that the tool isn't used with invalid arguments or hallucinated tool names.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Vague field descriptions ("query: some text"), no constraints on types or ranges, or assuming the schema alone guarantees correct usage with no validation logic in the tool's own execution code.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The model keeps sending generic queries like 'information' or 'facts.' How do you fix it?" (Tighten the query field's description with concrete guidance and examples of specific vs. generic queries &mdash; the same description-clarity fix used for any unreliable tool-calling behavior.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> A model calling a tool does not mean the model <code>____</code> the underlying code &mdash; your application is what actually runs it.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="executes,runs" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> The three required parts of a tool definition are its name, its <code>____</code>, and its input schema.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="description" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A tool's description functions as a kind of <code>____</code> that the model reads to decide when and why to call that specific tool.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="prompt" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> After a model requests a tool call, your code must execute it and send back a <code>____</code>, tagged so the model can match it to the original request.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="tool result,result" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> A tool that fails should return an honest <code>____</code> result rather than crashing or failing silently.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="error" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about tool calling in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for the reframe (a protocol, not a superpower) and concrete debugging instincts (fix the spec, not the model) &mdash; not textbook recall of the round-trip steps alone.</li>
+    <li>Pair this set with Session 4.1's agent-definition questions for a more realistic mixed-topic mock interview on agents.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-4-3-multi-step-task-agents/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

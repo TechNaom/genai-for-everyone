@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.1 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 4.1: agent vs. workflow vs. chatbot, the plan-act-observe loop, and stopping conditions — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-1" data-chapter-id="session-4-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.1 Interview Prep</span>
+    <span class="reading-time">8 min read</span>
+  </div>
+  <h1>Interview Questions: Agents, Workflows &amp; the Plan-Act-Observe Loop</h1>
+  <p>
+    "Agent" is one of the most abused words in a GenAI interview right now
+    &mdash; interviewers use these questions specifically to separate
+    candidates who can precisely define the term from candidates who just
+    reach for it whenever an LLM is involved. Each question below includes
+    what a strong answer sounds like, common red flags, and a natural
+    follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> How would you explain the difference between an agent and a workflow to a non-technical stakeholder who keeps calling everything an agent?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A workflow is a fixed sequence of steps a person designed in advance &mdash; even if it calls an LLM at several points, the order and the branches were decided ahead of time. An agent is a system where the model itself decides what to do next based on what it just observed, repeatedly, until it judges the goal is met. A strong candidate reaches for the concrete test from the chapter: if you swapped the model's decisions for a flowchart a person designed, would the system behave differently on a case nobody specifically planned for? If no, it's a workflow with an LLM inside it. If yes, it's a real agent. Framing it this way gives a non-technical stakeholder something checkable, not just vocabulary.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Answering only with buzzwords ("agents are autonomous, workflows aren't") without a concrete test or example; or being unable to name a system that uses an LLM but is <em>not</em> an agent by this definition.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Give me an example of a system that uses three separate LLM calls but is still just a workflow." (Strong answer: any fixed pipeline like summarize &rarr; classify &rarr; conditionally escalate, where the branching condition was written by a programmer in advance, not decided by the model reacting to something novel.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Describe a real or hypothetical system where making it "fully agentic" would actually be a worse engineering decision than keeping it a workflow.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Any high-frequency, low-variance task is a good example &mdash; a scheduled weekly reminder email, a fixed data-extraction pipeline with a stable input format, a routine report generator. These tasks don't have "genuinely distinct sub-problems that need in-the-moment decision-making" &mdash; the steps are the same every time. Making them fully agentic adds latency, cost (more model calls), and unpredictability (harder to test exhaustively, new failure modes like an infinite loop or a wrong tool call) without buying any real flexibility, because there was never a decision that needed making at run time. A strong candidate connects this to the chapter's point that most production systems should be mostly workflow, with only a small, deliberately-scoped agentic piece where flexibility actually earns its cost.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Claiming agents are strictly "more advanced, therefore always better," or being unable to name a concrete cost of making something needlessly agentic (predictability, testability, latency, spend).</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your team already built the fully agentic version and it works, but it's expensive and occasionally does something weird. Do you rip it out?" (Pragmatic answer: not necessarily &mdash; first measure whether the flexibility is actually being used on real traffic; if the task's variance turns out to be low in practice, scale it back to a workflow with an LLM at the one or two steps that genuinely benefit.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> What's the practical difference between a system failing because it crashed and a system failing because it confidently gave a wrong answer? Which is worse, and why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A crash is loud and immediate &mdash; you know something broke, and you can often see exactly where (the rigid workflow in this chapter's trace raises a <code>KeyError</code> the moment it hits a city with no data). A confidently wrong answer is quiet: nothing errors out, the system returns something plausible-looking, and unless someone happens to fact-check it, it can propagate downstream and get acted on. A strong candidate argues the quiet failure is usually worse in production, precisely because there's no signal that anything went wrong &mdash; it depends on someone noticing the output was incorrect, which is a much weaker safety net than a stack trace. This is exactly the shape of the Pro-path project for this session: the rigid version there doesn't crash on the contradiction case, it just confidently gives the wrong advice.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Claiming crashes are always worse "because they're visible to users" without weighing the cost of an undetected wrong answer; or treating the two failure modes as equivalent without reasoning about detectability.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you design a system to convert more of its 'confidently wrong' failures into 'loud and detectable' ones?" (Good answers mention grounding every claim in a traceable tool result, logging intermediate observations, and adding checks that compare an answer's implications against the evidence it was supposedly based on &mdash; exactly the re-planning check this session's Pro-path project builds.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Walk through what "stopping condition" means for an agent loop, and describe one way an agent loop could fail to stop even when it should.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A stopping condition is the explicit rule that ends the plan-act-observe loop &mdash; without one, nothing inherently tells the model it's done. Common forms: the model itself emits a "done" or final-answer signal once it judges the goal is met, a hard iteration/step limit acts as a safety net, or a specific success condition is checked after each observation. A concrete failure mode: the model keeps calling the same tool with slightly different arguments because it never becomes confident it has "enough" information, or because the goal itself was ambiguously specified and the model can't tell when it's satisfied &mdash; so it loops until an external limit (if one exists) finally cuts it off.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Assuming the model will "just know" when to stop without any explicit mechanism, or naming only a step-count limit without discussing why the loop got stuck in the first place.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You add a hard iteration limit of 10 as a safety net, and now the agent sometimes stops too early on legitimately hard tasks. What does that tell you?" (Strong answer: a hard limit alone treats the symptom, not the cause &mdash; the real fix is usually a clearer success condition or better prompting about what "done" looks like, with the iteration limit kept only as a last-resort safety net, not the primary stopping mechanism.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> You're asked to build three systems: (A) a reminder email sent every Monday morning, (B) a tool that researches a topic and answers follow-up questions about it dynamically, (C) a tool that extracts structured data from PDFs with a fixed, known layout. For each, would you use an agent or a workflow? Why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>(A) is a workflow &mdash; there's no decision to make at run time, just a scheduled action; an agent here is pure overhead. (B) is a strong candidate for an agent &mdash; the topic changes every time, the model needs to decide what to search for and when it has enough evidence, which is exactly "deciding what to do next based on what just happened." (C), somewhat counterintuitively, is usually still a workflow if the layout is genuinely fixed and known in advance &mdash; a single well-tested extraction prompt (or even non-LLM parsing) handles it more cheaply and predictably than a full agent loop, since there isn't a real decision being made about what to do next. A strong candidate frames the decision rule explicitly: agent when the task has genuine, un-enumerable variability and benefits from in-the-moment reasoning; workflow when the steps are predictable and repeatable, even if an LLM is involved at one stage.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Defaulting to "agent" for all three because it "sounds more capable," or treating (C) as automatically agentic just because it involves an LLM parsing unstructured-looking text.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"For (C), what would change your answer and push you toward an agent instead?" (Good answer: if the PDF layouts turn out to vary unpredictably across documents &mdash; different vendors, different formats &mdash; such that no single fixed extraction approach handles all of them, that's exactly the kind of un-enumerable variability that justifies letting the model decide how to handle each document rather than hard-coding every case.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> An agent's next action is chosen based on what just <code>____</code>, not a fixed pre-written plan.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="happened" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> A workflow's <code>____</code> of steps is fixed in advance, even if it calls an LLM at several points.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="sequence,order" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> The plan-act-observe loop's middle phase, where something actually happens outside the model, is called <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="act,acting" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Most production systems should be mostly workflow, with only a small, carefully-scoped <code>____</code> piece.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="agentic" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Every agent loop needs an explicit answer to how it knows when to <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="stop" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about agents vs. workflows in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers in this space are specifically listening for whether you reach for the flowchart test and can name concrete costs of over-using agents &mdash; not just correct-sounding vocabulary.</li>
+    <li>Pair this set with Session 4.3's stopping-condition content once you've built it, for a fuller picture of how "does it know when to stop" gets answered in real code.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-4-2-function-tool-calling/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

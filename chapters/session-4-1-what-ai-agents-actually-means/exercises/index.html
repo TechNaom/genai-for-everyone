@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.1 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercises for Session 4.1: trace and break the plan-act-observe agent loop — complete a reactive agent that survives a tool failure, and a rigid workflow that's meant to crash on it.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-1" data-chapter-id="session-4-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.1 Exercises</span>
+    <span class="reading-time">20 min, hands-on</span>
+  </div>
+  <h1>Exercises: Trace and Break the Agent Loop</h1>
+  <p>
+    Build two small, fully-offline programs that make the chapter's central
+    distinction concrete: a <strong>reactive agent loop</strong> (plan &rarr;
+    act &rarr; observe, where the next step depends on what a tool actually
+    returned) versus a <strong>rigid workflow</strong> (a fixed sequence that
+    assumes a tool result will always look a certain way). No live LLM calls are
+    used here &mdash; today's goal is to internalize the <em>loop structure</em>
+    itself before you build a real tool-calling agent in Session 4.2. Both tools
+    (<code>calculator</code> and <code>weather_lookup</code>) are real, fully
+    working Python functions, even though the "planning" decisions in this
+    exercise are ones you write yourself rather than ones a model makes.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 installed (check with <code>python --version</code>).
+    Download <code>starter.py</code> below, then run it from a terminal with
+    <code>python starter.py</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. The two tools (<code>calculator</code> and
+    <code>weather_lookup</code>) are already complete and working &mdash; don't
+    modify them. Two functions have TODOs for you to finish.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Complete the plan-act-observe loop</h3>
+    <p>Finish <code>run_agent_loop</code> so it: calls <code>calculator</code> to get the umbrella total cost, calls <code>weather_lookup</code> for the given city, and builds a <code>final_answer</code> string using <em>only</em> values that came from those tool calls &mdash; no invented numbers. If <code>weather_lookup</code> returns an <code>"error"</code> key, the answer must say data isn't available; it must <strong>not</strong> try to read <code>chance_of_rain_pct</code> in that case. That one check &mdash; inspecting the observation before deciding what to say &mdash; is the actual "agent" part of this function.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Complete the rigid workflow</h3>
+    <p>Finish <code>rigid_workflow</code> by writing the one missing line: index <code>weather["chance_of_rain_pct"]</code> directly, with no error handling. This is deliberately fragile &mdash; you are <strong>not</strong> meant to "fix" it. The point is to watch it crash on a city <code>weather_lookup</code> doesn't know about, and compare that to how your <code>run_agent_loop</code> from Task 1 handles the exact same situation.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Run both on a known and an unknown city</h3>
+    <p>Run the file. You should see <code>run_agent_loop("Chicago")</code> produce a grounded final answer recommending an umbrella, <code>run_agent_loop("Nowheresville")</code> produce an honest "no data" answer with no crash, <code>rigid_workflow("Chicago")</code> succeed, and <code>rigid_workflow("Nowheresville")</code> raise a <code>KeyError</code> &mdash; that crash is expected, not a bug to fix.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Explain the Crash</h3>
+    <p><code>rigid_workflow</code> crashes only when given a city outside <code>WEATHER_DB</code> &mdash; it works fine for Chicago. Explain in your own words why it crashed on the unknown city, and what that tells you about why broken workflows often look correct in demos (they've only ever been run on the "happy path" cases someone thought to test).</p>
+    <p>Then answer the harder follow-up: you could "fix" <code>rigid_workflow</code> with a <code>try/except KeyError</code> around that one line. What's the actual difference between that patch and what <code>run_agent_loop</code> does? Think about how many <em>different</em> unanticipated tool failures each approach could handle without a programmer writing a new branch for each one &mdash; a rate limit error, a malformed city name, a value in the wrong units. One catches exactly the case you anticipated; the other reasons over whatever it actually observes.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">rigid_workflow.py</span>
+      </div>
+      <pre><code>def rigid_workflow(city: str):
+    cost = calculator("3 * 14.50")
+    weather = weather_lookup(city)
+    rain_chance = weather["chance_of_rain_pct"]  &#35; crashes if "error" key present
+    return f"{rain_chance}% chance of rain. Total cost: ${cost:.2f}"</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>def run_agent_loop(city: str, num_umbrellas: int = 3, price_each: float = 14.50):
+    scratchpad = {}
+
+    &#35; TODO: Call the calculator tool to compute num_umbrellas * price_each.
+    scratchpad["total_cost"] = None  &#35; &lt;-- replace this
+
+    &#35; TODO: Call weather_lookup(city) and store the result.
+    scratchpad["weather"] = None  &#35; &lt;-- replace this
+
+    &#35; TODO: Build final_answer using ONLY scratchpad values. If
+    &#35; scratchpad["weather"] has an "error" key, say data isn't available
+    &#35; -- do NOT read chance_of_rain_pct in that case.
+    final_answer = None  &#35; &lt;-- replace this
+
+    scratchpad["final_answer"] = final_answer
+    return scratchpad
+
+
+def rigid_workflow(city: str):
+    cost = calculator("3 * 14.50")
+    weather = weather_lookup(city)
+    &#35; TODO: read weather["chance_of_rain_pct"] directly, no try/except
+    rain_chance = None  &#35; &lt;-- replace this: weather[???]
+    return f"{rain_chance}% chance of rain. Total cost: ${cost:.2f}"</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader. What matters is that <code>run_agent_loop</code>
+    checks <code>"error" in weather</code> before ever touching
+    <code>chance_of_rain_pct</code>, and that <code>rigid_workflow</code> reads
+    the field unconditionally and crashes as designed. Compare your structure
+    against <code>solution.py</code> (run it with <code>python
+    solution.py</code>) once you've made a genuine attempt &mdash; it also
+    includes a few assertions so you can confirm your version matches the
+    expected shape.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

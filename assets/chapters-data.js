@@ -118,12 +118,52 @@ window.GFE_MODULES = [
     title: "Week 4 — Tool Use, Agents & Automation",
     examPath: "assessments/written-exams/week-04-exam.md",
     chapters: [
-      { id: "session-4-1", num: "4.1", title: "What \"AI Agents\" Actually Means", path: null, subtopics: [] },
-      { id: "session-4-2", num: "4.2", title: "Function / Tool Calling", path: null, subtopics: [] },
-      { id: "session-4-3", num: "4.3", title: "Multi-Step Task Agents", path: null, subtopics: [] },
-      { id: "session-4-4", num: "4.4", title: "Multi-Agent Patterns", path: null, subtopics: [] },
-      { id: "session-4-5", num: "4.5", title: "Automation Workflows — No/Low-Code + Code", path: null, subtopics: [] },
-      { id: "session-4-6", num: "4.6", title: "Week 4 Lab — Mini Build Day", path: null, subtopics: [] }
+      { id: "session-4-1", num: "4.1", title: "What \"AI Agents\" Actually Means", path: "chapters/session-4-1-what-ai-agents-actually-means/lesson.html", subtopics: [
+        { id: "what-agent-actually-means", title: "The Word Everyone Uses and Almost Nobody Defines" },
+        { id: "chatbot-workflow-agent", title: "The Three Things People Conflate" },
+        { id: "plan-act-observe-loop", title: "The Loop, Concretely — Plan, Act, Observe" },
+        { id: "why-it-matters-this-week", title: "Why This Matters for What You Build This Week" }
+      ] },
+      { id: "session-4-2", num: "4.2", title: "Function / Tool Calling", path: "chapters/session-4-2-function-tool-calling/lesson.html", subtopics: [
+        { id: "real-hands", title: "Giving the Model Real Hands" },
+        { id: "three-things", title: "The Three Things Every Tool Needs" },
+        { id: "round-trip", title: "What Actually Happens When a Model \"Calls\" a Tool" },
+        { id: "when-decide", title: "When Does a Model Actually Decide to Call a Tool?" },
+        { id: "agent-loop", title: "Connecting Back to the Agent Loop" }
+      ] },
+      { id: "session-4-3", num: "4.3", title: "Multi-Step Task Agents", path: "chapters/session-4-3-multi-step-task-agents/lesson.html", subtopics: [
+        { id: "anatomy-of-a-multi-step-task", title: "The Anatomy of a Multi-Step Task" },
+        { id: "implicit-vs-explicit-planning", title: "Planning in Agents: Implicit vs. Explicit" },
+        { id: "building-the-agent-loop", title: "Building a Multi-Step Task Agent" },
+        { id: "stopping-conditions", title: "Stopping Conditions and the Stopping Problem" },
+        { id: "debugging-gotchas", title: "Real-World Gotchas: Debugging Multi-Step Agents" },
+        { id: "memory-and-safeguards", title: "Building a More Resilient Agent" }
+      ] },
+      { id: "session-4-4", num: "4.4", title: "Multi-Agent Patterns", path: "chapters/session-4-4-multi-agent-patterns/lesson.html", subtopics: [
+        { id: "why-multiple-agents", title: "Why Go From One Agent to Many?" },
+        { id: "three-patterns", title: "Three Multi-Agent Patterns" },
+        { id: "writer-critic-code", title: "The Code: Writer + Critic Pattern" },
+        { id: "real-world-patterns", title: "Real-World Patterns in Production" },
+        { id: "tradeoffs", title: "Trade-offs and When NOT to Use Multi-Agent" },
+        { id: "resilient-systems", title: "Building Resilient Multi-Agent Systems" }
+      ] },
+      { id: "session-4-5", num: "4.5", title: "Automation Workflows — No/Low-Code + Code", path: "chapters/session-4-5-automation-workflows-nolow-code-code/lesson.html", subtopics: [
+        { id: "three-types-of-automation", title: "The Three Types of Automation" },
+        { id: "decision-framework", title: "Decision Framework" },
+        { id: "email-triage-example", title: "Real-World Example: Email Triage Workflow" },
+        { id: "building-hybrid-workflows", title: "Building Hybrid Workflows" },
+        { id: "no-code-low-code-tools", title: "No-Code/Low-Code Tools" },
+        { id: "cost-analysis", title: "Cost Analysis" },
+        { id: "debugging-hybrid-workflows", title: "Debugging Hybrid Workflows" }
+      ] },
+      { id: "session-4-6", num: "4.6", title: "Week 4 Lab — Mini Build Day", path: "chapters/session-4-6-week-4-lab-mini-build-day/lesson.html", subtopics: [
+        { id: "system-design", title: "System Design: What the Agent Actually Needs to Do" },
+        { id: "tools-required", title: "Tools Required: What the Agent Can Call" },
+        { id: "the-workflow", title: "The Workflow, Phase by Phase" },
+        { id: "implementation-outline", title: "Implementation Outline: The ResearchAgent Class" },
+        { id: "what-makes-real", title: "What Makes This Real (Not a Toy Demo)" },
+        { id: "evaluation-criteria", title: "Evaluation Criteria: Judging Your Own Build" }
+      ] }
     ]
   },
   {

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.6 Week 4 Lab — Mini Build Day — GenAI for Everyone</title>
+<meta name="description" content="Capstone lab for Week 4: build a real research agent that plans searches, executes them, analyzes findings, and drafts a cited report — pulling together everything from agent basics through automation trade-offs.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-6">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Week 4 · Session 4.6</span>
+    <span class="badge-difficulty">Capstone</span>
+    <span class="reading-time">~30&ndash;35 min (mostly building)</span>
+  </div>
+  <h1>Week 4 Lab &mdash; Mini Build Day</h1>
+  <p><em>Five sessions taught you what agents are, how they call tools, how they run multi-step plans, how several of them can work together, and when to skip all of that and just automate. Today you build the thing that needed every one of those lessons at once: a real research agent.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#system-design">1. System design: what the agent actually needs to do</a>
+    <a href="#tools-required">2. Tools required: what the agent can call</a>
+    <a href="#the-workflow">3. The workflow, phase by phase</a>
+    <a href="#implementation-outline">4. Implementation outline: the ResearchAgent class</a>
+    <a href="#what-makes-real">5. What makes this real (not a toy demo)</a>
+    <a href="#evaluation-criteria">6. Evaluation criteria: judging your own build</a>
+  </nav>
+
+  <div class="hook">
+    For five sessions you've been learning agent concepts one at a time: what an
+    agent even is (4.1), how it decides to call a tool and reads the result back
+    (4.2), how it strings several of those tool calls into a plan &mdash; execute
+    &mdash; synthesize workflow (4.3), how multiple specialized agents can work
+    together instead of one agent doing everything (4.4), and when reaching for
+    an agent at all is the wrong call compared to a simple automation (4.5).
+    Today none of that is theory. You're building a <strong>research agent</strong>
+    that takes a topic, plans what to look into, actually goes and looks, weighs
+    what it found, and drafts a structured report with citations &mdash; the kind
+    of tool that shows up, in some form, behind a lot of the "AI research
+    assistant" products currently shipping.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="system-design">
+    <span class="subtopic-label">Part 1 of 6</span>
+    <h2>1. System design: what the agent actually needs to do</h2>
+
+    <p>
+      Start with the job, not the code. Someone types a topic &mdash; say,
+      <em>"Research the current state of AI regulation across countries"</em>
+      &mdash; and expects back something closer to a junior analyst's first
+      draft than a single paragraph. Sketched out, the job looks like a
+      pipeline with four distinct stages, each one handing its output to the
+      next:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">the-agents-job.txt</span>
+      </div>
+      <pre><code>User Input: "Research the current state of AI regulation across countries"
+    ↓
+[Agent: Planner]
+  → "I need to research: US, EU, UK, China, India regulations"
+    ↓
+[Agent: Researcher]
+  → Search each country's regulations
+  → Gather recent news and policy changes
+  → Identify key stakeholders
+    ↓
+[Agent: Analyst]
+  → Evaluate which sources are reliable
+  → Identify trends and patterns
+  → Note conflicting information
+    ↓
+[Agent: Writer]
+  → Draft a structured report with sections:
+    - Executive summary
+    - Country-by-country breakdown
+    - Emerging trends
+    - Implications for AI companies
+    - Citations
+    ↓
+Output: Full research report</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... a capstone build?</span>
+      A capstone build is deliberately the hardest, most integrated project of a
+      unit &mdash; not because it introduces new tricks, but because doing it
+      well is impossible without genuinely understanding everything that came
+      before. There's no clever shortcut through a research agent that skips
+      planning, or tool use, or multi-step execution, or the judgment call of
+      when a step should even be automated. Every earlier session becomes a
+      design decision here, not a fact to recite.
+    </div>
+
+    <p>
+      Notice the diagram names four roles &mdash; Planner, Researcher, Analyst,
+      Writer &mdash; but that's a description of <em>responsibilities</em>, not
+      necessarily four separate agent objects. Which brings up the first real
+      architectural decision you have to make.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Single agent, multiple modes &mdash; or true multi-agent?</span>
+      <strong>Single agent with multiple "modes":</strong> one <code>ResearchAgent</code>
+      object that calls the LLM four times in sequence &mdash; once per phase
+      &mdash; carrying its own running message history forward each time. Simpler
+      to build, easier to debug, and exactly what Session 4.3's multi-step task
+      pattern already taught you.
+      <br><br>
+      <strong>Multi-agent (an extension worth trying once the core works):</strong>
+      a distinct Researcher agent, Analyst agent, and Writer agent, each with its
+      own focused prompt and context &mdash; the orchestrator pattern from Session
+      4.4. This lab starts with the single-agent, multi-turn version, because
+      that's the version that teaches the workflow itself before adding the
+      coordination overhead of multiple agents talking to each other.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The job is a four-stage pipeline: plan &rarr; research &rarr; analyze &rarr; draft, each stage feeding the next.</li>
+        <li>Those four stages can be four "modes" of one agent (simpler, multi-turn) or four cooperating agents (an extension, using the 4.4 orchestrator pattern).</li>
+        <li>This lab builds the single-agent, multi-turn version first &mdash; the workflow has to work before the coordination overhead is worth adding.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="tools-required">
+    <span class="subtopic-label">Part 2 of 6</span>
+    <h2>2. Tools required: what the agent can call</h2>
+
+    <p>
+      Per Session 4.2, an agent's tools are just functions described to the
+      model in a schema &mdash; a name, a description, and (usually) a set of
+      arguments &mdash; so the model can request one instead of trying to
+      hallucinate the answer from memory. A research agent needs, at minimum,
+      three:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">tools.py</span>
+      </div>
+      <pre><code>tools = [
+    {
+        "name": "search_web",
+        "description": "Search the web for current information"
+    },
+    {
+        "name": "get_page_content",
+        "description": "Get full content from a specific URL"
+    },
+    {
+        "name": "evaluate_source",
+        "description": "Evaluate credibility of a source (news org, gov site, academic)"
+    }
+]</code></pre>
+    </div>
+
+    <p>
+      <code>search_web</code> is the obvious one &mdash; it's how the agent goes
+      from "I should look into the EU's approach" to actually having text to
+      reason about. <code>get_page_content</code> matters because search results
+      alone are usually just titles and snippets; a serious agent needs to go
+      one level deeper into an actual page when a snippet isn't enough.
+      <code>evaluate_source</code> is the one that's easy to skip and shouldn't
+      be: it's what keeps a government policy page and an anonymous blog post
+      from being treated as equally trustworthy just because both showed up in
+      the results.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Mocked tools, real lessons</span>
+      For this lab, all three tools are <strong>mocked</strong> &mdash; a fixed
+      lookup of realistic canned results instead of a live API call. That's a
+      deliberate choice, not a shortcut taken because real search integration is
+      "too advanced." Mocking lets you build and debug the entire workflow
+      &mdash; planning, looping, analyzing, drafting &mdash; without waiting on
+      network latency, API keys, or rate limits, and without a flaky live search
+      result silently changing your test output between runs. In production
+      you'd swap in something like SerpAPI or Firecrawl behind the exact same
+      function signature; the agent's reasoning about <em>when</em> and
+      <em>why</em> to search doesn't change at all.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Three tools: <code>search_web</code> (find information), <code>get_page_content</code> (go deeper than a snippet), <code>evaluate_source</code> (weigh credibility).</li>
+        <li>Tools are mocked with realistic fixed data for the lab &mdash; swap in a real search API later behind the same function signature.</li>
+        <li>Mocking isn't a shortcut around the hard part; it isolates the workflow logic from network flakiness while you build it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="the-workflow">
+    <span class="subtopic-label">Part 3 of 6</span>
+    <h2>3. The workflow, phase by phase</h2>
+
+    <p>
+      Here's where the four pipeline stages become four concrete LLM calls,
+      each with its own job and its own prompt.
+    </p>
+
+    <div class="what-is">
+      <span class="label">Phase 1 &mdash; Planning (the agent talks to itself first)</span>
+      Before any searching happens, the agent is asked to think through the
+      research itself: what to search for, what would make a source credible
+      for this particular topic, and how the eventual report should be
+      structured. This is the same instinct from Session 4.3 &mdash; a plan made
+      before execution starts is what keeps the later searches purposeful
+      instead of scattershot.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">phase_1_plan.txt</span>
+      </div>
+      <pre><code>LLM Prompt: "You're a research expert. Topic: {user_topic}
+Write a detailed plan for researching this. What searches will you do?
+What sources matter? How will you structure the report?"
+
+Agent Output: "I'll research:
+1. Government policy documents from each country
+2. Recent news (last 6 months)
+3. Expert analysis from policy organizations
+4. Company perspectives
+..."</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Phase 2 &mdash; Execution (the agent actually searches)</span>
+      For each search the plan called for, the same request &mdash; call
+      &mdash; result &mdash; read loop from Session 4.2 repeats: the agent
+      states what it wants to search for, the system calls the (mocked) search
+      tool, the result comes back, and the agent notes what it found before
+      moving to the next search. In a fuller implementation the agent decides
+      for itself when it has "enough" and stops looping &mdash; for this lab,
+      the loop runs a fixed, small number of planned searches, which keeps the
+      workflow predictable while you get the rest of the pipeline working.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">phase_2_research.txt</span>
+      </div>
+      <pre><code>For each planned search:
+  1. Agent outputs: "I'll search for: {query}"
+  2. System calls: search_tool(query)
+  3. System returns: Results
+  4. Agent reads and notes: "Found X results. Key info: ..."
+  5. Loop until agent says "I have enough information"</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Phase 3 &mdash; Analysis (the agent evaluates what it found)</span>
+      Raw search results dumped straight into a report would just be a list of
+      unfiltered facts. Before drafting anything, the agent is asked to step
+      back: what are the actual themes across everything it found, where do
+      sources disagree, and which sources deserve more weight? This is the
+      "Analyst" role from the system diagram, and it's the step that turns raw
+      findings into something worth writing about.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">phase_3_analyze.txt</span>
+      </div>
+      <pre><code>LLM Prompt: "Review what you found. What's reliable? What contradicts?
+What are the key trends?"
+
+Agent Output: "Based on searches:
+- Most countries moving toward regulation
+- Difference between EU (strict) and US (light)
+- China/India still developing frameworks
+..."</code></pre>
+    </div>
+
+    <div class="what-is">
+      <span class="label">Phase 4 &mdash; Drafting (the agent writes the report)</span>
+      Only now &mdash; after there's a plan, real findings, and an analysis of
+      those findings &mdash; does the agent write the actual deliverable. The
+      report needs a specified structure (executive summary, a section per
+      finding, implications, citations), not just "write something about the
+      topic," for exactly the reason Session 2.4's structured-output lesson
+      keeps resurfacing: a vague ask gets a vague, unpredictable answer.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">phase_4_draft.txt</span>
+      </div>
+      <pre><code>LLM Prompt: "Write a comprehensive report on {topic} based on your research.
+Structure:
+- Executive summary
+- [Section for each country]
+- Key trends
+- Implications
+- Citations (reference sources you found)"
+
+Agent Output: [Full report with structure]</code></pre>
+    </div>
+
+    <p>
+      The detail easy to gloss over: all four phases share <strong>one running
+      conversation</strong>. The drafting prompt in Phase 4 never repeats the
+      search results verbatim &mdash; it relies on the model remembering them
+      from earlier turns in the same message history. Skip that, and Phase 4
+      is effectively starting from nothing, which is exactly how a report ends
+      up citing sources it never actually looked at.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Plan &rarr; research &rarr; analyze &rarr; draft, in that order &mdash; each phase is a separate LLM call building on the last.</li>
+        <li>Analysis exists as its own phase so the report is built on themes and credibility judgments, not a raw dump of search results.</li>
+        <li>All four phases share one running message history &mdash; that's what lets the final report ground itself in the actual earlier findings instead of hallucinating.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="implementation-outline">
+    <span class="subtopic-label">Part 4 of 6</span>
+    <h2>4. Implementation outline: the ResearchAgent class</h2>
+
+    <p>
+      Putting all four phases into one object makes the shared conversation
+      history concrete: a single <code>self.messages</code> list that every
+      phase appends to and reads from.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">research_agent.py</span>
+      </div>
+      <pre><code>from anthropic import Anthropic
+
+class ResearchAgent:
+    def __init__(self, topic):
+        self.topic = topic
+        self.client = Anthropic()
+        self.model = "claude-3-5-sonnet-20241022"
+        self.messages = []
+        self.findings = []
+
+    def plan(self):
+        """Phase 1: Create research plan"""
+        prompt = f"""You're a research expert. Topic: {self.topic}
+
+Write a detailed research plan. What searches will you do?
+What sources matter? How will you structure the report?"""
+
+        response = self.call_llm(prompt)
+        self.findings.append(("plan", response))
+        return response
+
+    def research(self):
+        """Phase 2: Execute searches (mocked)"""
+        # In real version: agent makes search decisions
+        # Here: mock some searches
+        searches = self.extract_search_queries_from_plan()
+
+        for query in searches:
+            # Mock search (replace with real API)
+            results = mock_search(query)
+            self.findings.append(("search", query, results))
+
+        return self.findings
+
+    def analyze(self):
+        """Phase 3: Analyze findings"""
+        findings_text = format_findings_for_analysis(self.findings)
+
+        prompt = f"""Based on your research on {self.topic}:
+
+{findings_text}
+
+What are the key insights? What contradicts? What are the trends?"""
+
+        analysis = self.call_llm(prompt)
+        self.findings.append(("analysis", analysis))
+        return analysis
+
+    def draft_report(self):
+        """Phase 4: Write report"""
+        findings_text = format_findings_for_report(self.findings)
+
+        prompt = f"""Write a comprehensive report on {self.topic}.
+
+Base it on this research:
+{findings_text}
+
+Structure:
+- Executive Summary (2 paragraphs)
+- Main Body (section per key finding)
+- Key Trends
+- Implications
+- Citations (reference sources)
+
+Write professional report:"""
+
+        report = self.call_llm(prompt)
+        return report
+
+    def call_llm(self, prompt):
+        """Call LLM and track messages"""
+        self.messages.append({"role": "user", "content": prompt})
+
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=2048,
+            messages=self.messages
+        )
+
+        result = response.content[0].text
+        self.messages.append({"role": "assistant", "content": result})
+
+        return result
+
+    def run(self):
+        """Execute full workflow"""
+        print("Phase 1: Planning...")
+        self.plan()
+
+        print("Phase 2: Researching...")
+        self.research()
+
+        print("Phase 3: Analyzing...")
+        self.analyze()
+
+        print("Phase 4: Drafting report...")
+        report = self.draft_report()
+
+        return report
+
+# Usage
+if __name__ == "__main__":
+    agent = ResearchAgent("AI regulation trends 2024-2025")
+    report = agent.run()
+
+    print("\n" + "="*60)
+    print("FINAL REPORT")
+    print("="*60)
+    print(report)</code></pre>
+    </div>
+
+    <p>
+      Two things about this skeleton are worth calling out explicitly, because
+      they're exactly what the exercise scaffold leaves as <code>TODO</code>s
+      for you to fill in yourself. First, <code>call_llm()</code> is the one
+      place message history gets built &mdash; every phase routes through it,
+      which is what keeps the four phases talking to the same running
+      conversation rather than four isolated one-off calls. Second, this
+      outline is intentionally light on the actual prompt wording and on how
+      search queries get extracted from the plan &mdash; those specifics are
+      the real work, and they're what separates a report that's actually
+      grounded in what was found from one that's just plausible-sounding text.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the whole
+      quality of this agent lives in what each phase's prompt actually asks
+      for, not in the plumbing connecting the phases. Before writing the
+      prompts yourself, it's worth asking: what would make Phase 3's analysis
+      genuinely useful to Phase 4, instead of just restating Phase 2's raw
+      search results in different words?</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to build this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. Write a Python ResearchAgent class with plan(), research(), analyze(), and draft_report() methods that share one running conversation history, using a mocked search function..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant you use, and compare what it builds against this session's exercise &mdash; does it actually keep one shared message history across all four phases and ground the draft in the analyzed findings, or does it quietly reset context between calls?
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>Write a Python class named ResearchAgent that takes a topic and builds a four-phase workflow: plan() asks the model for a research plan (searches to run, credibility criteria, report structure); research() extracts search queries from the plan and calls a mock_search() function for each, storing results; analyze() summarizes the stored findings and asks the model to identify themes, contradictions, gaps, and source credibility; draft_report() asks the model to write a 1000+ word report with an executive summary, a section per finding, implications, and citations, grounded explicitly in the stored findings and analysis. All four phases must append to and read from one shared self.messages list via a single call_llm() helper, so later phases have full context from earlier ones. Include a run() method that executes all four phases in order and returns the final report.</pre></div>
+      </details>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li><code>call_llm()</code> is the single chokepoint where every phase reads from and writes to one shared conversation history.</li>
+        <li>The skeleton's plumbing (methods, loop, print statements) is the easy part; the specific prompt wording per phase is the actual design work.</li>
+        <li>A useful analysis phase summarizes and evaluates findings &mdash; it shouldn't just restate the raw search results in different words.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="what-makes-real">
+    <span class="subtopic-label">Part 5 of 6</span>
+    <h2>5. What makes this real (not a toy demo)</h2>
+
+    <p>
+      It would be easy to build something that technically runs and still feels
+      like a toy &mdash; a single prompt that asks the model to "research and
+      write about X" in one shot, with no distinct phases at all. Here's what
+      actually separates this build from that:
+    </p>
+
+    <div class="code-breakdown">
+      <dl>
+        <dt>Realistic scope</dt>
+        <dd>Research takes multiple searches across different angles, not one
+        or two queries that happen to sound related to the topic.</dd>
+
+        <dt>Structured output</dt>
+        <dd>The report has real sections &mdash; executive summary, body,
+        implications, citations &mdash; not one long, rambling paragraph.</dd>
+
+        <dt>Citation tracking</dt>
+        <dd>The agent has to reference the sources it actually found during
+        research, rather than inventing plausible-sounding attributions.</dd>
+
+        <dt>Human review</dt>
+        <dd>The draft goes to a human before it's treated as final &mdash;
+        the same principle Session 4.5 pushed on when deciding whether
+        something should run unattended at all.</dd>
+
+        <dt>Error handling</dt>
+        <dd>What happens if a search returns nothing useful? A real system
+        handles that gracefully instead of silently fabricating a result to
+        fill the gap.</dd>
+      </dl>
+    </div>
+
+    <p>
+      Once the core four-phase build works, there's a natural set of
+      extensions that push it closer to something you'd actually trust in
+      production: a second agent that fact-checks the draft before it's shown
+      to anyone, semantic re-ranking layered on top of simple keyword search,
+      caching so the same topic isn't re-researched from scratch every time,
+      persisting the plan/findings/report to a database instead of losing them
+      when the process exits, and versioning so you can track how a report
+      changed as research continued.
+    </p>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: why "mocking is okay" isn't a compromise</summary>
+      <p>
+        It's tempting to feel like mocked search data means you haven't really
+        built the thing yet. That's backwards. The hard, valuable part of this
+        agent isn't the HTTP call to a search API &mdash; that's a function
+        swap. The hard part is everything this session actually asks you to
+        design: what makes a good plan, how findings get carried forward
+        faithfully into analysis, how analysis gets carried forward faithfully
+        into a draft, and what the report should do when a search comes back
+        empty. All of that logic is exactly as real with mocked data as with a
+        live API, and testing it against mocked data you fully control is how
+        you catch bugs before they're expensive to debug against a flaky,
+        rate-limited live search response.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Realistic scope, real structure, real citations, human review, and graceful error handling are what separate this from a one-shot toy prompt.</li>
+        <li>Fact-checking, re-ranking, caching, persistence, and versioning are the natural next steps toward a production-grade version.</li>
+        <li>Mocked data doesn't make the workflow logic any less real &mdash; it's what lets you debug that logic without live-API flakiness getting in the way.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 6 ============ -->
+  <div class="subtopic" id="evaluation-criteria">
+    <span class="subtopic-label">Part 6 of 6</span>
+    <h2>6. Evaluation criteria: judging your own build</h2>
+
+    <p>
+      When your agent finishes, "it ran without crashing" is a low bar. Ask
+      these instead, the same way you'd critique someone else's system:
+    </p>
+
+    <ul>
+      <li><strong>Does the plan make sense?</strong> Does the agent actually understand the topic and what research it needs, or does the plan read as generic filler?</li>
+      <li><strong>Are the searches relevant?</strong> Do they actually answer what the plan said it needed, or do they drift off-topic?</li>
+      <li><strong>Is the analysis grounded?</strong> Does the agent cite its actual findings, or does it start inventing conclusions that sound plausible but weren't in the research?</li>
+      <li><strong>Is the report structured?</strong> Clear sections and a logical flow, or one long undifferentiated block of text?</li>
+      <li><strong>Are the citations accurate?</strong> Do they reference sources the agent actually found during research, not sources it's guessing might exist?</li>
+      <li><strong>Is the length reasonable?</strong> Roughly 1500&ndash;3000 words for a genuinely useful report &mdash; long enough to be substantive, not padded to hit a word count.</li>
+    </ul>
+
+    <div class="what-is">
+      <span class="label">Structure beats length</span>
+      A focused 1000-word report that actually answers the question beats a
+      rambling 5000-word one that technically covers more ground but forces the
+      reader to dig for the point. If you find yourself padding a draft to hit
+      a target word count, that's usually a sign the analysis phase didn't
+      surface enough real substance to write about &mdash; the fix is a better
+      Phase 3, not a longer Phase 4 prompt.
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Evaluate plan quality, search relevance, analysis grounding, report structure, citation accuracy, and length &mdash; not just "did it run."</li>
+        <li>A short, focused, well-grounded report beats a long, padded, ungrounded one every time.</li>
+        <li>If a draft needs padding to hit a word count, the real problem usually lives upstream, in a thin analysis phase.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Plan &rarr; execute &rarr; synthesize is the same backbone behind most shipping "AI research assistant" products in 2026 &mdash; the specifics (which search API, how many agents) vary, but the phase structure doesn't.</li>
+      <li>Teams that skip the analysis phase and go straight from raw search results to a drafted report consistently ship reports with weaker citations and more contradictions slipping through unnoticed &mdash; the analysis step is cheap insurance against exactly that.</li>
+      <li>"The agent said it, so it must be true" is a common and expensive mistake with research agents specifically, because a confident, well-structured report reads as more trustworthy than it necessarily is &mdash; which is exactly why the fact-checking extension (Pro path) matters more here than it might for a lower-stakes tool.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Plans matter.</strong> A good plan leads to good research; a vague plan wastes every search that follows it.</li>
+      <li><strong>Search is iterative</strong> in a fuller implementation &mdash; the agent might search, learn something, and search again based on what it learned, rather than running a fixed list decided up front.</li>
+      <li><strong>Citations ground claims.</strong> "According to X" is a meaningfully stronger and more checkable statement than an unsourced assertion.</li>
+      <li><strong>Humans still matter.</strong> Even a genuinely good agent benefits from human review before its output is treated as final.</li>
+      <li><strong>Mocking is okay.</strong> Don't wait on real APIs to test structure and logic &mdash; mock the data first, swap in real integrations once the workflow itself is solid.</li>
+      <li><strong>Structure beats length.</strong> A 1000-word focused report outperforms a 5000-word rambling one.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; then the exercises
+    page has both the Core path (the four-phase research agent above) and the
+    Pro path (adding a fact-checking layer) to actually build.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../session-4-5-automation-workflows-nolow-code-code/lesson.html">&larr; Session 4.5</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

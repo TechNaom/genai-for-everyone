@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.5 Project: Multi-Step Email Workflow — GenAI for Everyone</title>
+<meta name="description" content="Build the Pro-path multi-step automation workflow: monitor, analyze, draft, and track cost/performance across a batch of emails, then extend it with confidence scoring and human-in-loop approval.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-5" data-chapter-id="session-4-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.5 Project</span>
+    <span class="reading-time">35 min build</span>
+  </div>
+  <h1>Multi-Step Email Workflow</h1>
+  <p>The Pro-path build for this session &mdash; an <code>EmailWorkflow</code>
+  class that runs the full hybrid pipeline from Part 3 of the lesson (monitor
+  &rarr; analyze &rarr; draft &rarr; track) across a batch of emails, recording
+  cost and timing at every step so the workflow's actual economics are visible,
+  not just its output.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>============================================================
+MULTI-STEP EMAIL WORKFLOW
+============================================================
+
+Email 1: customer@company.com
+  Subject: URGENT: Can't access my account
+  Passed monitor: True
+  Category: urgent
+  Priority: 9/10
+  Action items: ['Restore account access', 'Follow up with customer']
+  Draft: Dear customer, Thank you for reaching out about your account access...
+  Action: draft_created
+  Time: 2.15s
+
+Email 2: partner@vendor.com
+  Subject: Integration question
+  Passed monitor: False
+  Action: skipped
+  Time: 0.01s
+
+Email 3: alerts@monitoring.com
+  Subject: ERROR: High CPU usage on server-03
+  Passed monitor: True
+  Category: important
+  Priority: 6/10
+  Action items: ['Investigate server-03 CPU usage']
+  Draft: None
+  Action: analyzed
+  Time: 1.80s
+
+============================================================
+SUMMARY
+============================================================
+Total emails: 3
+Skipped (simple rule): 1
+Analyzed by agent: 2
+Drafts created: 1
+Total processing time: 3.95s
+Avg time per email: 1.32s
+Estimated cost: $0.03</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    This project makes real API calls, since <code>agent_analyze()</code> and
+    <code>agent_draft_response()</code> both call the Anthropic API:
+    <pre><code>export ANTHROPIC_API_KEY=your-key-here
+pip install anthropic --break-system-packages
+python starter.py</code></pre>
+    <code>simple_monitor()</code> is pure keyword logic with no API dependency
+    &mdash; you can trace and modify the filtering rule without a key. Only the
+    emails that pass the monitor and get analyzed need a live one.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p><code>starter.py</code> already contains a working
+  <code>EmailWorkflow</code> class. Run it as-is first, then study how each
+  piece works before taking on the challenges below:</p>
+  <ul>
+    <li><strong><code>simple_monitor()</code></strong> &mdash; the free, instant filter: does the email match an urgent pattern at all? If not, it's skipped before any API cost is spent.</li>
+    <li><strong><code>agent_analyze()</code></strong> &mdash; the agent step: sends the email to the model and parses back a JSON object with <code>category</code>, <code>action_items</code>, <code>sentiment</code>, and <code>priority_score</code>.</li>
+    <li><strong><code>agent_draft_response()</code></strong> &mdash; only runs for <code>"urgent"</code>/<code>"important"</code> categories, drafting a short reply.</li>
+    <li><strong>Cost and timing tracking</strong> &mdash; <code>self.costs</code> accumulates an estimated dollar cost per agent call, and <code>process_email()</code> records wall-clock time per email, both surfaced in the final <code>summary()</code>.</li>
+  </ul>
+
+  <h2>Challenges (extend the code)</h2>
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Add a confidence field</h3>
+    <p>Have <code>agent_analyze()</code>'s prompt also ask for a <code>"confidence"</code> field (0.0&ndash;1.0) alongside <code>category</code>. This is the same confidence-threshold idea from Pattern 3 (Human-in-Loop) in the lesson &mdash; it's the signal a real system would use to decide whether a human needs to look at this one.</p>
+  </div>
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Resolve rule/agent conflicts</h3>
+    <p>Right now, if <code>simple_monitor()</code> passes an email through, the agent's category is trusted outright. Implement a conflict-resolution rule: if <code>simple_monitor()</code> matched on an urgent keyword but the agent categorizes the email as <code>"normal"</code>, which one should win, and why? Pick a rule and justify it in a comment.</p>
+  </div>
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Add human-in-loop approval</h3>
+    <p>Add a <code>send_draft_for_approval(email, draft)</code> method that simulates emailing a human the draft (print a formatted message is enough), and call it from <code>process_email()</code> whenever a draft is created and the new confidence field (Challenge 1) is below <code>0.8</code> &mdash; mirroring Pattern 3 from the lesson exactly.</p>
+  </div>
+  <div class="task-card">
+    <h3><span class="task-num">4</span> Track rule vs. agent accuracy</h3>
+    <p>Add a mechanism to log, for every email that goes through both <code>simple_monitor()</code> and the agent, whether the two would have agreed on urgency. Over a larger batch of emails, this lets you measure how much of the traffic your simple rule alone could safely handle &mdash; directly answering the "can the rule catch more cases without calling the agent" cost-optimization question from Part 6 of the lesson.</p>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>The email-triage example in the lesson describes cost and speed for each
+    step in the abstract; this project makes them <em>measured</em> quantities
+    you can actually watch accumulate across a batch, the same way a real
+    production system would track them. <code>self.costs</code> and
+    <code>processing_time</code> aren't decoration &mdash; they're the concrete
+    evidence you'd bring to the "should this be hybrid" conversation from Part 6,
+    instead of a guess. And the confidence/human-review challenges connect this
+    project directly back to Pattern 3: a workflow that knows when to trust
+    itself, and when to ask.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.2 Function / Tool Calling — GenAI for Everyone</title>
+<meta name="description" content="Give a real LLM real tools: how tool definitions work, the full tool-use round trip, when a model actually decides to call a tool, and how this fills in the 'act' step of the agent loop for real.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.2</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">28&ndash;33 min read</span>
+  </div>
+  <h1>Function / Tool Calling</h1>
+  <p><em>Session 4.1 left you with a scripted stand-in for a model's decisions. Today the stand-in disappears &mdash; you give a real LLM real tools and watch it genuinely decide, on its own, when to reach for one.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#real-hands">1. Giving the Model Real Hands</a>
+    <a href="#three-things">2. The Three Things Every Tool Needs</a>
+    <a href="#round-trip">3. What Actually Happens When a Model "Calls" a Tool</a>
+    <a href="#when-decide">4. When Does a Model Actually Decide to Call a Tool?</a>
+    <a href="#agent-loop">5. Connecting Back to the Agent Loop</a>
+  </nav>
+
+  <div class="hook">
+    Session 4.1 left you with a precise definition of an agent &mdash; a system
+    where the model decides what to do next, based on what just happened,
+    repeatedly, without a human choosing each step &mdash; and a trace you ran by
+    hand, with the model's decisions scripted rather than real. That honesty
+    mattered: nothing in that trace was actually decided by a live model. The
+    <code>calculator</code> and <code>weather_lookup</code> functions were real,
+    executable code, but the <em>choice</em> of when to call them was written by a
+    human in advance, standing in for what a model would plausibly decide. Today,
+    that stand-in disappears. You're going to give an actual LLM real tools, and
+    watch it genuinely decide &mdash; on its own, from the conversation alone
+    &mdash; when to reach for one. This is the moment the "act" step of the agent
+    loop stops being something you simulate and becomes something you build for
+    real.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="real-hands">
+    <span class="subtopic-label">Sub-topic 1 of 5</span>
+    <h2>1. Giving the Model Real Hands</h2>
+
+    <p>
+      Here's the mental model worth holding onto from the start: <strong>tool
+      calling does not let the model run code.</strong> A language model is
+      fundamentally a text generator. It cannot reach out and execute a Python
+      function, query a database, or hit an API on its own &mdash; it has no
+      hands, no permissions, no execution environment of any kind.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... tool calling, really?</span>
+      What tool calling actually gives the model is something narrower and, once
+      you see it clearly, much less mysterious: a structured way to say "I want
+      you to run this specific function, with these specific arguments" &mdash;
+      and then it's entirely on your code to actually run it and report back what
+      happened.
+    </div>
+
+    <p>
+      This matters because it reframes the whole topic. You are not teaching a
+      model a new superpower. You are building a very specific, very deliberate
+      communication protocol between a model that can reason but can't act, and
+      your code, which can act but can't reason about <em>when</em> to. Tool
+      calling is the bridge between those two halves.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Why the reframe matters in practice</span>
+      <ul>
+        <li>If you think of tool calling as "the model runs code," a failed tool call feels like a mystery &mdash; it isn't. It's your code's job that failed, or your code that never told the model what happened.</li>
+        <li>Once you see it as a protocol between two halves that each do one thing well (reasoning vs. acting), debugging becomes concrete: which half's job actually broke?</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Tool calling does not let a model execute code &mdash; it lets the model <strong>request</strong> that your code execute something specific.</li>
+        <li>The model has no hands, no permissions, no execution environment of its own.</li>
+        <li>Tool calling is a communication protocol between a model that can reason but can't act, and code that can act but can't decide when to.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="three-things">
+    <span class="subtopic-label">Sub-topic 2 of 5</span>
+    <h2>2. The Three Things Every Tool Needs</h2>
+
+    <p>
+      When you hand a model a tool, you're not handing it code &mdash; you're
+      handing it a <em>description</em> of code: a name, an explanation of what
+      it does, and a precise specification of what inputs it needs. The model
+      never sees your function's implementation at all. It only ever sees these
+      three things, and it has to decide when and how to call the tool based on
+      nothing else.
+    </p>
+
+    <div class="what-is">
+      <span class="label">1. A name</span>
+      Short, specific, and unambiguous &mdash; <code>get_weather</code>, not
+      <code>helper2</code>. The model uses this name both to refer to the tool
+      internally and, often, as a signal about what the tool is for. A vague name
+      produces vague reasoning about when to use it.
+    </div>
+
+    <div class="what-is">
+      <span class="label">2. A description</span>
+      This is the single highest-leverage piece of a tool definition, and it's
+      worth treating with the same care you gave prompt design back in Week 2
+      &mdash; because that's exactly what it is, a prompt, just one the model
+      reads to make a single decision rather than to generate a long response. A
+      good description says what the tool does, and just as importantly,
+      <em>when</em> to use it: "Get the current weather for a city. Use this when
+      the user asks about weather conditions, temperature, or whether they'll
+      need an umbrella." A vague description &mdash; "weather tool" &mdash; leaves
+      the model guessing both about the tool's behavior and about whether this
+      question even calls for it.
+    </div>
+
+    <div class="what-is">
+      <span class="label">3. An input schema</span>
+      This is a precise, machine-readable specification of exactly what
+      arguments the tool needs, and what shape they should take &mdash; typically
+      expressed as JSON Schema, the same kind of structured-format thinking you
+      practiced in Session 2.4. The schema isn't decoration &mdash; it's what lets
+      the model produce a call that your code can actually parse and execute
+      without guessing at what it meant.
+    </div>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">weather_tool_schema.json</span>
+      </div>
+      <pre><code>{
+  "name": "weather_lookup",
+  "description": "Get the current weather for a city. Use this when the user asks about weather conditions, temperature, or whether they'll need an umbrella.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "city": {
+        "type": "string",
+        "description": "The city name, e.g. 'Chicago'"
+      },
+      "units": {
+        "type": "string",
+        "enum": ["celsius", "fahrenheit"],
+        "description": "Optional temperature units"
+      }
+    },
+    "required": ["city"]
+  }
+}</code></pre>
+    </div>
+
+    <p>
+      Put plainly: name tells the model <em>what to call it</em>, description
+      tells the model <em>when and why to call it</em>, and the schema tells the
+      model <em>exactly how to call it</em>. Get any one of the three vague, and
+      the model's tool-calling behavior gets correspondingly unreliable &mdash;
+      not because the model is bad at the task, but because you've
+      under-specified the contract, in exactly the way Session 2.1 warned you an
+      under-specified prompt produces an under-specified answer.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Every tool has three load-bearing parts: <strong>name</strong>, <strong>description</strong>, and <strong>input schema</strong>.</li>
+        <li>The description is the highest-leverage part &mdash; it's a prompt the model reads to decide both <em>what</em> the tool does and <em>when</em> to use it.</li>
+        <li>The schema is what lets the model produce a call your code can actually execute without guessing.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="round-trip">
+    <span class="subtopic-label">Sub-topic 3 of 5</span>
+    <h2>3. What Actually Happens When a Model "Calls" a Tool</h2>
+
+    <p>
+      Here's the full round trip, made concrete, because the mechanics matter
+      more than they might seem to at first glance.
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">the_round_trip.txt</span>
+      </div>
+      <pre><code>1. You send the model a message + a list of tool definitions it may use.
+2. The model reads the conversation and decides: does this need a tool?
+   If yes, which one, and with what arguments?
+3. If it decides to use a tool, you get back a structured signal --
+   the tool's name, the arguments, and an identifier tying this call
+   to whatever response you send back. Not ordinary text.
+4. YOUR CODE -- not the model -- actually runs the real function.
+5. You send the tool's actual output back to the model, tagged with
+   that same identifier, as a new message in the conversation.
+6. The model reads the result and continues -- another tool call, or
+   a final natural-language answer incorporating what came back.</code></pre>
+    </div>
+
+    <p>
+      Step 4 is the one people skim past and shouldn't. The model never executes
+      anything. If your weather tool would, in a real implementation, hit a live
+      weather API, the model has no idea whether that API call succeeded, failed,
+      or returned garbage until you tell it, explicitly, in step 5. This is
+      exactly why the defensive instincts from Session 2.4 (validate before
+      trusting) and Session 2.6 (plan for the failure case, not just the happy
+      path) show up again here: a tool call that fails needs to report failure
+      back to the model honestly, the same way <code>weather_lookup</code> in
+      Session 4.1's exercise returned an <code>{"error": ...}</code> dict rather
+      than silently returning nothing or crashing.
+    </p>
+
+    <div class="real-world">
+      <span class="label">A structural detail that trips people up the first time</span>
+      <ul>
+        <li>Steps 3 through 5 have to happen in a specific order in the conversation history. The tool result message has to come <strong>immediately after</strong> the tool call message &mdash; you cannot insert anything else between an assistant's tool-use request and your reply with the result.</li>
+        <li>The model is reading the conversation sequentially, the same way it reads everything else; if the result doesn't directly follow the request, the model has no reliable way to connect the two.</li>
+      </ul>
+    </div>
+
+    <p>
+      Try it yourself below: this is a simplified, offline simulation of one
+      round trip &mdash; no real model, no API key &mdash; just the message-list
+      bookkeeping your real loop will need to get right (append the assistant's
+      tool-use turn, then immediately append the tagged tool result).
+    </p>
+
+    <div class="playground">
+      <div class="playground-bar">
+        <span class="filename">round_trip_demo.py</span>
+        <button class="playground-run-btn" data-playground-run>&#9654; Run Code</button>
+      </div>
+      <textarea class="playground-code" data-playground-code rows="22">def fake_weather_lookup(city):
+    db = {"Chicago": {"tomorrow": "rain", "chance_of_rain_pct": 80}}
+    return db.get(city, {"error": f"No data for {city}"})
+
+# Step 1-3: pretend the model just decided to call a tool.
+messages = [{"role": "user", "content": "Will it rain tomorrow in Chicago?"}]
+
+simulated_tool_call = {
+    "type": "tool_use",
+    "id": "call_1",
+    "name": "weather_lookup",
+    "input": {"city": "Chicago"},
+}
+messages.append({"role": "assistant", "content": [simulated_tool_call]})
+
+# Step 4: YOUR code actually runs the real function.
+result = fake_weather_lookup(simulated_tool_call["input"]["city"])
+
+# Step 5: the result goes back IMMEDIATELY, tagged with the same id.
+messages.append({
+    "role": "user",
+    "content": [{
+        "type": "tool_result",
+        "tool_use_id": simulated_tool_call["id"],
+        "content": str(result),
+    }],
+})
+
+for m in messages:
+    print(m)
+
+print("\nNotice: the tool_result's tool_use_id matches the tool_use's id --")
+print("that's how the model knows which call this result answers.")</textarea>
+      <div class="playground-output" data-playground-output>Click "Run Code" to see the message list build up, step by step.</div>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The round trip is: you send tools + message &rarr; model requests a tool call &rarr; your code executes it &rarr; you send the result back, tagged &rarr; model continues.</li>
+        <li>The model never executes anything itself &mdash; step 4 is entirely your code's job.</li>
+        <li>The tool result must come <strong>immediately after</strong> its matching tool-use request in the conversation &mdash; the model reads sequentially and has no other way to connect the two.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="when-decide">
+    <span class="subtopic-label">Sub-topic 4 of 5</span>
+    <h2>4. When Does a Model Actually Decide to Call a Tool?</h2>
+
+    <p>
+      This is the question today's chapter title promises and the one most
+      worth sitting with, because the honest answer is less mystical than "the
+      AI decides" makes it sound.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... actually happening at decision time?</span>
+      The model calls a tool when, based on the conversation and the tool
+      descriptions you provided, generating a tool-call response is the most
+      plausible continuation &mdash; the same next-token-prediction process from
+      every other session this course has covered, just now with "call this
+      tool" as one of the available kinds of output, alongside ordinary text.
+      There's no separate decision-making module bolted on. It's the same model,
+      reading the same kind of context, just with a wider menu of valid response
+      shapes.
+    </div>
+
+    <p>
+      This has a genuinely useful practical consequence: if a model isn't
+      calling your tool when you expect it to, or is calling it when it
+      shouldn't, the fix almost always lives in the same place a bad-prompt fix
+      lives &mdash; clarify the description, tighten the schema, or add an
+      example to the conversation showing the kind of question that should
+      trigger this tool. You're not debugging a black box. You're doing the same
+      prompt-engineering work from Week 2, applied to a tool definition instead
+      of a task instruction.
+    </p>
+
+    <div class="real-world">
+      <span class="label">Being honest about a real limitation</span>
+      <ul>
+        <li>Giving a model a tool doesn't guarantee it will use the tool correctly, or at all, every single time &mdash; in the same spirit Session 3.1 insisted on for retrieval.</li>
+        <li>A model might decide a question doesn't need a tool when it actually does, might pass a slightly malformed argument, or might call a tool when a direct answer would've been better.</li>
+        <li>This is precisely why today's exercise asks you to actually run the loop and inspect what happens &mdash; not just read about the theory &mdash; because seeing a real tool-call decision (and occasionally a real misfire) is the only way to build accurate intuition for when this mechanism is reliable and when it needs guardrails.</li>
+      </ul>
+    </div>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: is "just answer directly" ever the right call, even with a calculator available?</summary>
+      <p>
+        Yes &mdash; and this is a genuinely observable, legitimate outcome, not a
+        bug. A model might correctly compute <code>127 &times; 38</code> from its
+        own arithmetic ability without reaching for the calculator tool at all,
+        or it might call the tool anyway out of caution. Either is defensible
+        behavior; the exercise asks you to watch which one actually happens
+        rather than assume. The interesting failure mode isn't "didn't use a
+        tool it had access to" &mdash; it's producing a <em>wrong</em> answer
+        while skipping a tool that would have caught the error, or reaching for
+        a tool for something so simple that the extra round trip added latency
+        for no benefit.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A model decides to call a tool through the same next-token-prediction process behind everything else it generates &mdash; there's no separate "decision module."</li>
+        <li>Unreliable tool-calling behavior is fixed the same way a bad prompt is: clarify the description, tighten the schema, or add an example.</li>
+        <li>Tools don't guarantee correct or consistent use &mdash; that's why you run the loop for real and inspect what actually happens.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 5 ============ -->
+  <div class="subtopic" id="agent-loop">
+    <span class="subtopic-label">Sub-topic 5 of 5</span>
+    <h2>5. Connecting Back to the Agent Loop</h2>
+
+    <p>
+      Look at where this sits inside Session 4.1's plan-act-observe framing,
+      because today's session is best understood as filling in exactly one
+      piece of that loop, not introducing a new one.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... plan, act, observe, made real?</span>
+      <strong>Plan</strong> is the model deciding what to do next &mdash; which,
+      today, includes deciding whether that "next thing" is calling a tool.
+      <strong>Act</strong> is the tool call itself: the structured request, your
+      code executing it for real. <strong>Observe</strong> is the tool result
+      flowing back into the conversation, ready to inform the model's next
+      decision. Session 4.1 simulated all three steps by hand. Today, you're
+      building "act" for real, for the first time &mdash; and as a direct
+      consequence, "plan" and "observe" become real too, since they're now
+      driven by an actual model's actual decisions rather than a scripted policy
+      standing in for them.
+    </div>
+
+    <p>
+      This is also where Session 4.1's chatbot-vs-workflow-vs-agent distinction
+      gets sharper rather than more abstract. A chatbot with no tools can only
+      ever produce text. A rigid workflow might call a weather API and a
+      calculator in a fixed order regardless of what's actually being asked.
+      What you're building today &mdash; a model that looks at a real question,
+      decides for itself whether the question needs a calculator, a weather
+      lookup, both, or neither, and only then acts &mdash; is the first
+      genuinely agent-shaped system this course has built where every part of
+      that description is true at once, with a live model making the call.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Plan-act-observe was simulated by hand in 4.1; today, "act" becomes real, which makes "plan" and "observe" real by consequence too.</li>
+        <li>A chatbot only produces text; a rigid workflow calls tools in a fixed order; today's build genuinely decides, per question, whether and which tool to use.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="real-world">
+    <span class="label">In the Real World</span>
+    <ul>
+      <li>Production tool-calling systems spend a disproportionate amount of engineering time on descriptions and schemas, not on the loop code itself &mdash; the loop is a handful of lines; getting the model to reliably pick the right tool is the actual work.</li>
+      <li>A common production pattern for ambiguous tool boundaries (e.g. a <code>calculator</code> vs. a <code>unit_converter</code>) is to run a fixed set of representative test questions every time a description changes, and check the tool choice didn't regress &mdash; the same testing discipline Session 2.5 introduced for prompt templates, applied here to tool definitions.</li>
+      <li>Interviewers frequently ask candidates to design a tool schema live (e.g. for a <code>search_web</code> function) specifically to see whether they reach for tight types, required fields, and descriptive constraints, or leave the schema vague and hope for the best.</li>
+    </ul>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li><strong>Tool calling does not let a model execute code.</strong> It lets the model request that <em>your</em> code execute something specific, with specific arguments &mdash; your application remains entirely responsible for actually running the operation.</li>
+      <li><strong>Every tool definition has three load-bearing parts:</strong> a name, a description (which doubles as a prompt the model uses to decide <em>when</em> to call the tool, not just what it does), and an input schema specifying exactly what arguments it needs.</li>
+      <li><strong>The full round trip is sequential and strict:</strong> the model requests a tool call, your code executes it, and the result must be sent back immediately following that request, tagged so the model can match it to the original call.</li>
+      <li><strong>A model decides to call a tool through the same next-token-prediction process</strong> behind everything else it generates &mdash; there's no separate "decision module." Unreliable tool-calling behavior is usually a sign the tool's description or schema needs the same clarity work as a prompt.</li>
+      <li><strong>A tool that fails should report the failure honestly back to the model</strong> (an error result), not crash silently or fail invisibly &mdash; the same defensive design principle from structured outputs and graceful failure design earlier in this course.</li>
+      <li><strong>Today's build is the first time this course has implemented the "act" step of the agent loop for real,</strong> with a live model making genuine decisions, rather than a scripted stand-in.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the exercise
+    has you wire the real calculator and weather tools up to a live model for
+    the first time.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

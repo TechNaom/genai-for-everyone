@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.3 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 4.3: Multi-Step Task Agents — build a research agent with an explicit planning phase, a tool-calling execution loop, working memory, and a correct stopping condition.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-3" data-chapter-id="session-4-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.3 Exercises</span>
+    <span class="reading-time">45&ndash;60 min, hands-on</span>
+  </div>
+  <h1>Exercises: Multi-Step Research Agent</h1>
+  <p>
+    Build a research agent that plans a 3-step research strategy, executes it
+    with a tool-calling loop, and stops on its own when it has enough
+    information. This is the core plan-execute-stop pattern from Parts 3 and 6
+    of the lesson, made concrete. The search tool is simulated so this costs
+    almost nothing to run, but the planning and execution loop itself makes
+    real API calls.
+  </p>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 and the Anthropic SDK: <code>pip install
+    anthropic</code>, plus an API key set as <code>ANTHROPIC_API_KEY</code>
+    (the free tier is enough for this exercise). Download <code>starter.py</code>
+    below, then run it from a terminal with <code>python starter.py</code>.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. The tool schema, simulated search results, and
+    overall loop skeleton are provided &mdash; three TODO sections are left for
+    you to complete.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Write the planning prompt</h3>
+    <p>Complete <code>plan_prompt</code> so it clearly asks the LLM to plan 3 research steps for <code>user_task</code>, and explicitly instructs it <strong>not</strong> to execute yet &mdash; just plan. This is the explicit-planning pattern from Part 2 of the lesson.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Write the execution prompt</h3>
+    <p>Complete <code>execution_prompt</code> so it tells the agent to now carry out its plan step by step, using the <code>search_web</code> tool.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Implement the execution loop</h3>
+    <p>Inside the <code>for iteration in range(max_iterations)</code> loop: extract <code>tool_calls</code> (blocks where <code>block.type == "tool_use"</code>) and <code>text_blocks</code> (blocks with a <code>.text</code> attribute) from the response, implement the stopping condition (no tool calls means the agent is done &mdash; return <code>working_memory</code> with <code>status = "completed"</code>), and otherwise process every tool call, record each one in <code>working_memory["findings"]</code>, and send the tool results back as a new message so the next iteration can see them.</p>
+  </div>
+
+  <div class="debug-card">
+    <h3>🐞 Task 4 &mdash; Debug the Code</h3>
+    <p>A teammate wrote this stopping-condition check, but the agent runs for all 10 iterations every single time even on simple tasks that should finish in 3. Find the bug.</p>
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">buggy_stopping_check.py</span>
+      </div>
+      <pre><code>tool_calls = [block for block in response.content]
+text_blocks = [block for block in response.content if hasattr(block, "text")]
+
+&#35; Bug: tool_calls collects EVERY content block, not just tool_use blocks --
+&#35; so this list is never empty (there's always at least one block in the
+&#35; response), and "if not tool_calls" can never be True. The agent thinks
+&#35; it always has more tool calls to process, even when it only returned text.
+&#35;
+&#35; Fix: filter for the tool_use type specifically, same as text_blocks
+&#35; filters for blocks that have a .text attribute:
+&#35;   tool_calls = [block for block in response.content
+&#35;                 if hasattr(block, "type") and block.type == "tool_use"]
+if not tool_calls:
+    print("Agent determined it's done.")</code></pre>
+    </div>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>TOOLS = [{"name": "search_web", "description": "Search the web for information...", ...}]
+
+def run_research_agent(user_task: str) -> dict:
+    messages = []
+    working_memory = {"task": user_task, "plan": None, "findings": [], "final_result": None, "status": "in_progress"}
+
+    &#35; TODO 1: plan_prompt -- ask the LLM to plan 3 steps, do NOT execute yet
+    &#35; TODO 2: execution_prompt -- tell the agent to now execute the plan
+
+    for iteration in range(max_iterations):
+        response = client.messages.create(model=MODEL_ID, max_tokens=2048, tools=TOOLS, messages=messages)
+        &#35; TODO 3: extract tool_calls and text_blocks, implement the stopping
+        &#35; condition, process tool calls, append results back to messages
+        ...</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    There's no automated grader. What matters is that your plan phase never
+    calls a tool (check <code>plan_prompt</code> makes that explicit), your
+    stopping condition correctly fires when the response contains zero
+    <code>tool_use</code> blocks, and <code>working_memory["findings"]</code>
+    has one entry per search actually performed &mdash; not more, not fewer.
+    Compare your structure against <code>solution.py</code> (run it with
+    <code>python solution.py</code>) once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

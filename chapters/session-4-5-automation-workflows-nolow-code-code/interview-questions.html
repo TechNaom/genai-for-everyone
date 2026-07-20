@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.5 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 4.5: agents vs. simple automation, cost/performance trade-offs, and real-world hybrid workflows like an email triage agent — plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-5" data-chapter-id="session-4-5">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.5 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Automation vs. Agents</h1>
+  <p>
+    Interviewers use this exact topic to separate candidates who've only ever
+    built one flashy agent demo from candidates who think like systems engineers
+    &mdash; people who know that the right answer to "should this be an agent" is
+    often "no." Each question below includes what a strong answer sounds like,
+    common red flags, and a natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> You're building three systems: (A) a Monday-morning reminder email, (B) a tool that researches a topic and answers questions dynamically, (C) structured-data extraction from PDFs. For each, would you use an agent or simple automation? Why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>(A) Simple automation &mdash; no reasoning needed, just schedule an email; an agent here is pure overkill and pure cost. (B) An agent &mdash; the topic changes every time, it requires reasoning and tool use (search), which is exactly where agents excel. (C) It depends: a fixed template calls for automation, but variable document structures benefit from an agent's ability to adapt. A strong candidate names the decision framework explicitly: agent if the task is complex, reasoning-heavy, and has variable inputs; automation if it's simple, predictable, and high-frequency (where cost compounds). Bonus points for naming hybrid thinking &mdash; simple automation for the scheduling, an agent for the content.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Always use agents" (misses the cost/complexity trade-off entirely), or "agents can't scale" (false &mdash; they're just slower and pricier per run, not fundamentally unscalable). Treating all three tasks identically without distinguishing predictability is also a red flag.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You used an agent for (A) and it costs $1k/month. How do you fix it?" (Strong answer: replace it with a scheduled rule-based job — the reminder email never needed reasoning, so the fix is a pure automation swap, not a cheaper model.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Your agent-based research system costs $0.50 per query and takes 30 seconds across 5 API calls. A user complains it's too slow. Options: (A) a faster model, (B) fewer search iterations, (C) parallelize agent calls, (D) cache results. What do you recommend?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Weigh each option rather than picking one reflexively: (A) a faster model reduces latency but may hurt quality, so test it first; (B) fewer iterations is faster but risks less-thorough research; (C) parallelizing independent calls gives a large speed gain at the same cost, if the underlying tasks are actually independent; (D) caching gives an instant response, but only for repeated queries. A strong candidate ties the recommendation to the actual bottleneck &mdash; "is it always slow, or only sometimes" points toward caching vs. parallelizing &mdash; and closes with a measurement plan: A/B test the change and track both latency and quality, not latency alone.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just use a faster model" with no consideration of quality trade-offs, ignoring whether the 5 calls could run in parallel at all, or proposing any fix with no plan to measure whether it actually worked.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You parallelize and latency drops to 8 seconds, but quality also drops. Why?" (Strong answer: parallel calls likely lost the sequential context each step was building on &mdash; e.g. step 3 was supposed to refine step 2's search based on what step 2 found, and that dependency broke when they ran at the same time.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Design an agent that processes incoming emails, categorizes them (urgent, important, low-priority), and automatically drafts responses. Walk through the architecture, what could go wrong, and how you'd test it.</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A four-phase pipeline: the LLM reads an email and categorizes it while extracting action items; for urgent emails, it drafts a response; the system decides whether that draft needs human review; a human reviews, approves, and only then does the agent send. A strong candidate names the tool boundaries (read_email, categorize, draft_response, send_email behind an approval gate, flag_for_review) and the safety mechanisms explicitly: human-in-the-loop before any customer-facing send, a confidence threshold that escalates uncertain cases, an audit trail of what the agent did and why, and testing against historical emails with no real sends during development.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>No human review loop at all (genuinely dangerous for a system that emails real customers), no acknowledgment of what happens when the agent is wrong, or treating this as "just classification" while ignoring the much harder response-generation half of the problem.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The agent flags everything as urgent. How do you debug and retune it?" (Strong answer: inspect the categorization prompt and a sample of recent classifications, check whether the urgency threshold or keyword rules are too aggressive, and consider whether the simple rule layer — not the agent — should be catching more of these cases before they ever reach the LLM.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> A user asks your system to "analyze our Q3 sales performance, compare to competitors, and recommend next-quarter strategy." How would you decompose this as an orchestrator-worker system, and does that decomposition change if you're deciding between automation and an agent for each piece?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Decompose into distinct workers: analyze Q3 sales from the internal database, research competitor Q3 results, and gather market trends/forecasts &mdash; each an independently testable sub-task &mdash; with an orchestrator that assigns the work, collects each worker's result, and synthesizes a final recommendation. A strong candidate then applies this session's framework to each piece: pulling internal sales numbers from a database is closer to simple automation (a query, not reasoning), while competitor research and trend synthesis genuinely need an agent's reasoning and tool use. They'll also note that independent workers can run in parallel, while workers with real dependencies (recommendation depends on both analyses finishing) can't.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"One big agent does everything" (loses the benefit of decomposition and independent testing), treating genuinely dependent tasks as parallel, or failing to define what each worker returns.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Worker 1 (internal sales) takes 10 seconds and Worker 2 (competitor research) takes 30 seconds. How do you speed the whole thing up?" (Strong answer: if the workers are independent, run them concurrently so total time is bounded by the slower one, ~30s, rather than the sum, ~40s.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> How would you debug a hybrid workflow (scheduler &rarr; rule &rarr; agent &rarr; action) that's producing wrong results intermittently?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Don't debug the whole pipeline at once &mdash; identify the failure point first: did the scheduler actually trigger, did the simple rule behave as expected, did the agent produce valid output, did the action execute? Then test each component in isolation with mock data (a fixed fake email, a hardcoded "trigger fired" event) rather than re-running the live workflow and guessing. A strong candidate adds that "intermittent" specifically points toward the agent step &mdash; LLM output naturally varies run to run &mdash; so logging each step's output and cost, and correlating failures with specific input patterns, is what actually isolates the bug rather than a vague sense that "it's flaky."</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just add retries" without investigating the root cause, or debugging by staring at final output alone instead of inspecting intermediate steps.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You isolate it to the agent step, and the agent is technically returning valid JSON every time, but the category field is sometimes wrong. What now?" (Strong answer: this is now a prompt/quality problem, not a plumbing problem — tighten the categorization prompt, add few-shot examples of edge cases, and check whether the simple rule layer should be catching more of these cases before they reach the agent at all.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Simple automation is trigger &rarr; action with no <code>____</code> involved.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="reasoning" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> In the decision framework, the first question to ask is whether the task is predictable and <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="repetitive" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> A hybrid workflow calls the agent only on <code>____</code> cases the simple rule can't confidently resolve.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="edge,edge cases" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> A scheduled agent is a good fit when reasoning is needed but the task can wait, since nobody is waiting on it in <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="real time,real-time" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> When debugging a hybrid workflow, isolate and test each component with <code>____</code> data before touching the live pipeline.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="mock,mocked" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about automation vs. agents in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for a clear decision framework and named trade-offs (cost, latency, accuracy), not a reflexive "agents are the answer" &mdash; always be ready to say when automation wins.</li>
+    <li>Pair this set with the full Week 4 interview-questions pool for the tool-use and multi-agent-pattern questions this set doesn't cover.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-4-6-week-4-lab-mini-build-day/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

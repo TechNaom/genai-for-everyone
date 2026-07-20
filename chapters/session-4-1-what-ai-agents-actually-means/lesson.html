@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.1 What "AI Agents" Actually Means — GenAI for Everyone</title>
+<meta name="description" content="A precise, testable definition of what makes something an agent — the plan-act-observe loop, how agents differ from chatbots and workflows, and a real trace showing where the distinction actually matters.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../../index.html">&larr; Back to all sessions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.1</span>
+    <span class="badge-difficulty">Intermediate</span>
+    <span class="reading-time">20&ndash;25 min read</span>
+  </div>
+  <h1>What "AI Agents" Actually Means</h1>
+  <p><em>The word "agent" has been worn down by marketing until it means almost nothing. This chapter nails down a definition precise enough to build from &mdash; one that tells you, given any system in front of you, whether it's an agent, a workflow, or just a chatbot with extra steps.</em></p>
+
+  <nav class="page-toc" aria-label="On this page">
+    <span class="toc-label">On this page</span>
+    <a href="#what-agent-actually-means">1. The Word Everyone Uses and Almost Nobody Defines</a>
+    <a href="#chatbot-workflow-agent">2. The Three Things People Conflate</a>
+    <a href="#plan-act-observe-loop">3. The Loop, Concretely &mdash; Plan, Act, Observe</a>
+    <a href="#why-it-matters-this-week">4. Why This Matters for What You Build This Week</a>
+  </nav>
+
+  <div class="hook">
+    If you've spent any time near a tech conference or a product launch lately,
+    you've heard the word "agent" used to describe roughly everything. A chatbot
+    with a system prompt? Agent. A script that calls an API on a schedule? Agent.
+    A model that can use a calculator? Agent. Marketing has worn this word down
+    until it barely means anything &mdash; and that's a real problem if you're
+    trying to build actual things, because "I'll just build an agent" is not a
+    spec. This chapter nails down a definition precise enough to build from, before
+    Week 4 writes a single line of tool-calling code.
+  </div>
+
+  <!-- ============ SUB-TOPIC 1 ============ -->
+  <div class="subtopic" id="what-agent-actually-means">
+    <span class="subtopic-label">Sub-topic 1 of 4</span>
+    <h2>1. The Word Everyone Uses and Almost Nobody Defines</h2>
+
+    <p>
+      Here's the definition we'll use for the rest of the course:
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... an agent?</span>
+      An agent is a system where a language model <strong>decides what to do
+      next</strong>, based on <strong>what just happened</strong>, in order to
+      make progress <strong>toward a goal</strong> &mdash; <strong>repeatedly,
+      without a human choosing each step</strong>.
+    </div>
+
+    <p>
+      Every word in that sentence is doing work. Let's take it apart.
+    </p>
+
+    <p>
+      <strong>"Decides what to do next"</strong> &mdash; this is the part that
+      separates an agent from a workflow. In a workflow, the steps are fixed by
+      the programmer ahead of time: do A, then B, then C, always, in that order.
+      In an agent, the model looks at the current situation and <em>picks</em>
+      the next action from a set of possibilities. The control flow lives inside
+      the model's reasoning, not inside your <code>if</code> statements.
+    </p>
+
+    <p>
+      <strong>"Based on what just happened"</strong> &mdash; the model isn't
+      just executing a pre-written plan blindly. It's reading the result of its
+      last action before deciding on the next one. If a tool call fails, returns
+      something unexpected, or reveals new information, the agent's next move can
+      change because of it.
+    </p>
+
+    <p>
+      <strong>"Toward a goal"</strong> &mdash; there's a target state the system
+      is trying to reach, not just a single response to generate. "Answer this
+      question" is a single-turn task. "Research this topic and produce a report
+      I'm satisfied with" is a goal that might take many turns, several tool
+      calls, and some trial and error.
+    </p>
+
+    <p>
+      <strong>"Repeatedly, without a human choosing each step"</strong> &mdash;
+      this is what makes it autonomous rather than just interactive. A human can
+      still review the final output, or even approve risky steps, but the
+      <em>sequence of intermediate decisions</em> is the model's, not a person
+      typing each command one at a time.
+    </p>
+
+    <p>
+      If a system has all four properties, it's an agent. If it's missing any
+      one of them, it's something else &mdash; and that something else often has
+      a name we should use instead, because precision saves you from
+      over-engineering.
+    </p>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>An agent is a system where a model decides what to do next, based on what just happened, toward a goal, repeatedly, without a human choosing each step.</li>
+        <li>All four properties matter &mdash; missing any one of them means the system is something else (a chatbot, a workflow), and that "something else" usually has a more useful name.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 2 ============ -->
+  <div class="subtopic" id="chatbot-workflow-agent">
+    <span class="subtopic-label">Sub-topic 2 of 4</span>
+    <h2>2. The Three Things People Conflate</h2>
+
+    <p>
+      Let's separate the three categories that get blurred together:
+      <strong>chatbot</strong>, <strong>workflow</strong>, and <strong>agent</strong>.
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... a chatbot?</span>
+      A chatbot is single-turn (per turn) and reactive. You send a message, it
+      generates a response, the turn ends. Even with memory of the conversation
+      so far, it's still doing one thing per turn: producing text. There's no
+      loop where it takes an action, observes a result, and decides what to do
+      based on that result, all before getting back to you.
+    </div>
+
+    <div class="what-is">
+      <span class="label">What is... a workflow?</span>
+      A workflow (sometimes called an automation or a pipeline) is a fixed
+      sequence of steps that may use an LLM at one or more points, but the
+      <em>sequence itself</em> is hard-coded by a person. "Summarize the input
+      with an LLM call, translate the summary with another LLM call, then email
+      the result" is a workflow. It can be sophisticated &mdash; branching,
+      retries, parallel steps &mdash; but the branches are still decisions a
+      programmer made in advance ("if the sentiment score is negative,
+      escalate"), not decisions the model makes about what tool to reach for next
+      based on something novel it just observed.
+    </div>
+
+    <p>
+      An agent is what you get when you hand the model the decision of
+      <em>what to do next</em>, not just <em>what to say</em>. Concretely: the
+      model has access to a set of tools, it chooses which one to call and with
+      what arguments, it gets back the result, and it loops &mdash; possibly
+      calling more tools, possibly changing its plan &mdash; until it decides the
+      goal is met.
+    </p>
+
+    <div class="what-is">
+      <span class="label">A useful test</span>
+      If you removed the LLM and replaced its decision points with a flowchart a
+      human designed, would the system behave differently on a case it wasn't
+      specifically planned for? If no, it's a workflow with an LLM bolted on. If
+      yes &mdash; if it can genuinely react to something the designer didn't
+      anticipate &mdash; it's closer to a real agent.
+    </div>
+
+    <p>
+      This has real consequences. Workflows are cheaper, faster, and easier to
+      test exhaustively. Agents are more flexible and can handle situations you
+      didn't foresee, but are less predictable and can fail in stranger ways.
+      Most production systems that work well are <em>mostly</em> workflow, with
+      a small, carefully-scoped agentic piece where flexibility earns its cost.
+      Knowing which parts actually need to be agentic &mdash; and keeping the
+      rest as plain workflow &mdash; is one of the most valuable judgment calls
+      you'll develop this week.
+    </p>
+
+    <div class="real-world">
+      <span class="label">The same demo can be either one</span>
+      <ul>
+        <li>A chatbot with a clever system prompt, a scheduled script that calls an LLM once, and a genuine multi-step agent can all look identical in a five-minute product demo.</li>
+        <li>The difference only shows up under stress &mdash; when something happens that the person who built the system didn't specifically plan for. You'll see this play out concretely in the next section.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>A chatbot is single-turn and reactive &mdash; one message in, one response out, no action/observation loop within a turn.</li>
+        <li>A workflow's sequence of steps (and its branches) are fixed in advance by a programmer, even if an LLM runs at several of those steps.</li>
+        <li>An agent hands the model the decision of <em>what to do next</em>, not just what to say &mdash; the useful test is whether swapping in a human-designed flowchart would change behavior on an unanticipated case.</li>
+        <li>Most production systems should be mostly workflow, with a small, deliberately-scoped agentic core.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 3 ============ -->
+  <div class="subtopic" id="plan-act-observe-loop">
+    <span class="subtopic-label">Sub-topic 3 of 4</span>
+    <h2>3. The Loop, Concretely &mdash; Plan, Act, Observe</h2>
+
+    <p>
+      The mechanism underneath almost every real agent is a simple loop with
+      three repeating phases. Different frameworks name it differently (ReAct's
+      "Thought, Action, Observation" is the most famous version), but the shape
+      is always the same:
+    </p>
+
+    <div class="what-is">
+      <span class="label">What is... the plan-act-observe loop?</span>
+      <ol>
+        <li><strong>Plan</strong> &mdash; given the goal and everything that's happened so far, the model reasons about what to do next.</li>
+        <li><strong>Act</strong> &mdash; the model picks a specific tool and arguments, and that tool actually executes. This is the only phase where something happens outside the model.</li>
+        <li><strong>Observe</strong> &mdash; the result comes back to the model as new information, added to what it can see, so the <em>next</em> planning step is informed by it.</li>
+      </ol>
+      Then the loop repeats &mdash; until the model decides it has enough
+      information to answer, or hits a stopping condition (a step limit, a
+      "done" signal, or simply deciding the goal is satisfied).
+    </div>
+
+    <p>
+      This explains both the power and the risk of agents in one structure. The
+      power: each iteration can genuinely change direction based on real
+      information, which a fixed script can't do. The risk: nothing inherently
+      stops the loop from going wrong &mdash; looping forever, calling the wrong
+      tool repeatedly, or confidently misreading an observation. Every agent you
+      build from here needs an answer to "how does this loop know when to stop,
+      and what happens if it doesn't?" We'll build real stopping conditions in
+      Session 4.3.
+    </p>
+
+    <p>
+      Let's make this fully concrete with an actual trace &mdash; not a
+      hypothetical, but a real run we can inspect step by step.
+    </p>
+
+    <h3>A real trace: two sub-questions, two tools, one loop</h3>
+
+    <p>
+      Take this task: <em>"What's the total cost of 3 umbrellas at $14.50 each,
+      and will I need one tomorrow in Chicago?"</em> This is a good toy example
+      because it has two genuinely separate sub-problems needing two different
+      tools: arithmetic and weather. Here's what the loop actually produces,
+      with each tool call genuinely executed:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">umbrella_trace.txt</span>
+      </div>
+      <pre><code>[Step 0] TASK
+What's the total cost of 3 umbrellas at $14.50 each, and will I
+need one tomorrow in Chicago?
+
+[Step 1] PLAN
+This task has two independent sub-questions: (1) total cost of 3
+umbrellas at $14.50, (2) tomorrow's weather in Chicago. I'll solve
+both with tools, then combine into one answer.
+
+[Step 2] ACT
+{ "tool": "calculator", "input": "3 * 14.50" }
+
+[Step 3] OBSERVE
+{ "result": 43.5 }
+
+[Step 4] ACT
+{ "tool": "weather_lookup", "input": "Chicago" }
+
+[Step 5] OBSERVE
+{ "result": { "tomorrow": "rain", "chance_of_rain_pct": 80 } }
+
+[Step 6] FINAL_ANSWER
+3 umbrellas at $14.50 each = $43.50 total. Chicago's forecast for
+tomorrow is rain with an 80% chance of rain, so yes, you will
+likely need one.</code></pre>
+    </div>
+
+    <p>
+      Notice the shape: plan once, alternate act/observe for each tool needed,
+      then synthesize. The final answer's two numbers &mdash; $43.50 and 80%
+      &mdash; both trace directly to real tool outputs in Steps 3 and 5. Nothing
+      was invented; it's a recombination of verified observations. That
+      traceability is the entire point of building things this way instead of
+      asking a model to "guess" the cost and weather from training data &mdash;
+      every number in the answer has a receipt.
+    </p>
+
+    <h3>Where this breaks: agent vs. workflow, under stress</h3>
+
+    <p>
+      Here's the part that actually shows <em>why</em> the agent/workflow
+      distinction matters, instead of just asserting it. Take the same task
+      structure, but run it for a city the weather tool has no data for. We'll
+      run two versions side by side: a <strong>rigid workflow</strong> that
+      always executes the same two steps in the same order, and a
+      <strong>reactive agent</strong> that inspects what each tool actually
+      returned before deciding what to do next.
+    </p>
+
+    <p>
+      For a city the tool <em>does</em> have data for, both versions behave
+      identically:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">chicago_run.txt</span>
+      </div>
+      <pre><code>CITY: Chicago  (in DB: True)
+
+--- Rigid workflow ---
+  ('calculator', '3 * 14.50', 43.5)
+  ('weather_lookup', 'Chicago', {'tomorrow': 'rain', 'chance_of_rain_pct': 80})
+  OUTCOME: 80% chance of rain
+
+--- Reactive agent ---
+  ('calculator', '3 * 14.50', 43.5)
+  ('weather_lookup', 'Chicago', {'tomorrow': 'rain', 'chance_of_rain_pct': 80})
+  OUTCOME: 80% chance of rain</code></pre>
+    </div>
+
+    <p>
+      No visible difference &mdash; which is exactly why so many demos look
+      identical whether they're "really" agentic or just well-written
+      workflows. The difference only shows up under stress. Now try a city with
+      no entry in the lookup table:
+    </p>
+
+    <div class="code-window">
+      <div class="code-window-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="filename">miami_run.txt</span>
+      </div>
+      <pre><code>CITY: Miami  (in DB: False)
+
+--- Rigid workflow ---
+  ('calculator', '3 * 14.50', 43.5)
+  ('weather_lookup', 'Miami', {'error': 'No data for Miami'})
+  OUTCOME: CRASHED: workflow assumed a field that wasn't there
+
+--- Reactive agent ---
+  ('calculator', '3 * 14.50', 43.5)
+  ('weather_lookup', 'Miami', {'error': 'No data for Miami'})
+  ('replan', 'no data branch', 'No weather data available for Miami
+   from this tool. Recommending the user check a live weather
+   source instead.')
+  OUTCOME: No weather data available for Miami from this tool.
+  Recommending the user check a live weather source instead.</code></pre>
+    </div>
+
+    <p>
+      The rigid workflow breaks because it was written to always read a
+      <code>chance_of_rain_pct</code> field from the tool's response, and that
+      field doesn't exist when the lookup fails &mdash; it has no branch for
+      "what if the tool didn't return what I expected," because nobody wrote one
+      for this specific case. The reactive version <em>inspects the
+      observation</em> before deciding what to do next, notices the error, and
+      re-plans: it gives the user an honest answer about what's missing instead
+      of crashing on a bad assumption.
+    </p>
+
+    <p>
+      This is the real, concrete payoff of "the model decides what to do next
+      based on what just happened." It's the difference between a system that
+      degrades gracefully on cases nobody anticipated and one that breaks the
+      moment reality doesn't match the script. You could patch the workflow
+      with a manual <code>try/except</code> for this <em>specific</em> case
+      &mdash; and a good engineer would. But that's the point: a workflow only
+      handles the cases someone thought to write a branch for. An agent's
+      branching comes from the model's reasoning at run time, which can (within
+      limits) cover cases nobody explicitly anticipated.
+    </p>
+
+    <details class="go-deeper">
+      <summary>Go Deeper: doesn't a try/except just make the workflow into an agent?</summary>
+      <p>
+        No &mdash; and the distinction is worth being precise about. A
+        <code>try/except KeyError</code> around this one line handles exactly
+        one anticipated failure mode: a missing <code>chance_of_rain_pct</code>
+        key. It doesn't help if the tool instead returns a rate-limit error, a
+        malformed city name, or a value in the wrong units &mdash; each of those
+        would need its own hand-written branch. The reactive agent's advantage
+        isn't that it happens to handle the Miami case; it's that its
+        "decision" is made by the model reasoning over whatever it actually
+        observes, which can (within the limits of what the model can reason
+        about) generalize to failure modes nobody wrote a specific branch for.
+        More error handling makes a workflow more robust, but it's still
+        enumerating cases in advance &mdash; that's a difference in degree, not
+        in kind.
+      </p>
+    </details>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>The agent loop is plan &rarr; act &rarr; observe, repeating until a stopping condition is met.</li>
+        <li>Every number in a grounded final answer should trace back to a real tool output &mdash; not something invented from training data.</li>
+        <li>Agent vs. workflow looks identical on the happy path; the difference only shows up when a tool returns something unexpected.</li>
+        <li>A rigid workflow crashes on unanticipated cases because its next step is fixed regardless of what came back; a reactive agent inspects the observation first and can re-plan.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ SUB-TOPIC 4 ============ -->
+  <div class="subtopic" id="why-it-matters-this-week">
+    <span class="subtopic-label">Sub-topic 4 of 4</span>
+    <h2>4. Why This Matters for What You Build This Week</h2>
+
+    <p>
+      Week 4 is about giving models the ability to act, not just talk. Over the
+      next five sessions, you'll go from defining a single tool (4.2), to
+      chaining tool calls toward a multi-step goal (4.3), to coordinating more
+      than one model working together (4.4), to deciding when a full agent is
+      overkill and a simpler automation will do (4.5), and finally to building
+      something that puts it all together (4.6).
+    </p>
+
+    <p>
+      Every session this week, ask: <em>is this piece of the system genuinely
+      agentic &mdash; does it need the model deciding what happens next &mdash;
+      or would a plain workflow do the job more cheaply and predictably?</em>
+      Most of the time in real products, most of the system should be workflow,
+      with only the part that truly benefits from in-the-moment decision-making
+      made agentic. Knowing the difference is what separates engineers who ship
+      reliable systems from people who call everything an agent because it
+      sounds impressive.
+    </p>
+
+    <p>
+      This session's exercises don't ask you to write an agent from scratch
+      yet &mdash; that's next session. Instead, the Core path exercise has you
+      read, run, and annotate exactly the trace above, so the mental model is
+      solid before you write real tool-calling code. The Pro path pushes
+      further: a task where the tool's result actually <em>contradicts</em> an
+      assumption baked into the question, and you have to design the re-planning
+      branch that makes the agent correct the user rather than politely agreeing
+      with a false premise.
+    </p>
+
+    <div class="genai-prompt-box">
+      <p class="genai-thought"><strong>Thought process:</strong> the real skill in designing that Pro-path branch isn't asking an assistant to "handle contradictions" in the abstract &mdash; it's specifying exactly what evidence should override what assumption, and what the agent should say when it does. A vague request gets you a system that either silently agrees with the user's wrong premise or complains without explaining what it found.</p>
+      <div class="genai-try-first">
+        <p class="genai-prompt-label">Write the prompt you'd give an AI assistant to help design this:</p>
+        <textarea class="genai-user-attempt" rows="3" placeholder="e.g. I have a weather-lookup tool and a user question that assumes a certain forecast. Help me write the re-planning logic that checks the tool result against the question's assumption..."></textarea>
+        <button type="button" class="genai-reveal-btn">Reveal a strong reference prompt</button>
+        <div class="genai-compare-note" hidden>
+          Paste your prompt into Claude, ChatGPT, Copilot, or whatever assistant
+          you use, and compare what it produces against this session's project
+          &mdash; does it explicitly compare the tool's observation to the
+          question's assumption before answering, and does the final answer name
+          the contradiction rather than quietly ignoring it? That comparison is
+          the real test, not a score.
+        </div>
+      </div>
+      <details class="genai-reveal">
+        <summary>Show a strong version of this prompt</summary>
+        <div class="genai-prompt-text"><pre>I have a toy weather_lookup(city) tool that returns a dict like {"tomorrow": "sunny", "chance_of_rain_pct": 2}. A user asks a question that assumes a specific forecast, e.g. "It's supposed to rain in Phoenix tomorrow, should I bring an umbrella?" Write a Python function that: (1) calls weather_lookup for the city, (2) checks whether the tool's actual "tomorrow" value contradicts what the question assumed (a simple keyword check on the question text is fine), and (3) if it contradicts, builds a final answer that explicitly corrects the user's assumption and cites the real forecast value -- not just answers the literal question as if the premise were true. If there's no contradiction, just answer normally using the tool's data. Also write a second, rigid version that always defers to the question's framing without checking, so I can compare the two side by side on the same city.</pre></div>
+      </details>
+    </div>
+
+    <div class="real-world">
+      <span class="label">In the Real World</span>
+      <ul>
+        <li>Most well-known "agent" products &mdash; coding assistants, research tools, customer support bots &mdash; are actually a small agentic loop wrapped in a much larger workflow (auth, logging, retries, formatting) that a person designed in advance.</li>
+        <li>Engineers who can't articulate this distinction tend to either over-build (turning a simple scheduled task into an expensive, unpredictable agent) or under-build (forcing a genuinely open-ended task into a rigid pipeline that breaks the first time reality doesn't match the script).</li>
+        <li>The "if you swapped in a flowchart, would behavior change on an unanticipated case" test works as a real design review question, not just a classroom exercise &mdash; it's a fast way to catch a system that's being over-described as "agentic" when it's really just a workflow with an LLM inside it.</li>
+      </ul>
+    </div>
+
+    <div class="quick-recap">
+      <span class="label">Quick recap</span>
+      <ul>
+        <li>Week 4 builds toward real tool-calling agents, session by session &mdash; this session gives you the definition and mental model everything else builds on.</li>
+        <li>The recurring design question all week: does this piece of the system genuinely need the model deciding what happens next, or would a workflow do the job more cheaply and predictably?</li>
+        <li>Most real systems should be mostly workflow, with a small, deliberately-scoped agentic core.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Points to Remember</h2>
+    <ul>
+      <li>An <strong>agent</strong> is a system where the model decides what to do next based on what just happened, repeatedly, toward a goal &mdash; without a human choosing each step.</li>
+      <li>A <strong>chatbot</strong> is single-turn and reactive: one message in, one response out, no loop of action and observation within a turn.</li>
+      <li>A <strong>workflow</strong> may use an LLM at one or more steps, but the <em>sequence</em> of steps is fixed in advance by a programmer, not decided by the model at run time.</li>
+      <li>The core agent mechanism is the <strong>plan &rarr; act &rarr; observe</strong> loop: reason about the next step, take an action (usually a tool call), observe the real result, and repeat.</li>
+      <li>The test for "is this really agentic": if you replaced the model's decision points with a human-designed flowchart, would it behave differently on a case the designer didn't anticipate? If yes, it's agentic. If no, it's a workflow.</li>
+      <li>Agentic flexibility comes at a cost: less predictability, harder testing, and new failure modes (like infinite loops or wrong tool calls). Most production systems are mostly workflow, with a small, deliberately-scoped agentic core.</li>
+      <li>Every agent loop needs an explicit answer to "how does it know when to stop?" &mdash; we'll build real stopping conditions in Session 4.3.</li>
+    </ul>
+  </div>
+
+  <p>
+    Ready to check what stuck? Head to the quiz next &mdash; every blank has a
+    Check button, so you'll know instantly if you've got it. Then the exercises
+    have you trace and break the plan-act-observe loop yourself, before the
+    project pushes into the trickier contradiction case.
+  </p>
+
+  <div class="chapter-nav">
+    <a href="../../index.html">&larr; All Sessions</a>
+    <a href="quiz.html">Take the Quiz &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/playground.js"></script>
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

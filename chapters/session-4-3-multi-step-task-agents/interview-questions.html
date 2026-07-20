@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.3 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 4.3: multi-step agent design, stopping-condition and loop debugging, and orchestrator-worker task decomposition — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-3" data-chapter-id="session-4-3">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.3 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Multi-Step Agent Design &amp; Debugging</h1>
+  <p>
+    Once a candidate can explain what an agent is and how tool calling works,
+    interviewers move to the question that actually separates "read about agents"
+    from "built one": can you design a multi-step agent loop, name its concrete
+    failure modes, and debug one when it's stuck in a loop or stopping too early.
+    Each question below includes what a strong answer sounds like, common red
+    flags, and a natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> Design a multi-step agent that researches a topic and writes a report. How would you structure it, what could go wrong, and how would you debug it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A strong answer names a three-phase structure: <strong>Plan</strong> (the agent writes out what it will search for, before executing), <strong>Execute</strong> (a loop where the agent calls search tools and observes results), and <strong>Synthesize</strong> (the agent stops calling tools and writes the final report). Implementation details worth naming: a working memory that tracks findings so the agent doesn't forget mid-task, a max-iteration safety limit, and a stopping condition based on the absence of tool calls in the response. A strong candidate can also name the concrete failure modes unprompted: infinite loops (same tool, near-duplicate queries), early stopping (partial report, agent quits), forgotten context (early results lost to token limits), and wrong ordering (searching for conclusions before gathering data).</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just call search tools until you have enough data" with no structure at all; no mention of working memory or an iteration limit; no debugging plan; confusing the planning phase with the execution phase.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Your agent researches 5 topics but only cites the last 2 in the report. Why?" (Strong answer: almost certainly a context-window / forgetting problem &mdash; early findings got pushed out or under-weighted by the time the final synthesis prompt ran; fix by summarizing key findings as you go, not just at the end.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> Your agent is running for 20 iterations and not stopping. It keeps calling the same search tool with slightly different queries. How would you debug this, and how would you fix it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Debug systematically: log every iteration (which tool, what query, what result came back), verify the stopping-condition logic is actually correct (does "no tool calls" really trigger a return?), and inspect the prompt for whether it's clear about success criteria. The root cause is usually one of: no real stopping condition at all, a prompt that doesn't define what "enough evidence" means, or the agent genuinely not realizing near-duplicate queries aren't yielding new information. Fixes: add an explicit stopping rule ("if you've called the same tool with a similar query twice, stop"), tighten the prompt to name a concrete success criterion ("stop once you have three independent sources"), add memory of prior queries so the agent can see it's repeating itself, and keep a max-iteration limit as the backstop. Always test with mocked tools before spending real API calls on the fix.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just set a timeout" without investigating the root cause; no mention of prompt clarity or memory; proposing a fix without first logging/observing what the agent is actually doing.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You added a 10-iteration cap, but now the agent stops too early on legitimately hard tasks. Why?" (Strong answer: an iteration limit is a safety net, not a quality control &mdash; if 10 genuinely isn't enough for the task's real complexity, the fix is a smarter stopping condition or a task-specific limit, not just raising the cap blindly.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> A user asks your system: "Analyze our Q3 sales performance, compare to competitors, and recommend next quarter strategy." Design this as an orchestrator-worker system. What tasks do you decompose into?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Decompose into independent worker tasks with a clear input/output contract for each: Worker 1 analyzes internal Q3 sales data, Worker 2 researches competitor Q3 results, Worker 3 gathers market trends and forecasts, and the Orchestrator collects all three results and synthesizes a final recommendation. A strong candidate notes that Workers 1&ndash;3 are largely independent and can run in parallel, while the Orchestrator step genuinely depends on all three finishing first &mdash; and calls out error handling explicitly (what happens if the competitor-research worker fails to find data, or a worker times out and needs a fallback).</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"One big agent does everything" (misses the entire point of decomposition); treating genuinely interdependent tasks as if they were parallel; not defining what each worker actually returns; no error handling for a failed or slow worker.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Worker 1 takes 10 seconds and Worker 2 takes 30 seconds. How do you speed the whole thing up?" (Strong answer: since the three research workers are independent, run them concurrently rather than sequentially &mdash; total latency becomes roughly the slowest worker's time, not the sum of all three.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Design an agent that processes incoming emails, categorizes them by urgency, and drafts responses. What could go wrong, and how would you test it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>A multi-step structure: read and categorize the email, extract action items, draft a response for anything urgent, then gate sending behind human review rather than sending automatically. Tool definitions worth naming: <code>read_email</code>, <code>categorize</code>, <code>draft_response</code>, <code>flag_for_review</code>, and <code>send_email</code> kept behind an approval step. A strong candidate treats human-in-the-loop as non-negotiable here (the cost of a wrong auto-send to a real client is high), names a confidence threshold for escalating uncertain cases, and insists on testing against a batch of historical emails before any real send capability is enabled.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>No human review loop at all (dangerous for anything that actually sends messages); no consideration of what happens when the agent miscategorizes or hallucinates content; no testing strategy beyond "try it and see."</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The agent flags almost every email as urgent. How do you debug and retune it?" (Strong answer: inspect a sample of the flagged emails against the categorization prompt's criteria, check whether the urgency definition in the prompt is too broad, and adjust the threshold or add clearer negative examples of "not urgent" rather than just tweaking a number blindly.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> You're building an agent to "Find the three most cost-effective cloud providers and explain why." It makes three searches (AWS, GCP, Azure pricing) and stops. Is that sufficient?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>No &mdash; three pricing searches alone don't satisfy the task. The agent gathered raw pricing per provider, but never actually compared the pricing <em>models</em> (per-GB vs. per-request vs. egress costs differ meaningfully), never considered other factors like reliability, support, or compliance, and never defined "cost-effective" relative to a specific use case (a small startup's usage pattern looks nothing like an enterprise's). A strong candidate suggests concrete next steps: a comparison-focused search, a use-case-specific search, and a final synthesis step before the agent is allowed to stop. The general point: multi-step agents need to verify sufficiency against the actual task, not just execute a fixed number of steps and declare victory.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Saying three searches are sufficient because "it did three things"; not connecting this back to the stopping-condition problem (the agent stopped calling tools, but that doesn't mean the task was actually complete).</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"How would you change the prompt so the agent catches this gap itself?" (Strong answer: have the planning phase explicitly require a comparison/synthesis step as part of the plan, not just a list of provider searches &mdash; and reinforce during execution that raw data collection alone doesn't satisfy "explain why.")</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> Explicit planning means the agent writes out its steps <code>____</code> executing.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="before" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> The most reliable stopping signal for a multi-step agent is the absence of <code>____</code> in its response.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="tool calls,tool_use,tool use" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> An agent that calls the same tool repeatedly with near-identical queries is a classic symptom of being stuck in a <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="loop" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Working memory keeps a running record of <code>____</code> so the agent doesn't forget earlier results.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="findings,results,observations" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> Explicit planning generally earns its extra API call once a task needs <code>____</code> or more steps.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="5,five" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about multi-step agent design in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers are listening for named, concrete failure modes (loops, early stopping, forgotten context, wrong ordering) and specific fixes &mdash; not a vague "the agent might mess up."</li>
+    <li>Pair this set with Session 4.4's multi-agent-pattern questions for a fuller Week 4 mock interview.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-4-4-multi-agent-patterns/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

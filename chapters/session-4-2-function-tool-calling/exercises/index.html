@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.2 Exercises — GenAI for Everyone</title>
+<meta name="description" content="Hands-on exercise for Session 4.2: Function / Tool Calling — wire up a real calculator and weather tool to a live LLM via the Anthropic API's tool-use feature.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-2" data-chapter-id="session-4-2">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../quiz.html">&larr; Back to the quiz</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.2 Exercises</span>
+    <span class="reading-time">30&ndash;40 min, hands-on</span>
+  </div>
+  <h1>Exercises: An LLM That Calls a Real Weather/Calculator Tool</h1>
+  <p>
+    Take the same <code>calculator</code> and <code>weather_lookup</code>
+    functions from Session 4.1 &mdash; already real, already tested &mdash; and
+    wire them up to an actual LLM via the Anthropic API's tool-use feature. You
+    define both tools' schemas, send a real question to the model, execute
+    whichever tool(s) it actually decides to call, and feed the results back to
+    get a final, grounded answer.
+  </p>
+
+  <div class="what-is">
+    <span class="label">Free/open vs. paid API &mdash; read this first</span>
+    Most of this course's exercises run entirely free and offline. This one is
+    the exception, and deliberately so: the model's actual tool-calling
+    <em>decision</em> is the entire point of the exercise, and there's no free
+    or open substitute for a live model making that decision. The Anthropic API
+    is a paid, metered service &mdash; Session 4.1's simulated trace was
+    designed specifically to avoid this cost while you learned the concepts;
+    this session is where that training wheel comes off. If you don't have a
+    key yet, you can still do real, verifiable work offline &mdash;
+    <code>build_tool_schemas()</code> and <code>execute_tool()</code> are pure
+    logic with no API dependency, and <code>offline_test()</code> validates
+    both, including two error-handling edge cases, without touching the
+    network. It's also fine to test the <em>shape</em> of your request with a
+    fake placeholder key &mdash; <code>anthropic.Anthropic()</code> constructs
+    without ever reaching the network, so you can confirm the request is built
+    correctly before it fails at the network call.
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run these</span>
+    You'll need Python 3 and the <code>anthropic</code> package
+    (<code>pip install anthropic --break-system-packages</code>). Download
+    <code>starter.py</code> below, set <code>ANTHROPIC_API_KEY</code> in your
+    environment if you have one, then run <code>python starter.py</code> from a
+    terminal. It runs the offline tests first, then attempts four real
+    questions against a live model.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>The task</h2>
+  <p>
+    Open <code>starter.py</code>. The real <code>calculator</code> and
+    <code>weather_lookup</code> functions are already there, unchanged from
+    Session 4.1. Three functions are left for you to fill in.
+  </p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Define the tool schemas</h3>
+    <p>Fill in <code>build_tool_schemas()</code> so it returns two tool definitions formatted exactly as the Anthropic API expects &mdash; each a dict with <code>name</code>, <code>description</code>, and <code>input_schema</code> keys. Write real, specific descriptions that say both what each tool does and <em>when</em> to use it &mdash; a vague description ("weather tool") produces unreliable tool-calling behavior, exactly as the lesson described.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Execute whichever tool the model requests</h3>
+    <p>Fill in <code>execute_tool()</code> to dispatch a tool name and input dict to the correct real function. Handle the calculator's invalid-input case (catch the <code>ValueError</code> and return a string describing the error, don't let it crash) and an unknown-tool-name case defensively &mdash; the same honest-failure-reporting principle from Session 4.1's <code>weather_lookup</code>.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Build the full tool-calling loop</h3>
+    <p>Fill in <code>run_conversation()</code>: send the message and tool schemas to the model, check <code>stop_reason</code>, and if it's <code>"tool_use"</code>, execute every requested tool and send the results back &mdash; tagged with the matching <code>tool_use_id</code>, immediately following the assistant's tool-use turn &mdash; then repeat until the model returns a final text answer.</p>
+  </div>
+
+  <h2>Starter code, at a glance</h2>
+  <div class="code-window">
+    <div class="code-window-bar">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="filename">starter.py</span>
+    </div>
+    <pre><code>def calculator(expression: str) -> float:
+    &#35; ... unchanged from Session 4.1 ...
+
+WEATHER_DB = {"Chicago": {...}, "Phoenix": {...}, "Seattle": {...}}
+
+def weather_lookup(city: str) -> dict:
+    &#35; ... unchanged from Session 4.1 -- returns {"error": ...}, never raises ...
+
+&#35; TODO 1
+def build_tool_schemas() -> list:
+    raise NotImplementedError("Fill in build_tool_schemas()")
+
+&#35; TODO 2
+def execute_tool(tool_name: str, tool_input: dict) -> str:
+    raise NotImplementedError("Fill in execute_tool()")
+
+&#35; TODO 3 (requires ANTHROPIC_API_KEY)
+def run_conversation(user_message: str, max_rounds: int = 5) -> str:
+    import anthropic
+    client = anthropic.Anthropic()
+    raise NotImplementedError("Fill in run_conversation()")
+
+TEST_QUESTIONS = [
+    "What's 3 umbrellas at $14.50 each, and will I need one tomorrow in Chicago?",
+    "Will it rain tomorrow in Phoenix?",
+    "What's 127 times 38?",
+    "Should I bring an umbrella tomorrow in Miami?",  &#35; city not in the DB
+]</code></pre>
+  </div>
+
+  <div class="output-block">
+    <span class="output-label">Example output (with a real API key)</span>
+    <pre><code>--- Testing build_tool_schemas() ---
+build_tool_schemas() looks correct.
+
+--- Testing execute_tool() ---
+calculator result: {"result": 43.5}
+weather_lookup result: {"tomorrow": "rain", "chance_of_rain_pct": 80}
+weather_lookup (unknown city) result: {"error": "No data for Miami"}
+calculator (invalid input) result: {"error": "Invalid characters in expression"}
+All offline tests passed.
+
+======================================================================
+Q: What's 3 umbrellas at $14.50 each, and will I need one tomorrow in Chicago?
+
+A: Three umbrellas at $14.50 each comes to $43.50. And yes, you'll want
+one -- there's an 80% chance of rain in Chicago tomorrow.</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">Watch for these two specific moments</span>
+    Question 3 ("What's 127 times 38?") is a genuine test of whether the model
+    reaches for the calculator or just answers from its own arithmetic ability
+    &mdash; either is a legitimate outcome; the point is to actually observe
+    which happens, not assume. Question 4 (Miami, a city not in
+    <code>WEATHER_DB</code>) tests whether the model reports the tool's honest
+    error back to you clearly, or tries to guess a plausible-sounding forecast
+    anyway despite the tool telling it there's no data.
+  </div>
+
+  <div class="what-is">
+    <span class="label">Checking your work</span>
+    <code>offline_test()</code> should pass with no assertion errors regardless
+    of whether you have an API key. If you do have one, all four test
+    questions should return a sensible final answer, with the calculator and
+    weather questions actually triggering their corresponding tool, and the
+    Miami question producing an honest "no data available" answer rather than
+    a guessed forecast. Compare your implementation against
+    <code>solution.py</code> once you've made a genuine attempt.
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../quiz.html">&larr; Back to Quiz</a>
+    <a href="../project/index.html">Build the Project &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

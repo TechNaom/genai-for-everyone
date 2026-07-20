@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.1 Project: The Contradiction Case — GenAI for Everyone</title>
+<meta name="description" content="Build a reactive agent that catches when a weather-tool result contradicts an assumption baked into the user's own question, and compare it to a rigid workflow that confidently gets it wrong.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../exercises/index.html">&larr; Back to the exercises</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.1 Project</span>
+    <span class="reading-time">25 min build</span>
+  </div>
+  <h1>The Contradiction Case</h1>
+  <p>
+    The Pro-path build for this session. The Core-path exercise had the agent
+    react to a <strong>missing</strong> tool result (an unknown city). This
+    project is harder: the tool result is present, but it
+    <strong>contradicts</strong> an assumption baked into the user's own
+    question &mdash; and you'll design the re-planning branch that makes the
+    agent correct the user rather than politely agreeing with a false premise.
+  </p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>=== Consistent case: Chicago (question assumes rain, forecast IS rain) ===
+Reactive agent final_answer:
+"That matches the forecast -- Chicago is expecting rain tomorrow
+(80% chance), so bring an umbrella."
+Rigid workflow: "Yes, as your question mentioned, tomorrow's rain
+means you'll want an umbrella."
+
+=== Contradiction case: Phoenix (question assumes rain, forecast is SUNNY) ===
+Reactive agent final_answer:
+"Actually, tomorrow's forecast for Phoenix is sunny with only a 2%
+chance of rain -- the opposite of what your question assumed. You
+likely won't need an umbrella."
+Rigid workflow: "Yes, as your question mentioned, tomorrow's rain
+means you'll want an umbrella."   &lt;-- confidently wrong
+
+Notice: the rigid workflow gives the SAME advice in both cases --
+it calls weather_lookup, but never actually checks the result
+against the question's assumption.</code></pre>
+  </div>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    No installation and no API key needed. Download <code>starter.py</code>
+    below and run <code>python starter.py</code>. Both tools in this project
+    are real, offline Python functions &mdash; the point of this project is
+    the <strong>re-planning logic</strong> that compares an observation to an
+    assumption, not live model output.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What to build</h2>
+  <p>Fill in the three <code># TODO</code> sections in <code>starter.py</code>:</p>
+  <ul>
+    <li><strong>TODO 1</strong> &mdash; <code>contains_assumed_rain</code>: a simple keyword check on the question text (does it mention "rain" or "raining"?). This stands in for the assumption a real agent would have to extract from the user's phrasing.</li>
+    <li><strong>TODO 2</strong> &mdash; <code>run_agent_loop_pro</code>: call <code>weather_lookup</code>, then compare the question's assumption to what the tool actually returned. If they conflict, the final answer must explicitly correct the user and cite the real <code>chance_of_rain_pct</code> &mdash; not just answer the literal question as if the premise were true. If they agree, confirm it. If the city has no data, say so honestly.</li>
+    <li><strong>TODO 3</strong> &mdash; <code>rigid_workflow_pro</code>: deliberately wrong on purpose &mdash; it calls <code>weather_lookup</code> so it looks like it's using real data, but the reply is built purely from whether the question mentioned rain. It never checks that assumption against the tool's actual result. This is the comparison point, not something to fix.</li>
+  </ul>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Run the consistent and contradiction cases</h3>
+    <p>Run the file with Chicago (where the question's assumption matches the real forecast) and Phoenix (where it doesn't). Confirm the reactive agent's answer changes shape between the two &mdash; consistent confirmation vs. explicit correction &mdash; while the rigid workflow gives the same kind of answer either way, right or wrong.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Write the "what would the workflow need to hard-code" note</h3>
+    <p>In a few sentences, explain what branch a programmer would have to add to <code>rigid_workflow_pro</code> to handle the Phoenix case correctly &mdash; and then explain why that fix still wouldn't generalize to the <em>next</em> contradiction nobody thought to check for (a question that assumes snow instead of rain, say, or a specific temperature). See <code>README.md</code> for a full worked answer to compare against.</p>
+  </div>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>The Core-path exercise showed an agent surviving a tool that returned nothing useful. This one is subtler and, in a real product, more dangerous: the tool returned a perfectly good result, but a naive system used it to confirm a premise the user got wrong instead of correcting them. That's the difference between "my code crashed" and "my code confidently told someone the wrong thing" &mdash; the second failure mode is quieter and easier to ship by accident. The re-planning branch you wrote here &mdash; comparing what was assumed to what was actually observed, and speaking up when they don't match &mdash; is the same shape of reasoning a real tool-calling agent needs any time a user's framing might not match reality, which is exactly what Session 4.2 starts building for real.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../exercises/index.html">&larr; Exercises</a>
+    <a href="../interview-questions.html">Interview Questions &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.4 Interview Questions — GenAI for Everyone</title>
+<meta name="description" content="Interview prep for Session 4.4: multi-agent patterns in production — strong-answer, red-flag, and follow-up breakdowns, plus a rapid-fire fill-in-the-blank review.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body data-active-chapter="session-4-4" data-chapter-id="session-4-4">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="project/index.html">&larr; Back to the project</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 4.4 Interview Prep</span>
+    <span class="reading-time">10 min read</span>
+  </div>
+  <h1>Interview Questions: Multi-Agent Patterns in Production</h1>
+  <p>
+    Multi-agent design is one of the questions interviewers use to separate candidates
+    who've read about agents from candidates who've actually had to make one work
+    reliably. These questions probe pattern selection, decomposition, and the cost/
+    latency trade-offs that only show up once a system is running for real. Each
+    question below includes what a strong answer sounds like, common red flags, and a
+    natural follow-up. Click any question to expand it.
+  </p>
+
+  <details class="qa-item">
+    <summary><span class="q-num">1</span> You're building a system for legal document review. Describe how you'd structure it as a multi-agent system. What pattern would you use &mdash; orchestrator-worker, debate, or reviewer &mdash; and why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>The reviewer pattern is the strongest fit: a writer agent drafts a summary of the document, while a fact-checker verifies claims against the document text, a risk-assessor identifies legal risks, and a compliance-checker checks against relevant regulations. The reasoning: legal work is high-stakes and errors are costly, multiple independent reviewers catch different categories of error, and each agent can specialize like an expert system. A strong candidate also names the implementation details &mdash; structured feedback (JSON with error types), a convergence-based stopping condition, and a conflict-resolution rule (if agents disagree, route to a human reviewer) &mdash; and is explicit about the trade-off: this is expensive (multiple agents, multiple calls) and slower (sequential reviews), but quality matters far more than cost or speed in this domain.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just use one agent" (misses the entire value of independent review), picking a pattern without reasoning through why it fits this specific domain, or not considering legal-specific needs (compliance, risk) at all.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You ran three review rounds and still missed an error. What went wrong?" (Strong answer: reviewers may share the same blind spot, or the error type wasn't covered by any of the three reviewer roles &mdash; the fix is adding a reviewer for that specific gap, not just adding more rounds.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">2</span> A user asks your system: "Analyze our Q3 sales performance, compare to competitors, and recommend next-quarter strategy." Design this as an orchestrator-worker system. What tasks would you decompose it into?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Decompose into independent, specialized workers: Worker 1 analyzes internal Q3 sales data; Worker 2 researches competitor Q3 results; Worker 3 gathers market trends and forecasts; the orchestrator synthesizes all three into a final recommendation. A strong candidate notes the orchestrator's full job &mdash; assigning tasks, collecting results, integrating them &mdash; and flags that Workers 1&ndash;3 are independent enough to run in parallel, which is a real speed win the pattern enables. They also address communication (each task has a clear input/output format) and error handling (what happens if a worker's data source fails or times out).</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"One big agent does everything" (misses the point of decomposition entirely), treating genuinely interdependent tasks as if they were parallel, or not defining what each worker actually returns.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"Worker 1 takes 10 seconds, Worker 2 takes 30 seconds. How do you speed the whole system up?" (Strong answer: since the workers are independent, run them concurrently rather than sequentially &mdash; total latency becomes close to the slowest worker, not the sum of all three.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">3</span> Your agent-based system costs $0.50 per query and takes 30 seconds across 5 API calls. A user complains it's too slow. Would you use a faster model, fewer iterations, parallelization, or caching &mdash; and how do you decide?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Each lever has a different trade-off: a faster model reduces latency but may hurt quality, so test it first rather than assuming; fewer iterations is faster but risks less-thorough output; parallelizing independent agent calls gives a large speed win at the same cost, if the calls are actually independent; caching helps only if queries genuinely repeat. A strong candidate reasons about which lever fits this specific bottleneck &mdash; is it slow every time (favors caching or a faster model) or only sometimes (favors parallelization) &mdash; and insists on measuring the change (A/B testing latency and quality together) rather than guessing.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just use a faster model" without acknowledging the quality risk, not considering whether the calls can be parallelized at all, or proposing a fix with no plan to measure whether it actually worked.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You parallelize and latency drops to 8 seconds, but quality also drops. Why?" (Strong answer: parallel agents likely lost access to each other's intermediate outputs that a sequential pipeline would have passed along &mdash; some steps are truly interdependent and can't be parallelized for free.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">4</span> Your agent keeps calling the same search tool with slightly different queries and won't stop after 20 iterations. How do you debug it, and how do you fix it?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Debug systematically: log every iteration (what tool was called, what came back), check the stopping-condition logic directly, and look for the pattern &mdash; is the agent re-searching the same thing because the prompt never told it what "done" looks like? Root causes are usually one of: no stopping condition at all, a prompt that's unclear about success criteria, or the agent not recognizing it already has the answer because each search result looks "slightly new." Fixes: an explicit stopping rule ("stop if you've searched for something similar twice"), a clearer prompt about what counts as sufficient evidence, and a hard iteration limit as a safety net regardless of the smarter fix.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>"Just set a timeout" as the only fix (treats the symptom, not the cause), not investigating what the agent is actually doing before proposing a change, or no mention of testing the fix with mocked tools first.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"You added a 10-iteration limit, but now the agent stops too early. Why?" (Strong answer: the limit is masking the same underlying problem &mdash; the agent still doesn't have a real "I'm done" signal, it's just getting cut off before or after it happens to notice; the durable fix is still a clearer stopping condition, not a smaller or larger number.)</p>
+    </div>
+  </details>
+
+  <details class="qa-item">
+    <summary><span class="q-num">5</span> You're building a system to generate marketing copy that needs to be accurate, engaging, and on-brand. Budget allows multiple API calls. Which multi-agent pattern would you choose, and why?</summary>
+    <div class="qa-body">
+      <span class="qa-section-label strong">Strong answer</span>
+      <p>Reviewer pattern: a writer produces the copy, and three specialized reviewers &mdash; an accuracy/fact-checker, an engagement/style-checker, and a brand-voice checker &mdash; each review it independently for their one concern, then the writer revises based on the aggregated feedback. Each reviewer catches a different category of error that the others would miss, which is exactly the value multiple specialized reviewers add over one generalist reviewer. A strong candidate explicitly names the trade-off: this is more expensive than a single pass, but worth it here because accuracy, engagement, and brand consistency all genuinely matter and none can be sacrificed for the others.</p>
+      <span class="qa-section-label flags">Red flags</span>
+      <p>Picking orchestrator-worker or debate without reasoning about why reviewer fits this specific need better, or naming "reviewer pattern" without being able to say what each reviewer actually specializes in.</p>
+      <span class="qa-section-label followup">Follow-up</span>
+      <p>"The fact-checker and the style-checker give conflicting feedback on the same paragraph. What does the writer do?" (Strong answer: this is a conflict-resolution decision that should be made up front &mdash; e.g. accuracy wins over style when they truly conflict, or the writer is prompted to satisfy both if genuinely possible before picking a winner.)</p>
+    </div>
+  </details>
+
+  <h2>Rapid-Fire Review</h2>
+  <p>Quick recall check &mdash; fill in each blank and hit Check.</p>
+
+  <div class="quiz-progress-wrap" aria-hidden="true">
+    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+  </div>
+
+  <form onsubmit="return false;">
+
+    <div class="quiz-question">
+      <label for="r1"><span class="q-num">1</span> In orchestrator-worker, the orchestrator's job is to coordinate task distribution and <code>____</code> the results, not to do the specialized work itself.</label>
+      <div class="fib-row">
+        <input type="text" id="r1" class="fib-blank" data-answers="synthesize,integrate" aria-label="Answer for rapid-fire question 1">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r2"><span class="q-num">2</span> The debate pattern is for exploring perspectives and surfacing trade-offs &mdash; not specifically for situations where agents happen to <code>____</code>.</label>
+      <div class="fib-row">
+        <input type="text" id="r2" class="fib-blank" data-answers="disagree,disagreement" aria-label="Answer for rapid-fire question 2">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r3"><span class="q-num">3</span> In a reviewer pattern, quality scales with the number of <code>____</code>, since each can specialize in catching a different kind of error.</label>
+      <div class="fib-row">
+        <input type="text" id="r3" class="fib-blank" data-answers="reviewers" aria-label="Answer for rapid-fire question 3">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r4"><span class="q-num">4</span> Multi-agent systems trade latency and cost for <code>____</code> &mdash; that trade is a deliberate choice, not a default.</label>
+      <div class="fib-row">
+        <input type="text" id="r4" class="fib-blank" data-answers="quality" aria-label="Answer for rapid-fire question 4">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <label for="r5"><span class="q-num">5</span> "Convergence" in a multi-reviewer loop means feedback stops <code>____</code> round over round, not that every agent has reached full agreement.</label>
+      <div class="fib-row">
+        <input type="text" id="r5" class="fib-blank" data-answers="changing" aria-label="Answer for rapid-fire question 5">
+        <button type="button" class="check-btn">Check</button>
+        <span class="fib-feedback" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="check-all-wrap">
+      <button type="button" id="check-all-btn" class="check-btn">Check All Answers</button>
+      <span id="quiz-score"></span>
+    </div>
+
+    <div class="quiz-celebration" id="quiz-celebration" aria-live="polite">
+      🎉 5 for 5 &mdash; you're ready to talk about multi-agent patterns in an interview.
+    </div>
+
+  </form>
+
+  <h2>Strategy Tips</h2>
+  <ul>
+    <li>Cover the "Strong answer" line, answer out loud, then check yourself against it &mdash; that's how these are meant to be used for self-testing.</li>
+    <li>Interviewers listen for pattern-selection reasoning tied to the specific domain, not textbook recall &mdash; always be ready to say <em>why</em> a pattern fits, not just name it.</li>
+    <li>Pair this set with Session 4.3's questions for a more realistic mixed-topic mock interview on agent design overall.</li>
+  </ul>
+
+  <div class="chapter-nav">
+    <a href="project/index.html">&larr; Project</a>
+    <a href="../session-4-5-automation-workflows-nolow-code-code/lesson.html">Next Session &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../assets/quiz-engine.js"></script>
+
+<script src="../../assets/progress.js"></script>
+<script src="../../assets/chapters-data.js"></script>
+<script src="../../assets/sidebar.js"></script>
+</body>
+</html>

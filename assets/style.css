@@ -4,30 +4,28 @@
    user, while feeling credible enough for a working professional. */
 
 :root {
-  /* "Aurora" — GenAI for Everyone's own visual identity: a deep plum/wine
-     structural color (deliberately NOT navy, unlike python-for-everyone and
-     rag-for-everyone) with a vivid magenta/violet/amber gradient mesh —
-     generative, a little bold, distinct energy from the sibling courses'
-     technical blue. Same glassmorphic structure/shadows/type scale as both. */
-  --color-bg: #FBF3F6;
-  --color-text: #241629;
-  --color-text-soft: #5C4A56;
-  --color-navy: #2B1830;
-  --color-navy-2: #452249;
-  --color-blue: #C23B6B;
-  --color-blue-dark: #9E2E56;
-  --color-yellow: #F5A623;
-  --color-yellow-dark: #D6890F;
+  /* Same navy/blue/teal visual identity as python-for-everyone, for a
+     consistent look across sibling courses. Same glassmorphic
+     structure/shadows/type scale as both. */
+  --color-bg: #F6F7FB;
+  --color-text: #171A21;
+  --color-text-soft: #4B5160;
+  --color-navy: #101B33;
+  --color-navy-2: #16274A;
+  --color-blue: #2E6BB8;
+  --color-blue-dark: #1B4F8C;
+  --color-yellow: #FFC93C;
+  --color-yellow-dark: #E6A800;
   --color-green: #1E8E3E;
   --color-red: #C5221F;
-  --color-teal: #7C4DDC;
+  --color-teal: #0E7C86;
   --color-card-bg: rgba(255, 255, 255, 0.62);
-  --color-border: rgba(43, 24, 48, 0.10);
+  --color-border: rgba(16, 27, 51, 0.10);
   --glass-blur: blur(18px);
   --glass-border: 1px solid rgba(255, 255, 255, 0.55);
-  --shadow-sm: 0 2px 8px rgba(43, 24, 48, 0.06);
-  --shadow-md: 0 10px 30px rgba(43, 24, 48, 0.10);
-  --shadow-lg: 0 20px 50px rgba(43, 24, 48, 0.16);
+  --shadow-sm: 0 2px 8px rgba(16, 27, 51, 0.06);
+  --shadow-md: 0 10px 30px rgba(16, 27, 51, 0.10);
+  --shadow-lg: 0 20px 50px rgba(16, 27, 51, 0.16);
   --radius: 14px;
   --max-width: 800px;
   --sidebar-width: 290px;
@@ -62,11 +60,11 @@ body::before {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(circle at 8% 12%, rgba(194, 59, 107, 0.30), transparent 38%),
-    radial-gradient(circle at 92% 15%, rgba(245, 166, 35, 0.26), transparent 34%),
-    radial-gradient(circle at 25% 92%, rgba(124, 77, 220, 0.28), transparent 42%),
-    radial-gradient(circle at 85% 88%, rgba(43, 24, 48, 0.30), transparent 40%),
-    linear-gradient(160deg, #FBF3F6 0%, #F5E8EE 50%, #FAF0F4 100%);
+    radial-gradient(circle at 8% 12%, rgba(46, 107, 184, 0.30), transparent 38%),
+    radial-gradient(circle at 92% 15%, rgba(255, 201, 60, 0.26), transparent 34%),
+    radial-gradient(circle at 25% 92%, rgba(27, 79, 140, 0.28), transparent 42%),
+    radial-gradient(circle at 85% 88%, rgba(16, 27, 51, 0.30), transparent 40%),
+    linear-gradient(160deg, #EEF0F8 0%, #E4E9F6 50%, #EAEEF9 100%);
   background-attachment: fixed;
 }
 
@@ -78,7 +76,7 @@ body::before {
 
 /* ---------- Top navigation ---------- */
 header.top-bar {
-  background: rgba(43, 24, 48, 0.72);
+  background: rgba(16, 27, 51, 0.72);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   color: #fff;
@@ -182,7 +180,7 @@ code, pre {
 }
 
 code {
-  background: #F5EEF2;
+  background: #EEF1F7;
   padding: 2px 7px;
   border-radius: 5px;
   font-size: 0.9em;
@@ -235,7 +233,7 @@ pre code {
 
 .code-window-bar .filename {
   margin-left: 10px;
-  color: #A08A98;
+  color: #8A91A0;
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 13px;
 }
@@ -264,7 +262,7 @@ pre code {
 }
 
 .output-block pre {
-  background: #FAF3F6;
+  background: #F4F6FA;
   color: #1B2233;
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -292,7 +290,7 @@ pre code {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-blue-dark);
-  background: rgba(194, 59, 107, 0.10);
+  background: rgba(46, 107, 184, 0.10);
   padding: 3px 10px;
   border-radius: 999px;
   margin-bottom: 10px;
@@ -310,7 +308,7 @@ pre code {
 }
 
 .diagram-card pre {
-  background: #FAF3F6;
+  background: #F4F6FA;
   color: #1B2233;
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -320,7 +318,7 @@ pre code {
 
 /* ---------- Hero (landing page) ---------- */
 .hero {
-  background: radial-gradient(circle at 15% 20%, #6B2A50 0%, transparent 45%),
+  background: radial-gradient(circle at 15% 20%, #2A406B 0%, transparent 45%),
               linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-2) 55%, var(--color-blue-dark) 100%);
   color: #fff;
   padding: 72px 20px 84px;
@@ -356,7 +354,7 @@ pre code {
 
 .hero p.lede {
   font-size: 21px;
-  color: #D9BFC9;
+  color: #BFC8D9;
   max-width: 560px;
   margin: 18px 0 30px;
 }
@@ -371,7 +369,7 @@ pre code {
 .hero-badges span {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #EAD9E3;
+  color: #D9DFEA;
   font-size: 14px;
   font-weight: 500;
   padding: 7px 14px;
@@ -440,7 +438,7 @@ pre code {
 
 .hero-stats span {
   font-size: 13px;
-  color: #B999AC;
+  color: #99A4B9;
   margin-top: 2px;
 }
 
@@ -474,7 +472,7 @@ pre code {
   width: 52px;
   height: 52px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #F6E9F0, #EFD9E5);
+  background: linear-gradient(135deg, #E9EDF6, #D9E0EF);
   margin-bottom: 14px;
 }
 
@@ -496,7 +494,7 @@ pre code {
   padding: 28px 30px;
   border-radius: 18px;
   font-size: 20px;
-  box-shadow: 0 16px 40px rgba(43, 24, 48, 0.16);
+  box-shadow: 0 16px 40px rgba(16, 27, 51, 0.16);
   margin: 28px 0 24px;
   position: relative;
 }
@@ -539,11 +537,11 @@ pre code {
 
 .lesson-hero {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(234, 241, 252, 0.95));
-  border: 1px solid rgba(43, 24, 48, 0.08);
+  border: 1px solid rgba(16, 27, 51, 0.08);
   border-radius: 18px;
   padding: 24px 26px;
   margin: 24px 0 28px;
-  box-shadow: 0 10px 30px rgba(43, 24, 48, 0.08);
+  box-shadow: 0 10px 30px rgba(16, 27, 51, 0.08);
 }
 
 .lesson-hero h2 {
@@ -563,12 +561,12 @@ pre code {
 
 .lesson-stack {
   background: linear-gradient(135deg, rgba(234, 241, 252, 0.95), rgba(248, 250, 255, 0.95));
-  border: 1px solid rgba(43, 24, 48, 0.08);
+  border: 1px solid rgba(16, 27, 51, 0.08);
   border-left: 5px solid var(--color-blue);
   border-radius: 14px;
   padding: 16px 18px;
   margin: 20px 0;
-  box-shadow: 0 8px 24px rgba(43, 24, 48, 0.06);
+  box-shadow: 0 8px 24px rgba(16, 27, 51, 0.06);
 }
 
 .lesson-pill {
@@ -579,7 +577,7 @@ pre code {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-blue-dark);
-  background: #F6E9F0;
+  background: #E9EDF6;
   padding: 4px 10px;
   border-radius: 999px;
   margin-bottom: 8px;
@@ -618,7 +616,7 @@ pre code {
 
 .code-breakdown dt {
   font-family: "JetBrains Mono", monospace;
-  background: linear-gradient(135deg, #F6E9F0, #EFD9E5);
+  background: linear-gradient(135deg, #E9EDF6, #D9E0EF);
   color: var(--color-blue-dark);
   display: inline-block;
   padding: 4px 10px;
@@ -715,7 +713,7 @@ details.go-deeper summary:hover {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-blue-dark);
-  background: #F6E9F0;
+  background: #E9EDF6;
   padding: 6px 14px;
   border-radius: 999px;
   margin-bottom: 14px;
@@ -729,7 +727,7 @@ details.go-deeper summary:hover {
   height: 14px;
   overflow: hidden;
   margin: 8px 0 30px;
-  box-shadow: inset 0 1px 3px rgba(43, 24, 48, 0.12);
+  box-shadow: inset 0 1px 3px rgba(16, 27, 51, 0.12);
 }
 
 .quiz-progress-fill {
@@ -867,7 +865,7 @@ button.check-btn:focus-visible,
 
 .mcq-option:hover:not(:disabled) {
   border-color: var(--color-blue);
-  background: rgba(194, 59, 107, 0.06);
+  background: rgba(46, 107, 184, 0.06);
 }
 
 .mcq-option:focus-visible {
@@ -1092,7 +1090,7 @@ button.check-btn:focus-visible,
 
 .chapter-card-more {
   --card-accent: var(--color-navy);
-  background: linear-gradient(160deg, rgba(194, 59, 107, 0.08), rgba(43, 24, 48, 0.04));
+  background: linear-gradient(160deg, rgba(46, 107, 184, 0.08), rgba(16, 27, 51, 0.04));
   border-style: dashed;
 }
 
@@ -1103,10 +1101,10 @@ button.check-btn:focus-visible,
 
 /* ---------- Footer ---------- */
 footer.site-footer {
-  background: rgba(43, 24, 48, 0.75);
+  background: rgba(16, 27, 51, 0.75);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  color: #CBAFBD;
+  color: #AFB8CB;
   padding: 32px 20px;
   margin-top: 60px;
   font-size: 15px;
@@ -1122,16 +1120,16 @@ footer.site-footer .page {
 }
 
 footer.site-footer a {
-  color: #EAD9E3;
+  color: #D9DFEA;
 }
 
 .footer-brand-credit {
   font-size: 13.5px;
-  color: #A08A98;
+  color: #8A91A0;
 }
 
 .footer-brand-credit a {
-  color: #C2A7B6;
+  color: #A7B0C2;
   font-weight: 600;
 }
 
@@ -1198,7 +1196,7 @@ footer.site-footer a {
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  background: #F5EEF2;
+  background: #EEF1F7;
   color: var(--color-blue-dark);
   padding: 6px 12px;
   border-radius: 999px;
@@ -1206,7 +1204,7 @@ footer.site-footer a {
 }
 
 .page-toc a:hover {
-  background: #EFD9E5;
+  background: #D9E0EF;
 }
 
 .page-toc .toc-planned {
@@ -1346,7 +1344,7 @@ footer.site-footer a {
 
 .qa-section-label.strong { background: #E7F6EA; color: var(--color-green); }
 .qa-section-label.flags { background: #FCE9E8; color: var(--color-red); }
-.qa-section-label.followup { background: #F6E9F0; color: var(--color-blue-dark); }
+.qa-section-label.followup { background: #E9EDF6; color: var(--color-blue-dark); }
 
 /* ---------- Roadmap page ---------- */
 .roadmap-list {
@@ -1427,7 +1425,7 @@ footer.site-footer a {
 }
 
 .playground-bar .filename {
-  color: #A08A98;
+  color: #8A91A0;
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 13px;
 }
@@ -1474,7 +1472,7 @@ footer.site-footer a {
 }
 
 .playground-output {
-  background: #FAF3F6;
+  background: #F4F6FA;
   color: #1B2233;
   border-top: 1px solid var(--color-border);
   font-family: "JetBrains Mono", monospace;
@@ -1516,7 +1514,7 @@ footer.site-footer a {
 .challenge-statement .constraints,
 .challenge-statement .examples {
   font-size: 16px;
-  background: rgba(43, 24, 48, 0.04);
+  background: rgba(16, 27, 51, 0.04);
   border-radius: 10px;
   padding: 10px 16px;
   margin: 10px 0;
@@ -1652,7 +1650,7 @@ textarea.challenge-code:focus {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-blue-dark);
-  background: #F6E9F0;
+  background: #E9EDF6;
   padding: 4px 12px;
   border-radius: 999px;
   margin-bottom: 10px;
@@ -1854,7 +1852,7 @@ table {
   top: 14px;
   left: 14px;
   z-index: 200;
-  background: rgba(43, 24, 48, 0.85);
+  background: rgba(16, 27, 51, 0.85);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   color: #fff;
@@ -1874,7 +1872,7 @@ table {
   height: 100vh;
   width: var(--sidebar-width);
   overflow-y: auto;
-  background: rgba(43, 24, 48, 0.68);
+  background: rgba(16, 27, 51, 0.68);
   backdrop-filter: blur(26px);
   -webkit-backdrop-filter: blur(26px);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -1897,7 +1895,7 @@ table {
 
 .sidebar-subtitle {
   display: block;
-  color: #A08A98;
+  color: #8A91A0;
   font-size: 12px;
   padding: 0 8px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -1911,7 +1909,7 @@ table {
 .sidebar-module summary {
   cursor: pointer;
   list-style: none;
-  color: #D9BFC9;
+  color: #BFC8D9;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 12px;
@@ -1932,7 +1930,7 @@ table {
 .sidebar-module summary::after {
   content: "▸";
   float: right;
-  color: #8C6A7E;
+  color: #6A758C;
   transition: transform 0.15s ease;
 }
 
@@ -1955,7 +1953,7 @@ table {
   border-radius: 8px;
   font-size: 14px;
   line-height: 1.3;
-  color: #EAD9E3;
+  color: #D9DFEA;
   text-decoration: none;
 }
 
@@ -1970,7 +1968,7 @@ table {
 }
 
 .sidebar-chapter-list li .soon {
-  color: #7A5C6C;
+  color: #5C667A;
   cursor: default;
 }
 
@@ -1993,13 +1991,13 @@ table {
   border-radius: 6px;
   font-size: 12.5px;
   line-height: 1.3;
-  color: #A08A98;
+  color: #8A91A0;
   text-decoration: none;
 }
 
 .sidebar-subtopic-list li a:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: #EAD9E3;
+  color: #D9DFEA;
 }
 
 .sidebar-scrim {
@@ -2014,7 +2012,7 @@ table {
   display: block;
   padding: 6px 10px 10px 34px;
   font-size: 13px;
-  color: #B999AC;
+  color: #99A4B9;
   text-decoration: none;
 }
 

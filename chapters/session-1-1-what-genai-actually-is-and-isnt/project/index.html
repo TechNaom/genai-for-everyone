@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.1 Project: The AI Request Decoder — GenAI for Everyone</title>
+<meta name="description" content="Build the AI Request Decoder: a small tool that takes one vague 'let's use AI' request and splits it into its hidden predictive/generative sub-projects, each with a risk note.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body data-active-chapter="session-1-1">
+<button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle session list" aria-expanded="false">☰ Sessions</button>
+<aside id="chapter-sidebar" class="sidebar" data-root="../../../" aria-label="Session navigation"></aside>
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+<header class="top-bar">
+  <div class="page">
+    <a href="../../../index.html" class="brand">🤖 GenAI for Everyone</a>
+    <nav>
+      <a href="../../../index.html">All Sessions</a>
+      <a href="https://github.com/TechNaom/genai-for-everyone">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <p><a href="../interview-questions.html">&larr; Back to interview questions</a></p>
+
+  <div class="page-meta">
+    <span class="chapter-badge">Session 1.1 Project</span>
+    <span class="reading-time">15 min build</span>
+  </div>
+  <h1>The AI Request Decoder</h1>
+  <p>The exercise had you hand-classify twelve isolated scenarios. This project turns that judgment into a small, reusable tool: feed it one vague <em>"let's use AI on this"</em> request &mdash; already split into its sub-tasks &mdash; and it decodes each one as predictive or generative and flags its rollout risk. It's the lesson's support-backlog scenario, written as code.</p>
+
+  <h2>Example run</h2>
+  <div class="output-block">
+    <span class="output-label">Output</span>
+    <pre><code>=== AI Request Decoder ===
+Request: "We need to put AI on our customer support backlog"
+
+Sub-project                                        Category     Risk
+----------------------------------------------------------------------------------------------------
+Draft reply suggestions for agents to review       GENERATIVE   Medium risk: needs human review before it reaches a customer.
+Auto-route tickets to the right team               PREDICTIVE   Lower risk: deterministic output, easy to audit.
+Predict which tickets will escalate or churn       PREDICTIVE   Lower risk: deterministic output, easy to audit.
+Summarize long multi-message threads for agents    GENERATIVE   Medium risk: needs human review before it reaches a customer.
+
+Takeaway: this one sentence hides 2 generative and 2 predictive sub-project(s) -- each needs its
+own data, evaluation approach, and rollout plan.</code></pre>
+  </div>
+
+  <p>One sentence from a VP, four different engineering projects &mdash; exactly the "four hidden projects" example from the lesson, decoded automatically instead of by hand.</p>
+
+  <div class="what-is">
+    <span class="label">How to run</span>
+    Download <code>starter.py</code> below, fill in the <code>&#35; TODO</code> sections, then run <code>python starter.py</code>. Pure Python &mdash; no libraries, no API key.
+  </div>
+
+  <div class="download-links">
+    <a href="starter.py">starter.py</a>
+    <a href="solution.py">solution.py (reference)</a>
+  </div>
+
+  <h2>What you'll build</h2>
+  <p>A script holding one request and a list of its sub-project descriptions. For each sub-project, <code>classify_subproject()</code> guesses predictive vs. generative from keywords, and <code>risk_note()</code> attaches a one-line rollout warning based on that category.</p>
+
+  <div class="task-card">
+    <h3><span class="task-num">1</span> Classify each sub-project</h3>
+    <p>Find <code>&#35; TODO 1</code>. Lowercase <code>description</code>, then return <code>"predictive"</code> if it contains any word from <code>PREDICTIVE_KEYWORDS</code>, <code>"generative"</code> if it contains any word from <code>GENERATIVE_KEYWORDS</code>, and <code>"unknown"</code> otherwise.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">2</span> Attach a risk note</h3>
+    <p>Find <code>&#35; TODO 2</code>. Return a one-line string: a warning about needing human review for <code>"generative"</code>, a note about easy auditing for <code>"predictive"</code>, and a prompt to classify by hand for anything else.</p>
+  </div>
+
+  <div class="task-card">
+    <h3><span class="task-num">3</span> Print the decoded report</h3>
+    <p>Find <code>&#35; TODO 3</code>. Loop over <code>subprojects</code>, classify and print a row for each, then finish with a takeaway line counting how many came back generative vs. predictive.</p>
+  </div>
+
+  <h2>Ideas to make it your own</h2>
+  <ul>
+    <li>Swap in a request from your own job or a news story and write its sub-projects by hand.</li>
+    <li>Add a third category, <code>"unclear"</code>, for sub-tasks that genuinely blend both (recommendation systems are a good test case).</li>
+    <li>Sort the printed rows so all the higher-risk generative sub-projects surface first.</li>
+  </ul>
+
+  <div class="points-to-remember">
+    <h2>Why this project matters</h2>
+    <p>This is the chapter's central habit, made mechanical: before writing any code, split a vague "add AI" request into its real sub-projects and name each one's category. Predictive and generative sub-tasks need different data, different evaluation, and carry different rollout risk &mdash; catching that up front is worth more than a week of building against the wrong target.</p>
+  </div>
+
+  <div class="chapter-nav">
+    <a href="../interview-questions.html">&larr; Interview Questions</a>
+    <a href="../../session-1-2-how-llms-work-without-the-math-fear/lesson.html">Session 1.2 &rarr;</a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="page">
+    <span>🤖 GenAI for Everyone &mdash; free &amp; open source, MIT licensed.</span>
+    <span><a href="https://github.com/TechNaom/genai-for-everyone">github.com/TechNaom/genai-for-everyone</a></span>
+    <span class="footer-brand-credit">Built by Manohar Papasani</span>
+  </div>
+</footer>
+
+<script src="../../../assets/progress.js"></script>
+<script src="../../../assets/chapters-data.js"></script>
+<script src="../../../assets/sidebar.js"></script>
+</body>
+</html>
